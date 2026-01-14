@@ -1,0 +1,45 @@
+{
+  "name": "@holoscript/uaa2-client",
+  "version": "1.0.0-alpha.1",
+  "description": "Thin client for consuming uaa2-service APIs from HoloScript projects",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "holoscript",
+    "uaa2",
+    "vr",
+    "metaverse",
+    "ai-agents",
+    "voice-commands",
+    "api-client"
+  ],
+  "author": "HoloScript Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/holoscript/holoscript.git",
+    "directory": "packages/uaa2-client"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.1"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "holoscript",
+  "version": "1.0.0-alpha.1",
+  "private": true,
+  "description": "HoloScript - Open source VR scene description language",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "test": "pnpm -r test",
+    "lint": "eslint packages/*/src/**/*.ts",
+    "clean": "pnpm -r exec rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "pnpm@8.12.0",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
