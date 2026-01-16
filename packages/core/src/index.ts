@@ -56,6 +56,44 @@ export { ReactiveState, createReactiveState, bindStateToDOM } from './state/Reac
 // HoloScript+ VR Traits (NEW)
 export { VRTraitRegistry, registerTraits } from './traits/VRTraitSystem';
 
+// HoloScript+ Voice Input Trait (NEW - Phase 1)
+export {
+  VoiceInputTrait,
+  createVoiceInputTrait,
+  type VoiceInputConfig,
+  type VoiceInputMode,
+  type VoiceCommand,
+  type VoiceRecognitionResult,
+  type VoiceInputEvent,
+} from './traits/VoiceInputTrait';
+
+// HoloScript+ AI Driver NPC Trait (NEW - Phase 1)
+export {
+  AIDriverTrait,
+  createAIDriverTrait,
+  BehaviorTreeRunner,
+  GOAPPlanner,
+  type AIDriverConfig,
+  type DecisionMode,
+  type BehaviorNode,
+  type NPCContext,
+  type NPCGoal,
+  type BehaviorState,
+} from './traits/AIDriverTrait';
+
+// Performance Telemetry (NEW - Phase 1)
+export {
+  PerformanceTelemetry,
+  getPerformanceTelemetry,
+  type Metric,
+  type MetricType,
+  type SeverityLevel,
+  type PerformanceBudget,
+  type FrameTiming,
+  type MemorySnapshot,
+  type AnalyticsExporter,
+} from './runtime/PerformanceTelemetry';
+
 // Type Checker
 export {
   HoloScriptTypeChecker,
