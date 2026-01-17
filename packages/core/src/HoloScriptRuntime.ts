@@ -31,6 +31,7 @@ import type {
   TransformationNode,
   UI2DNode,
 } from './types';
+import type { ImportLoader } from './types';
 
 const RUNTIME_SECURITY_LIMITS = {
   maxExecutionDepth: 50,
@@ -95,8 +96,10 @@ export class HoloScriptRuntime {
   private animations: Map<string, Animation> = new Map();
   private uiElements: Map<string, UIElementState> = new Map();
   private builtinFunctions: Map<string, (args: unknown[]) => unknown>;
+  private importLoader?: ImportLoader;
 
-  constructor() {
+  constructor(importLoader?: ImportLoader) {
+    this.importLoader = importLoader;
     this.context = this.createEmptyContext();
     this.currentScope = { variables: this.context.variables };
     this.builtinFunctions = this.initBuiltins();
@@ -319,6 +322,9 @@ export class HoloScriptRuntime {
           break;
         case 'generic':
           result = await this.executeGeneric(node);
+          break;
+        case 'expression-statement':
+          result = await this.executeCall(node);
           break;
         default:
           result = {
@@ -543,7 +549,16 @@ export class HoloScriptRuntime {
     }
 
     // Check context variables
-    return this.context.variables.get(name);
+    if (this.context.variables.has(name)) {
+      return this.context.variables.get(name);
+    }
+
+    // Fallback to functions map (for imported functions)
+    if (this.context.functions.has(name)) {
+      return this.context.functions.get(name);
+    }
+
+    return undefined;
   }
 
   /**

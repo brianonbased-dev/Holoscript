@@ -262,7 +262,6 @@ export type {
   HSPlusCompileResult,
   HoloScriptPlusModule,
   HSPlusRuntime,
-};
   TransformationNode,
   GenericASTNode,
 
@@ -274,6 +273,7 @@ export type {
   // Phase 2: Module Nodes
   ImportNode,
   ExportNode,
+  ImportLoader,
 
   // Phase 2: Variable Nodes
   VariableDeclarationNode,

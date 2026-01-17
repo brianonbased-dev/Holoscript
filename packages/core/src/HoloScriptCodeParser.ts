@@ -81,6 +81,7 @@ export class HoloScriptCodeParser {
       'class', 'new', 'this', 'super', 'static', 'private', 'public',
       'try', 'catch', 'finally', 'throw',
       'const', 'let', 'var',
+      'animate', 'modify', 'pulse', 'move', 'show', 'hide',
     ]);
   }
 
@@ -351,6 +352,11 @@ export class HoloScriptCodeParser {
         case 'let':
         case 'var':
           return this.parseVariableDeclaration();
+        // DSL-first commands (Phase 54)
+        case 'animate':
+          return this.parseAnimate();
+        case 'modify':
+          return this.parseModify();
         default:
           this.advance();
           return null;
@@ -1059,6 +1065,69 @@ export class HoloScriptCodeParser {
       message: `Expected identifier, got ${token?.type || 'EOF'}`,
     });
     return null;
+  }
+
+  /**
+   * Parse animate command: animate target property: "..." from: 0 to: 1 duration: 1000
+   */
+  private parseAnimate(): ASTNode | null {
+    this.expect('keyword', 'animate');
+    const target = this.expectIdentifier();
+    if (!target) return null;
+
+    const properties: Record<string, unknown> = {};
+
+    // Parse inline properties
+    while (this.position < this.tokens.length) {
+      this.skipNewlines();
+      const t = this.currentToken();
+      if (!t || t.type === 'newline' || (t.type === 'keyword' && this.keywordSet.has(t.value.toLowerCase()))) break;
+
+      const prop = this.parseProperty();
+      if (prop) {
+        properties[prop.key] = prop.value;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      type: 'expression-statement',
+      expression: `animate("${target}", ${JSON.stringify(properties)})`,
+      position: { x: 0, y: 0, z: 0 },
+    } as ASTNode;
+  }
+
+  /**
+   * Parse modify command: modify target { prop: value }
+   */
+  private parseModify(): ASTNode | null {
+    this.expect('keyword', 'modify');
+    const target = this.expectIdentifier();
+    if (!target) return null;
+
+    const properties: Record<string, unknown> = {};
+
+    if (this.check('punctuation', '{')) {
+      this.advance();
+      while (!this.check('punctuation', '}') && this.position < this.tokens.length) {
+        this.skipNewlines();
+        if (this.check('punctuation', '}')) break;
+
+        const prop = this.parseProperty();
+        if (prop) {
+          properties[prop.key] = prop.value;
+        }
+        this.skipNewlines();
+      }
+      this.expect('punctuation', '}');
+    }
+
+    return {
+      type: 'expression-statement',
+      expression: `modify("${target}", ${JSON.stringify(properties)})`,
+      position: { x: 0, y: 0, z: 0 },
+    } as ASTNode;
   }
 
   /**

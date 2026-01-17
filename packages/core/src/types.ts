@@ -164,6 +164,8 @@ export interface ImportNode extends ASTNode {
   modulePath: string;
 }
 
+export type ImportLoader = (path: string) => Promise<string>;
+
 export interface ExportNode extends ASTNode {
   type: 'export';
   exports?: string[];
@@ -180,6 +182,7 @@ export interface VariableDeclarationNode extends ASTNode {
   name: string;
   dataType?: string;
   value?: unknown;
+  isExpression?: boolean;
 }
 
 // ============================================================================
@@ -201,7 +204,8 @@ export type UIElementType =
   | 'flex-container'
   | 'grid-container'
   | 'scroll-view'
-  | 'tab-view';
+  | 'tab-view'
+  | 'dashboard' | 'card' | 'metric' | 'row' | 'col';
 
 export interface UI2DNode {
   type: '2d-element';
@@ -231,6 +235,7 @@ export interface UIStyle {
 export interface RuntimeContext {
   variables: Map<string, unknown>;
   functions: Map<string, MethodNode>;
+  exports: Map<string, unknown>;
   connections: ConnectionNode[];
   spatialMemory: Map<string, SpatialPosition>;
   hologramState: Map<string, HologramProperties>;
@@ -244,6 +249,7 @@ export interface ExecutionResult {
   spatialPosition?: SpatialPosition;
   error?: string;
   executionTime?: number;
+  learningSignals?: any;
 }
 
 export interface ParticleSystem {
