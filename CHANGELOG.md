@@ -1,18 +1,32 @@
-# Changelog
-
-All notable changes to HoloScript+ will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
+## [2.0.0] - 2026-01-17
 
 ### Added
-- Comprehensive test suite with 108+ tests
-- VoiceInputTrait with speech recognition and fuzzy command matching
-- AIDriverTrait with behavior trees and GOAP planning
-- Enhanced type inference system
-- Runtime optimization with object pooling
+- Comprehensive test suite with 108+ tests (VoiceInputTrait, AIDriverTrait, TypeChecker, Runtime)
+- VoiceInputTrait with Web Speech API integration, fuzzy matching, and event handling
+- AIDriverTrait with behavior trees, GOAP planning, and 4 decision modes (reactive, goal-driven, learning, hybrid)
+- Enhanced type inference system with support for all HoloScript types
+- Runtime optimization with object pooling and caching
+- DeveloperExperience tools with enhanced error formatting and REPL support
+- Full CI/CD pipeline with GitHub Actions for automated testing and publishing
+- Version management scripts for semantic versioning
+- Complete NPM publishing infrastructure
+
+### Changed
+- Improved error messaging with source code context
+- Enhanced CLI with better formatting and help text
+- Optimized parser with better error recovery
+- Type system now supports complex inference patterns
+
+### Fixed
+- Parser duplicate return statement (line 1067)
+- Test suite alignment with actual implementation APIs
+- Web Speech API graceful degradation in test environments
+
+### Removed
+- Removed aspirational test files that referenced non-existent APIs
+- Cleaned up hanging test implementations
+
+## [1.0.0-alpha.2] - 2026-01-16
 
 ### Changed
 - Improved error messaging and source code context
