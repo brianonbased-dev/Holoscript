@@ -1,6 +1,6 @@
 {
   "name": "@holoscript/uaa2-client",
-  "version": "1.0.0-alpha.2",
+  "version": "2.0.0",
   "description": "Thin client for consuming uaa2-service APIs from HoloScript projects",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

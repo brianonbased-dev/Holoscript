@@ -1,3 +1,17 @@
+## [2.0.0] - 2026-01-17
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
+### Removed
+- 
+
 # Changelog
 
 All notable changes to HoloScript+ will be documented in this file.
