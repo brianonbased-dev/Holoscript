@@ -1,42 +1,40 @@
 /**
- * @holoscript/uaa2-client
+ * @holoscript/infinity-builder-client
  *
- * Thin client for consuming uaa2-service APIs from HoloScript projects.
+ * Client for building universal apps with Infinity Builder from HoloScript.
+ * Build once with HoloScript, compile to 9 platforms via Infinity Builder.
  *
  * Features:
- * - HoloScript generation from natural language
- * - AI agent avatars with WebSocket communication
- * - Voice-to-HoloScript transcription
- * - Knowledge queries for patterns and suggestions
- * - Spatial coordination for multiplayer
- * - In-world economy transactions
+ * - Create components (forms, data display, navigation, feedback, layout)
+ * - Compile to web, mobile (4), desktop (2), VR/AR (2)
+ * - Multi-language build profiles (Core, Plus, VR)
+ * - AI-assisted building and optimization
+ * - Real-time deployment and updates
  *
  * @example
  * ```typescript
- * import { UAA2Client } from '@holoscript/uaa2-client';
+ * import { InfinityBuilderClient } from '@holoscript/infinity-builder-client';
  *
- * const client = new UAA2Client({
- *   apiKey: process.env.UAA2_API_KEY,
- *   baseUrl: 'https://api.uaa2.io'
+ * const client = new InfinityBuilderClient({
+ *   apiKey: process.env.INFINITY_BUILDER_API_KEY,
+ *   baseUrl: 'https://api.infinityassistant.io'
  * });
  *
- * // Generate HoloScript from natural language
- * const result = await client.build("Create a forest with pine trees");
- * console.log(result.holoScript);
- *
- * // Spawn an AI agent
- * const agent = await client.agents.spawn({
- *   agentType: 'assistant',
- *   worldId: 'world_123',
- *   avatarConfig: {
- *     displayName: 'Helper Bot',
- *     appearance: { model: 'humanoid', color: '#667eea' }
- *   },
- *   capabilities: ['chat', 'build-assist']
+ * // Build a component
+ * const component = await client.components.create({
+ *   type: 'form',
+ *   holoScript: `form#login { input#email { } input#password { } }`,
+ *   targets: ['web', 'mobile-react-native', 'vr']
  * });
  *
- * agent.on('message', (msg) => console.log(msg.content));
- * agent.send('Help me build a table');
+ * // Compile to all platforms
+ * const builds = await client.components.compileToAllPlatforms(
+ *   component.id,
+ *   { optimize: true }
+ * );
+ *
+ * // Deploy
+ * await client.deploy({ componentId: component.id, environment: 'production' });
  * ```
  *
  * @packageDocumentation
@@ -45,10 +43,10 @@
 // Main client
 export { UAA2Client } from './UAA2Client';
 
-// Agent session for WebSocket communication
-export { AgentSession } from './AgentSession';
+// Agent InfinityBuilderClient } from './InfinityBuilderClient';
 
-// All types
+// Component builder session
+export { ComponentBuilderSession } from './ComponentBuilder
 export type {
   // Config
   UAA2ClientConfig,
@@ -131,6 +129,8 @@ export type {
 // Version
 export const HOLOSCRIPT_UAA2_CLIENT_VERSION = '1.0.0-alpha.1';
 
+// Default export for coINFINITY_BUILDER_CLIENT_VERSION = '1.0.0';
+
 // Default export for convenience
-import { UAA2Client } from './UAA2Client';
-export default UAA2Client;
+import { InfinityBuilderClient } from './InfinityBuilderClient';
+export default InfinityBuilder
