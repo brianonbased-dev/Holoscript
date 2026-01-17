@@ -88,6 +88,28 @@ export interface AdaptiveQualitySettings {
 }
 
 // ============================================================================
+// Compression & Recommendations
+// ============================================================================
+
+export type CompressionFormat =
+  | 'none'
+  | 'lz4'
+  | 'zstd'
+  | 'bc1'
+  | 'bc7'
+  | 'astc'
+  | 'etc2'
+  | 'pvrtc';
+
+export interface PerformanceRecommendation {
+  category: 'texture' | 'geometry' | 'shader' | 'memory' | 'rendering';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  recommendation: string;
+  expectedImprovement: number; // percentage
+  estimatedCost: string; // complexity of implementation
+}
+
+// ============================================================================
 // Platform Performance Optimizer
 // ============================================================================
 

@@ -1,0 +1,18 @@
+import { defineConfig } from 'tsup';
+export default defineConfig({
+    entry: {
+        index: 'src/index.ts',
+        parser: 'src/HoloScriptCodeParser.ts',
+        runtime: 'src/HoloScriptRuntime.ts',
+        'type-checker': 'src/HoloScriptTypeChecker.ts',
+        debugger: 'src/HoloScriptDebugger.ts',
+    },
+    format: ['cjs', 'esm'],
+    dts: true,
+    clean: true,
+    sourcemap: true,
+    splitting: true,
+    treeshake: true,
+    minify: false, // Keep readable for debugging, enable for production
+    external: [], // No external deps for now
+});

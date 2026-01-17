@@ -11,6 +11,6 @@
     "forceConsistentCasingInFileNames": true
   },
   "references": [
-    { "path": "./packages/uaa2-client" }
+    { "path": "./packages/infinityassistant" }
   ]
 }

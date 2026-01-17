@@ -26,9 +26,9 @@ interface EffectOptions {
   deep?: boolean;
 }
 
-interface WatchOptions<T> extends EffectOptions {
-  handler: (newValue: T, oldValue: T) => void;
-}
+// interface WatchOptions<T> extends EffectOptions {
+//   handler: (newValue: T, oldValue: T) => void;
+// }
 
 // =============================================================================
 // DEPENDENCY TRACKING
@@ -271,14 +271,14 @@ export class ReactiveState<T extends StateDeclaration> implements IReactiveState
     }
 
     // Subscribe to changes
-    return this.subscribe((state, changedKey) => {
+    return this.subscribe((_state, changedKey) => {
       if (changedKey === key) {
         effect();
       }
     });
   }
 
-  watchEffect(effect: EffectFunc, options: EffectOptions = {}): UnsubscribeFunc {
+  watchEffect(effect: EffectFunc, _options: EffectOptions = {}): UnsubscribeFunc {
     let cleanup: (() => void) | void;
 
     const wrappedEffect = () => {
@@ -360,7 +360,7 @@ export function reactive<T extends object>(target: T): T {
   return createReactiveProxy(target);
 }
 
-export function effect(fn: EffectFunc, options?: EffectOptions): UnsubscribeFunc {
+export function effect(fn: EffectFunc, _options?: EffectOptions): UnsubscribeFunc {
   let cleanup: (() => void) | void;
 
   const wrappedEffect = () => {

@@ -17,7 +17,7 @@
  *
  * const client = new InfinityBuilderClient({
  *   apiKey: process.env.INFINITY_BUILDER_API_KEY,
- *   baseUrl: 'https://api.infinityassistant.io'
+ *   baseUrl: 'https://api.infinityassistant.io/api'
  * });
  *
  * // Build a component
@@ -41,15 +41,14 @@
  */
 
 // Main client
-export { UAA2Client } from './UAA2Client';
+export { InfinityBuilderClient } from './UAA2Client';
 
-// Agent InfinityBuilderClient } from './InfinityBuilderClient';
+// Agent session
+export { AgentSession } from './AgentSession';
 
-// Component builder session
-export { ComponentBuilderSession } from './ComponentBuilder
 export type {
   // Config
-  UAA2ClientConfig,
+  InfinityBuilderClientConfig,
 
   // Auth
   OAuthTokenRequest,
@@ -119,7 +118,7 @@ export type {
   UsageResponse,
 
   // Error
-  UAA2Error,
+  InfinityBuilderError,
 
   // Events
   AgentEventType,
@@ -127,10 +126,5 @@ export type {
 } from './types';
 
 // Version
-export const HOLOSCRIPT_UAA2_CLIENT_VERSION = '1.0.0-alpha.1';
-
-// Default export for coINFINITY_BUILDER_CLIENT_VERSION = '1.0.0';
-
-// Default export for convenience
-import { InfinityBuilderClient } from './InfinityBuilderClient';
-export default InfinityBuilder
+export const INFINITYASSISTANT_BUILDER_CLIENT_VERSION = '1.0.0-alpha.1';
+export const INFINITY_BUILDER_CLIENT_VERSION = '1.0.0';

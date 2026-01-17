@@ -36,7 +36,7 @@ All 100% backward compatible with original HoloScript syntax.
 |---------|-------------|
 | [@holoscript/core](./packages/core) | Core parser, runtime, and AST types |
 | [@holoscript/cli](./packages/cli) | Command-line interface for HoloScript |
-| [@holoscript/uaa2-client](./packages/uaa2-client) | API client for uaa2-service (AI building, agents, voice) |
+| [@holoscript/infinity-builder-client](./packages/infinity-builder-client) | Client for Infinity Builder service (AI building, agents, component deployment) |
 
 ## Quick Start
 
@@ -71,8 +71,8 @@ await runtime.mount(document.body);
 - 9 VR traits: `@grabbable`, `@throwable`, `@pointable`, `@hoverable`, `@scalable`, `@rotatable`, `@stackable`, `@snappable`, `@breakable`
 - Reactive state: `@state { ... }`, computed values, lifecycle hooks like `@on_grab`, `@on_collision`
 - TypeScript interop: `@import "./companion.ts"` for advanced logic
-- Training pipeline examples: see `examples/vr-interactions.hsplus` and uaa2-service’s Brittney agent (end-to-end VR event logging + export)
-- Dual-source model: `@holoscript/core` is canonical; uaa2-service maintains an enhanced copy for service-level features
+- Training pipeline examples: see `examples/vr-interactions.hsplus` and Infinity Assistant's Brittney agent (end-to-end VR event logging + export)
+- Dual-source model: `@holoscript/core` is canonical; Infinity Assistant maintains an enhanced copy for service-level features
 
 ### Using Original HoloScript
 
@@ -97,17 +97,17 @@ const nodes = parser.parseVoiceCommand({
 const results = await runtime.executeProgram(nodes);
 ```
 
-### Using @holoscript/uaa2-client
+### Using @holoscript/infinity-builder-client
 
 ```bash
-npm install @holoscript/uaa2-client
+npm install @holoscript/infinity-builder-client
 ```
 
 ```typescript
-import { UAA2Client } from '@holoscript/uaa2-client';
+import { InfinityBuilderClient } from '@holoscript/infinity-builder-client';
 
-const client = new UAA2Client({
-  apiKey: process.env.UAA2_API_KEY
+const client = new InfinityBuilderClient({
+  apiKey: process.env.INFINITY_BUILDER_API_KEY
 });
 
 // Generate HoloScript from natural language
@@ -134,19 +134,19 @@ agent.send('Help me add furniture');
 HoloScript is the open source foundation for VR development:
 
 ```text
-+------------------+     +------------------+     +------------------+
-|    HoloScript    | --> |     Hololand     | --> |   uaa2-service   |
-|   (Open Source)  |     | (Elastic 2.0)    |     |   (Proprietary)  |
-|                  |     |                  |     |                  |
-|  - Language spec |     |  - Full platform |     |  - AI agents     |
-|  - Runtime       |     |  - Networking    |     |  - Voice → VR    |
-|  - API clients   |     |  - Social        |     |  - Knowledge     |
-+------------------+     +------------------+     +------------------+
++------------------+     +------------------+     +------------------------------+
+|    HoloScript    | --> |     Hololand     | --> |  Infinity Assistant Service  |
+|   (Open Source)  |     | (Elastic 2.0)    |     |      (Public API)            |
+|                  |     |                  |     |                              |
+|  - Language spec |     |  - Full platform |     |  - HoloScript building       |
+|  - Runtime       |     |  - Networking    |     |  - Multi-platform deploy     |
+|  - API clients   |     |  - Social        |     |  - AI agents & voice         |
++------------------+     +------------------+     +------------------------------+
 ```
 
 - **HoloScript** (MIT): Language, runtime, and tooling anyone can use
 - **Hololand** (Elastic 2.0): Full metaverse platform built on HoloScript
-- **uaa2-service** (Proprietary): AI infrastructure powering intelligent features
+- **Infinity Assistant** (Public API): Universal app building service with HoloScript + AI
 
 ## HoloScript Syntax
 

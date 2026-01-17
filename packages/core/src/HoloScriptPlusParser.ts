@@ -15,11 +15,9 @@
  */
 
 import { HoloScriptCodeParser } from './HoloScriptCodeParser';
-import { HoloScriptTypeChecker } from './HoloScriptTypeChecker';
 import type {
   ASTNode,
   OrbNode,
-  GenericASTNode,
 } from './types';
 
 // ============================================================================
@@ -116,11 +114,9 @@ export interface EnhancedOrbNode extends OrbNode {
 
 export class HoloScriptPlusParser {
   private baseParser: HoloScriptCodeParser;
-  private typeChecker: HoloScriptTypeChecker;
 
   constructor() {
     this.baseParser = new HoloScriptCodeParser();
-    this.typeChecker = new HoloScriptTypeChecker();
   }
 
   /**
@@ -129,18 +125,10 @@ export class HoloScriptPlusParser {
   parse(code: string): ASTNode[] {
     // First, parse with base parser
     const baseResult = this.baseParser.parse(code);
-    const ast = Array.isArray(baseResult) ? baseResult : [baseResult];
+    const ast = (Array.isArray(baseResult) ? baseResult : [baseResult]) as ASTNode[];
 
     // Then enhance with trait annotations
     return this.enhanceWithTraits(ast, code);
-  }
-
-  /**
-   * Parse single HoloScript+ expression with traits
-   */
-  parseExpression(code: string): ASTNode {
-    const base = this.baseParser.parseExpression(code);
-    return this.enhanceOrbNodeWithTraits(base, code);
   }
 
   /**
@@ -182,7 +170,7 @@ export class HoloScriptPlusParser {
   /**
    * Extract trait annotations from code
    */
-  extractTraitAnnotations(code: string, orbLine?: number): AnyTraitAnnotation[] {
+  extractTraitAnnotations(code: string, _orbLine?: number): AnyTraitAnnotation[] {
     const traits: AnyTraitAnnotation[] = [];
     const traitRegex = /@(material|lighting|rendering)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g;
 

@@ -278,3 +278,92 @@ export interface RuntimeSecurityLimits {
   maxExecutionTimeMs: number;
   maxParticlesPerSystem: number;
 }
+// ============================================================================
+// VR Types
+// ============================================================================
+
+export interface Vector3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface Vector2 {
+  x: number;
+  y: number;
+}
+
+export interface Color {
+  r: number;
+  g: number;
+  b: number;
+  a?: number;
+}
+
+export interface Duration {
+  milliseconds: number;
+}
+
+export interface Transform {
+  position: Vector3;
+  rotation: Vector3;
+  scale: Vector3;
+}
+
+export type VRHand = 'left' | 'right' | 'both';
+
+export interface ThrowVelocity {
+  magnitude: number;
+  direction: Vector3;
+  spin?: Vector3;
+}
+
+export interface CollisionEvent {
+  object1: string;
+  object2: string;
+  position: Vector3;
+  normal: Vector3;
+  force: number;
+  timestamp: number;
+}
+
+// ============================================================================
+// VR Traits
+// ============================================================================
+
+export interface GrabbableTrait {
+  snapToHand: boolean;
+  grip_type: 'palm' | 'pinch' | 'full';
+  haptic_feedback: boolean;
+}
+
+export interface ThrowableTrait {
+  velocityMultiplier: number;
+  enableSpin: boolean;
+  gravityScale: number;
+}
+
+export interface PointableTrait {
+  maxPointDistance: number;
+  interactionRadius: number;
+  hapticFeedback: boolean;
+}
+
+export interface HoverableTrait {
+  hoverDistance: number;
+  hoverColor: Color;
+  hoverScale: number;
+  enableHighlight: boolean;
+}
+
+export interface ScalableTrait {
+  minScale: number;
+  maxScale: number;
+  scaleSpeed: number;
+}
+
+export interface RotatableTrait {
+  rotationSpeed: number;
+  freeRotation: boolean;
+  snapAngles?: number[];
+}

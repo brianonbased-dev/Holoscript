@@ -1,5 +1,5 @@
 /**
- * @holoscript/uaa2-client
+ * @holoscript/infinity-builder-client
  * Agent session for real-time WebSocket communication
  */
 
@@ -9,7 +9,7 @@ import type {
   AgentUserMessage,
   AgentMessageContext,
   AgentResponse,
-  UAA2Error,
+  InfinityBuilderError,
 } from './types';
 
 export class AgentSession extends EventEmitter<AgentEventMap> {
@@ -52,7 +52,7 @@ export class AgentSession extends EventEmitter<AgentEventMap> {
         };
 
         this.ws.onerror = () => {
-          const error: UAA2Error = {
+          const error: InfinityBuilderError = {
             code: 500,
             message: 'WebSocket connection error',
           };

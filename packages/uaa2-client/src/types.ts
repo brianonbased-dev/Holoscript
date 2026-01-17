@@ -1,17 +1,23 @@
 /**
- * @holoscript/uaa2-client
- * TypeScript types for uaa2-service API
+ * @holoscript/infinity-builder-client
+ * TypeScript types for Infinity Builder service API
  */
 
 // ============================================================================
 // Client Configuration
 // ============================================================================
 
-export interface UAA2ClientConfig {
+export interface InfinityBuilderClientConfig {
   apiKey: string;
   baseUrl?: string;
   timeout?: number;
   retries?: number;
+  // Hololand integration
+  hololandAuth?: {
+    userId: string;
+    sessionToken: string;
+    hololandApiUrl?: string; // Defaults to Hololand backend
+  };
 }
 
 // ============================================================================
@@ -31,6 +37,7 @@ export interface OAuthTokenResponse {
   expires_in: number;
   scope: string;
 }
+
 
 // ============================================================================
 // HoloScript Builder API
@@ -343,7 +350,7 @@ export interface UsageResponse {
 // Error Types
 // ============================================================================
 
-export interface UAA2Error {
+export interface InfinityBuilderError {
   code: number;
   message: string;
   details?: Record<string, unknown>;
@@ -359,5 +366,5 @@ export interface AgentEventMap {
   message: AgentResponse;
   action: AgentAction;
   disconnect: { reason: string };
-  error: UAA2Error;
+  error: InfinityBuilderError;
 }

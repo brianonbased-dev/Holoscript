@@ -236,6 +236,11 @@ export class HoloScript2DParser {
       'grid-container': { columns: 3, gap: 10, padding: 10 },
       'scroll-view': { width: 300, height: 400, scrollDirection: 'vertical' },
       'tab-view': { tabs: [], activeTabId: null, tabPosition: 'top', width: 400, height: 300 },
+      'dashboard': { title: 'Dashboard', width: 1200, height: 800, layout: 'grid', columns: 4 },
+      'card': { title: '', width: 300, height: 200, backgroundColor: '#ffffff', elevation: 2 },
+      'metric': { label: '', value: 0, unit: '', fontSize: 24, color: '#000000' },
+      'row': { height: 'auto', gap: 10, alignItems: 'center' },
+      'col': { width: 'auto', gap: 10, alignItems: 'stretch' },
     };
     return { ...defaults[elementType] };
   }

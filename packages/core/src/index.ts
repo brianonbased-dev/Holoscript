@@ -34,7 +34,6 @@
 // Import for use in utility functions
 import { HoloScriptParser } from './HoloScriptParser';
 import { HoloScriptRuntime } from './HoloScriptRuntime';
-import { HoloScriptPlusParser } from './parser/HoloScriptPlusParser';
 
 // Parser
 export { HoloScriptParser } from './HoloScriptParser';
@@ -50,20 +49,20 @@ export {
   type MaterialTraitAnnotation,
   type LightingTraitAnnotation,
   type RenderingTraitAnnotation,
-  type TraitAnnotationConfig,
+  type GraphicsConfiguration,
 } from './HoloScriptPlusParser';
 
 // Runtime
 export { HoloScriptRuntime } from './HoloScriptRuntime';
 
 // HoloScript+ Runtime (NEW)
-export { HoloScriptPlusRuntime } from './runtime/HoloScriptPlusRuntime';
+export { HoloScriptPlusRuntimeImpl } from './runtime/HoloScriptPlusRuntime';
 
 // HoloScript+ State Management (NEW)
-export { ReactiveState, createReactiveState, bindStateToDOM } from './state/ReactiveState';
+export { ReactiveState, createState, reactive, effect, computed, bind } from './state/ReactiveState';
 
 // HoloScript+ VR Traits (NEW)
-export { VRTraitRegistry, registerTraits } from './traits/VRTraitSystem';
+export { VRTraitRegistry } from './traits/VRTraitSystem';
 
 // HoloScript+ Voice Input Trait (NEW - Phase 1)
 export {
@@ -71,7 +70,6 @@ export {
   createVoiceInputTrait,
   type VoiceInputConfig,
   type VoiceInputMode,
-  type VoiceCommand,
   type VoiceRecognitionResult,
   type VoiceInputEvent,
 } from './traits/VoiceInputTrait';
@@ -109,8 +107,6 @@ export {
   LIGHTING_PRESETS,
   type LightType,
   type ShadowType,
-  type Color,
-  type Vector3,
   type ShadowConfig,
   type LightSource,
   type GlobalIlluminationConfig,
@@ -151,13 +147,8 @@ export {
   type TextureAsset,
   type ShaderProgram,
   type PlatformConfig,
-  type GraphicsConfiguration,
-  type MaterialConfig as HololandMaterialConfig,
-  type LightingConfig as HololandLightingConfig,
-  type RenderingConfig as HololandRenderingConfig,
   type GPUMemoryEstimate,
   type PerformanceMetrics,
-  type QualityPreset,
 } from './services/HololandGraphicsPipelineService';
 
 // Platform Performance Optimizer (NEW - Phase 5)
@@ -167,9 +158,9 @@ export {
   type PerformanceProfile,
   type AdaptiveQualitySettings,
   type BenchmarkResult,
-  type PerformanceRecommendation,
-  type CompressionFormat,
   type DeviceCapabilities,
+  type CompressionFormat,
+  type PerformanceRecommendation,
 } from './services/PlatformPerformanceOptimizer';
 
 // Type Checker
@@ -228,8 +219,10 @@ export type {
   ConnectionNode,
   GateNode,
   StreamNode,
+  TransformationNode,
+  GenericASTNode,
 
-  // HoloScript+ Types (NEW)
+  // VR Types
   Vector3,
   Vector2,
   Color,
@@ -238,32 +231,14 @@ export type {
   VRHand,
   ThrowVelocity,
   CollisionEvent,
+
+  // VR Traits
   GrabbableTrait,
   ThrowableTrait,
   PointableTrait,
   HoverableTrait,
   ScalableTrait,
   RotatableTrait,
-  StackableTrait,
-  SnappableTrait,
-  BreakableTrait,
-  StateDeclaration,
-  ReactiveState as ReactiveStateType,
-  LifecycleHook,
-  VRLifecycleHook,
-  ControllerHook,
-  HSPlusDirective,
-  VRTraitName,
-  HSPlusNode,
-  HSPlusAST,
-  HSPlusRuntimeContext,
-  HSPlusBuiltins,
-  HSPlusParserOptions,
-  HSPlusCompileResult,
-  HoloScriptPlusModule,
-  HSPlusRuntime,
-  TransformationNode,
-  GenericASTNode,
 
   // Phase 2: Loop Nodes
   ForLoopNode,

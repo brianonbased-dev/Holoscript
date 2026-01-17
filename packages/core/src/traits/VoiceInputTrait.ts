@@ -99,8 +99,6 @@ export class VoiceInputTrait {
 
   constructor(config: VoiceInputConfig) {
     this.config = {
-      mode: 'continuous',
-      confidenceThreshold: 0.7,
       showTranscript: false,
       audioFeedback: true,
       timeout: 10000,
@@ -176,7 +174,7 @@ export class VoiceInputTrait {
       }
     };
 
-    this.recognition.onerror = (event: any) => {
+    this.recognition.onerror = (_event: any) => {
       this.emitEvent({
         type: 'error',
         result: {

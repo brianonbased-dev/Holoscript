@@ -96,10 +96,8 @@ export class HoloScriptRuntime {
   private animations: Map<string, Animation> = new Map();
   private uiElements: Map<string, UIElementState> = new Map();
   private builtinFunctions: Map<string, (args: unknown[]) => unknown>;
-  private importLoader?: ImportLoader;
 
-  constructor(importLoader?: ImportLoader) {
-    this.importLoader = importLoader;
+  constructor(_importLoader?: ImportLoader) {
     this.context = this.createEmptyContext();
     this.currentScope = { variables: this.context.variables };
     this.builtinFunctions = this.initBuiltins();
@@ -1633,6 +1631,7 @@ export class HoloScriptRuntime {
     return {
       variables: new Map(),
       functions: new Map(),
+      exports: new Map(),
       connections: [],
       spatialMemory: new Map(),
       hologramState: new Map(),

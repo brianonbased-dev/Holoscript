@@ -2,7 +2,7 @@
  * @holoscript/core AI-Driven NPC Trait
  *
  * Enables intelligent NPC behaviors using behavior trees and goal planning
- * Integrates with uaa2-service for agent-based decision making
+ * Integrates with Infinity Assistant service for agent-based decision making
  */
 
 export type BehaviorState = 'idle' | 'moving' | 'acting' | 'talking' | 'reacting';
@@ -93,7 +93,7 @@ export interface AIDriverConfig {
   enableLearning?: boolean;
   learningRate?: number;
   
-  /** uaa2-service integration */
+  /** Infinity Assistant integration */
   agentId?: string;
 }
 
@@ -102,7 +102,6 @@ export interface AIDriverConfig {
  */
 export class BehaviorTreeRunner {
   private rootNode: BehaviorNode;
-  private nodeStates: Map<string, 'running' | 'success' | 'failure'> = new Map();
 
   constructor(rootNode: BehaviorNode) {
     this.rootNode = rootNode;
@@ -172,7 +171,7 @@ export class GOAPPlanner {
   /**
    * Plan a sequence of actions to reach goal
    */
-  planGoal(currentState: Map<string, unknown>, goal: NPCGoal): NPCGoal[] {
+  planGoal(currentState: Map<string, unknown>, _goal: NPCGoal): NPCGoal[] {
     // Simple greedy planner: select highest-priority achievable goal
     for (const g of this.goals) {
       if (this.canAchieve(currentState, g)) {

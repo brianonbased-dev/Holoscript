@@ -1,5 +1,5 @@
 {
-  "name": "@holoscript/infinity-builder-client",
+  "name": "@holoscript/infinityassistant",
   "version": "1.0.0",
   "description": "Client for building universal apps with Infinity Builder from HoloScript",
   "main": "./dist/index.js",

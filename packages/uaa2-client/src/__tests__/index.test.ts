@@ -1,12 +1,12 @@
 /**
- * @holoscript/uaa2-client Basic Tests
+ * @holoscript/infinityassistant Basic Tests
  *
  * Placeholder test file for UAA2 client integration
  */
 
 import { describe, it, expect } from 'vitest';
 
-describe('@holoscript/uaa2-client', () => {
+describe('@holoscript/infinityassistant', () => {
   it('should be importable', () => {
     expect(true).toBe(true);
   });

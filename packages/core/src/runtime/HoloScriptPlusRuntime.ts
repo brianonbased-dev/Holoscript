@@ -16,17 +16,12 @@ import type {
   HSPlusNode,
   HSPlusDirective,
   HSPlusRuntime,
-  HSPlusRuntimeContext,
   HSPlusBuiltins,
   StateDeclaration,
-  VRTraitName,
   VRHand,
   Vector3,
-  LifecycleHook,
-  VRLifecycleHook,
-  ControllerHook,
   Color,
-} from '../types/HoloScriptPlus';
+} from '../types/AdvancedTypeSystem';
 import { ReactiveState, createState, ExpressionEvaluator } from '../state/ReactiveState';
 import { VRTraitRegistry, vrTraitRegistry, TraitContext, TraitEvent } from '../traits/VRTraitSystem';
 
@@ -206,7 +201,6 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
   private builtins: HSPlusBuiltins;
   private traitRegistry: VRTraitRegistry;
   private rootInstance: NodeInstance | null = null;
-  private container: unknown = null;
   private eventHandlers: Map<string, Set<(payload: unknown) => void>> = new Map();
   private templates: Map<string, HSPlusNode> = new Map();
   private updateLoopId: number | null = null;
@@ -241,7 +235,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
     // Create expression evaluator with context
     this.evaluator = new ExpressionEvaluator(
       this.state.getSnapshot(),
-      this.builtins as Record<string, unknown>
+      this.builtins as unknown as Record<string, unknown>
     );
 
     // Initialize state from AST
@@ -256,7 +250,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
   // ==========================================================================
 
   private initializeState(): void {
-    const stateDirective = this.ast.root.directives.find((d) => d.type === 'state');
+    const stateDirective = this.ast.root.directives.find((d: HSPlusDirective) => d.type === 'state');
     if (stateDirective && stateDirective.type === 'state') {
       this.state.update(stateDirective.body);
     }
@@ -283,7 +277,6 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
       return;
     }
 
-    this.container = container;
     this.mounted = true;
 
     // Build node tree
@@ -314,7 +307,6 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
     }
 
     this.rootInstance = null;
-    this.container = null;
     this.mounted = false;
   }
 
@@ -376,7 +368,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
       // Build parameter context
       const paramContext: Record<string, unknown> = {};
       if (params) {
-        params.forEach((param, i) => {
+        params.forEach((param: string, i: number) => {
           paramContext[param] = args[i];
         });
       }
@@ -474,7 +466,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
       id: node.id ? this.interpolateString(node.id, context) : undefined,
       properties: this.interpolateProperties(node.properties, context),
       directives: [...node.directives],
-      children: node.children.map((child) => this.cloneNodeWithContext(child, context)),
+      children: node.children.map((child: HSPlusNode) => this.cloneNodeWithContext(child, context)),
       traits: new Map(node.traits),
       loc: node.loc,
     };
@@ -483,7 +475,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
   }
 
   private interpolateString(str: string, context: Record<string, unknown>): string {
-    return str.replace(/\$\{([^}]+)\}/g, (match, expr) => {
+    return str.replace(/\$\{([^}]+)\}/g, (_match, expr) => {
       this.evaluator.updateContext(context);
       const value = this.evaluator.evaluate(expr);
       return String(value ?? '');
@@ -524,7 +516,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
 
     for (const [key, value] of Object.entries(properties)) {
       if (value && typeof value === 'object' && '__expr' in value) {
-        result[key] = this.evaluateExpression((value as { __raw: string }).__raw);
+        result[key] = this.evaluateExpression((value as unknown as { __raw: string }).__raw);
       } else if (value && typeof value === 'object' && '__ref' in value) {
         // Reference to state or companion
         const ref = (value as { __ref: string }).__ref;
@@ -624,7 +616,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
   // TRAIT CONTEXT
   // ==========================================================================
 
-  private createTraitContext(instance: NodeInstance): TraitContext {
+  private createTraitContext(_instance: NodeInstance): TraitContext {
     return {
       vr: {
         hands: this.vrContext.hands,
@@ -649,7 +641,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
         setKinematic: (node, kinematic) => {
           this.emit('set_kinematic', { node, kinematic });
         },
-        raycast: (origin, direction, maxDistance) => {
+        raycast: (_origin, _direction, _maxDistance) => {
           // Would need physics engine integration
           return null;
         },

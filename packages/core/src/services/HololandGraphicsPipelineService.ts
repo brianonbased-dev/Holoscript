@@ -12,12 +12,8 @@
  * - Cross-platform optimization (mobile/VR/desktop)
  */
 
-import type {
-  MaterialTrait,
-  LightingTrait,
-  RenderingTrait,
-  GraphicsConfiguration,
-} from '@holoscript/core';
+import type { GraphicsConfiguration } from '../HoloScriptPlusParser';
+import type { MaterialTrait } from '../traits/MaterialTrait';
 
 // ============================================================================
 // GPU Memory Estimation
@@ -115,7 +111,7 @@ export class HololandGraphicsPipelineService {
   private platformConfig: PlatformConfig;
   private metrics: PerformanceMetrics;
 
-  private memoryBudget: number = 512; // MB default
+  // private _memoryBudget: number = 512; // MB default - unused
   private memoryUsed: number = 0;
 
   constructor(platform: Platform = 'desktop') {
@@ -243,7 +239,7 @@ export class HololandGraphicsPipelineService {
   /**
    * Generate PBR shader program
    */
-  private generatePBRShader(config: any): ShaderProgram {
+  private generatePBRShader(_config: any): ShaderProgram {
     const vertexShader = `
       #version 300 es
       precision highp float;
@@ -461,10 +457,10 @@ export class HololandGraphicsPipelineService {
   /**
    * Setup shadow mapping
    */
-  private setupShadowMapping(config: any): void {
+  private setupShadowMapping(_config: any): void {
     // Configure shadow map resolution and filtering
-    const shadowQuality = this.platformConfig.shadowQuality;
-    const shadowResolution = this.shadowResolutionForQuality(shadowQuality);
+    // const shadowQuality = this.platformConfig.shadowQuality;
+    // const _shadowResolution = this.shadowResolutionForQuality(shadowQuality);
 
     // Create shadow map textures
     // This would allocate GPU memory for shadow maps
@@ -473,27 +469,27 @@ export class HololandGraphicsPipelineService {
   /**
    * Get shadow map resolution for quality level
    */
-  private shadowResolutionForQuality(quality: string): number {
-    switch (quality) {
-      case 'none':
-        return 0;
-      case 'low':
-        return 512;
-      case 'medium':
-        return 1024;
-      case 'high':
-        return 2048;
-      default:
-        return 1024;
-    }
-  }
+  // private shadowResolutionForQuality(quality: string): number {
+  //   switch (quality) {
+  //     case 'none':
+  //       return 0;
+  //     case 'low':
+  //       return 512;
+  //     case 'medium':
+  //       return 1024;
+  //     case 'high':
+  //       return 2048;
+  //     default:
+  //       return 1024;
+  //   }
+  // }
 
   /**
    * Setup global illumination
    */
-  private setupGlobalIllumination(config: any): void {
+  private setupGlobalIllumination(__config: any): void {
     // Create light probes for indirect lighting
-    const probeCount = config.probes || 16;
+    // const _probeCount = __config.probes || 16;
 
     // Allocate GPU memory for probes
     // Each probe stores 6 faces of cubemap
@@ -651,7 +647,7 @@ export class HololandGraphicsPipelineService {
    * Set memory budget
    */
   setMemoryBudget(budget: number): void {
-    this.memoryBudget = budget;
+    // this._memoryBudget = budget; // field removed
     this.platformConfig.maxGPUMemory = budget;
   }
 

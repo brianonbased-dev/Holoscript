@@ -95,7 +95,6 @@ export class HoloScriptTypeChecker {
   private diagnostics: TypeDiagnostic[] = [];
   private currentLine: number = 0;
   private currentColumn: number = 0;
-  private inferenceCache: WeakMap<object, TypeInfo> = new WeakMap();
 
   constructor() {
     // Initialize with built-in functions

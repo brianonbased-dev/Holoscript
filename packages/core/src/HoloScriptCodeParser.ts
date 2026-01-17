@@ -1180,36 +1180,6 @@ export class HoloScriptCodeParser {
       } as ASTNode;
   }
 
-  /**
-   * Parse property: key: value
-   */
-  private parseProperty(): { key: string, value: any } | null {
-      const keyToken = this.currentToken();
-      if (!keyToken || (keyToken.type !== 'identifier' && keyToken.type !== 'string')) {
-          this.advance();
-          return null;
-      }
-      
-      const key = keyToken.value;
-      this.advance();
-      
-      if (this.check('punctuation', ':')) {
-          this.advance();
-          const valueToken = this.currentToken();
-          let value: any = valueToken?.value;
-          
-          if (valueToken?.type === 'number') value = parseFloat(valueToken.value);
-          else if (valueToken?.type === 'string') value = valueToken.value;
-          else if (valueToken?.value === 'true') value = true;
-          else if (valueToken?.value === 'false') value = false;
-          
-          this.advance();
-          return { key, value };
-      }
-      
-      return null;
-  }
-
   private skipNewlines(): void {
     while (this.currentToken()?.type === 'newline') {
       this.advance();

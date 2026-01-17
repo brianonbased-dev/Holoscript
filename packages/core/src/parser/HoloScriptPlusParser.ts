@@ -21,7 +21,7 @@ import type {
   LifecycleHook,
   VRLifecycleHook,
   ControllerHook,
-} from '../types/HoloScriptPlus';
+} from '../types/AdvancedTypeSystem';
 
 // =============================================================================
 // TOKEN TYPES
@@ -442,7 +442,6 @@ class Lexer {
     }
 
     // Unit suffix
-    const unitStart = this.pos;
     while (this.isAlpha(this.peek()) || this.peek() === '%') {
       value += this.advance();
     }
@@ -602,7 +601,7 @@ export class HoloScriptPlusParser {
         vrTraits: this.hasVRTraits,
         loops: this.hasControlFlow,
         conditionals: this.hasControlFlow,
-        lifecycleHooks: root.directives.some((d) => d.type === 'lifecycle'),
+        lifecycleHooks: root.directives.some((d: HSPlusDirective) => d.type === 'lifecycle'),
       },
       warnings: this.warnings,
       errors: this.errors,

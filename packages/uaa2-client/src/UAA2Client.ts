@@ -1,11 +1,11 @@
 /**
- * @holoscript/uaa2-client
- * Main client for consuming uaa2-service APIs
+ * @holoscript/infinity-builder-client
+ * Main client for consuming Infinity Builder service APIs
  */
 
 import { AgentSession } from './AgentSession';
 import type {
-  UAA2ClientConfig,
+  InfinityBuilderClientConfig,
   BuildRequest,
   BuildResponse,
   BuildOptions,
@@ -30,32 +30,39 @@ import type {
   TransactionResponse,
   HealthResponse,
   UsageResponse,
-  UAA2Error,
+  InfinityBuilderError,
 } from './types';
 
-const DEFAULT_BASE_URL = 'https://api.uaa2.io';
+const DEFAULT_BASE_URL = 'https://api.infinityassistant.io/api';
 const DEFAULT_TIMEOUT = 30000;
 const DEFAULT_RETRIES = 3;
 
-export class UAA2Client {
-  private readonly config: Required<UAA2ClientConfig>;
+export class InfinityBuilderClient {
+  private readonly config: Required<InfinityBuilderClientConfig & { hololandAuth?: any }>;
   private activeSessions: Map<string, AgentSession> = new Map();
+  private hololandApiUrl: string = 'http://localhost:3001/api/v1'; // Default local
 
-  constructor(config: UAA2ClientConfig) {
+  constructor(config: InfinityBuilderClientConfig) {
     this.config = {
       apiKey: config.apiKey,
       baseUrl: config.baseUrl || DEFAULT_BASE_URL,
       timeout: config.timeout || DEFAULT_TIMEOUT,
       retries: config.retries || DEFAULT_RETRIES,
+      hololandAuth: config.hololandAuth,
     };
+    
+    if (config.hololandAuth?.hololandApiUrl) {
+      this.hololandApiUrl = config.hololandAuth.hololandApiUrl;
+    }
   }
 
   // ==========================================================================
-  // HoloScript Builder API
+  // HoloScript Builder API (with Hololand Integration)
   // ==========================================================================
 
   /**
    * Build HoloScript from natural language prompt
+   * If user has Hololand auth, routes through Hololand backend for subscription tracking
    */
   async build(prompt: string, options?: BuildOptions): Promise<BuildResponse> {
     const request: BuildRequest = { prompt, options };
@@ -79,6 +86,133 @@ export class UAA2Client {
   async explain(holoScript: string): Promise<ExplainResponse> {
     const request: ExplainRequest = { holoScript };
     return this.post<ExplainResponse>('/api/v1/hololand/explain', request);
+  }
+
+  /**
+   * Build a component with Hololand subscription tracking (requires Hololand auth)
+   * Routes through Hololand backend to track usage and enforce limits
+   */
+  async buildComponentWithHololand(
+    componentName: string,
+    holoScript: string,
+    targets: Array<
+      | 'web'
+      | 'web-vr'
+      | 'web-ar'
+      | 'mobile-react-native'
+      | 'mobile-flutter'
+      | 'mobile-compose'
+      | 'mobile-swiftui'
+      | 'desktop-electron'
+      | 'desktop-tauri'
+    >,
+    optimize?: boolean
+  ): Promise<BuildResponse> {
+    if (!this.config.hololandAuth) {
+      throw new Error('Hololand authentication required for this method');
+    }
+
+    try {
+      const response = await fetch(
+        `${this.hololandApiUrl}/infinity-assistant/build-component`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.config.hololandAuth.sessionToken}`,
+          },
+          body: JSON.stringify({
+            componentName,
+            holoScript,
+            targets,
+            optimize: optimize ?? true,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({
+          error: 'Unknown error',
+        }));
+        throw new Error(error.error || 'Build failed');
+      }
+
+      const data = await response.json();
+      return data.build;
+    } catch (error: any) {
+      throw new Error(`Failed to build component via Hololand: ${error.message}`);
+    }
+  }
+
+  /**
+   * Deploy a component with Hololand subscription tracking
+   */
+  async deployComponentWithHololand(
+    componentId: string,
+    environment: 'development' | 'staging' | 'production' = 'staging'
+  ): Promise<any> {
+    if (!this.config.hololandAuth) {
+      throw new Error('Hololand authentication required for this method');
+    }
+
+    try {
+      const response = await fetch(
+        `${this.hololandApiUrl}/infinity-assistant/deploy-component`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.config.hololandAuth.sessionToken}`,
+          },
+          body: JSON.stringify({
+            componentId,
+            environment,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({
+          error: 'Unknown error',
+        }));
+        throw new Error(error.error || 'Deployment failed');
+      }
+
+      const data = await response.json();
+      return data.deployment;
+    } catch (error: any) {
+      throw new Error(`Failed to deploy component via Hololand: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get subscription status (Hololand integration)
+   */
+  async getHololandSubscriptionStatus(): Promise<any> {
+    if (!this.config.hololandAuth) {
+      throw new Error('Hololand authentication required for this method');
+    }
+
+    try {
+      const response = await fetch(
+        `${this.hololandApiUrl}/infinity-assistant/subscription`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${this.config.hololandAuth.sessionToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch subscription status');
+      }
+
+      const data = await response.json();
+      return data.subscription;
+    } catch (error: any) {
+      throw new Error(`Failed to get subscription status: ${error.message}`);
+    }
   }
 
   // ==========================================================================
@@ -305,7 +439,7 @@ export class UAA2Client {
     });
 
     if (!response.ok) {
-      const error: UAA2Error = await response.json().catch(() => ({
+      const error: InfinityBuilderError = await response.json().catch(() => ({
         code: response.status,
         message: response.statusText,
       }));
@@ -322,7 +456,7 @@ export class UAA2Client {
   ): Promise<T> {
     const url = `${this.config.baseUrl}${path}`;
 
-    let lastError: UAA2Error | null = null;
+    let lastError: InfinityBuilderError | null = null;
 
     for (let attempt = 0; attempt <= this.config.retries; attempt++) {
       try {
@@ -345,7 +479,7 @@ export class UAA2Client {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          const error: UAA2Error = await response.json().catch(() => ({
+          const error: InfinityBuilderError = await response.json().catch(() => ({
             code: response.status,
             message: response.statusText,
           }));
@@ -369,8 +503,8 @@ export class UAA2Client {
       } catch (err) {
         if ((err as Error).name === 'AbortError') {
           lastError = { code: 408, message: 'Request timeout' };
-        } else if ((err as UAA2Error).code) {
-          throw err; // Re-throw UAA2Error
+        } else if ((err as InfinityBuilderError).code) {
+          throw err; // Re-throw InfinityBuilderError
         } else {
           lastError = { code: 500, message: (err as Error).message };
         }

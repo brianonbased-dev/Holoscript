@@ -1,23 +1,23 @@
-# @holoscript/uaa2-client
+# @holoscript/infinity-builder-client
 
-Thin client for consuming uaa2-service APIs from HoloScript projects.
+Thin client for consuming Infinity Builder APIs from HoloScript projects.
 
 ## Installation
 
 ```bash
-npm install @holoscript/uaa2-client
+npm install @holoscript/infinity-builder-client
 # or
-pnpm add @holoscript/uaa2-client
+pnpm add @holoscript/infinity-builder-client
 ```
 
 ## Quick Start
 
 ```typescript
-import { UAA2Client } from '@holoscript/uaa2-client';
+import { InfinityBuilderClient } from '@holoscript/infinity-builder-client';
 
-const client = new UAA2Client({
-  apiKey: process.env.UAA2_API_KEY,
-  baseUrl: 'https://api.uaa2.io'
+const client = new InfinityBuilderClient({
+  apiKey: process.env.INFINITY_BUILDER_API_KEY,
+  baseUrl: 'https://api.infinityassistant.io'
 });
 
 // Generate HoloScript from natural language
@@ -174,9 +174,9 @@ console.log(`API calls: ${usage.usage.apiCalls}/${usage.limits.apiCalls}`);
 ## Configuration
 
 ```typescript
-const client = new UAA2Client({
+const client = new InfinityBuilderClient({
   apiKey: 'your-api-key',     // Required
-  baseUrl: 'https://api.uaa2.io', // Optional, default shown
+  baseUrl: 'https://api.infinityassistant.io/api', // Optional, default shown
   timeout: 30000,             // Optional, request timeout in ms
   retries: 3                  // Optional, retry count for failed requests
 });
@@ -185,13 +185,13 @@ const client = new UAA2Client({
 ## Error Handling
 
 ```typescript
-import { UAA2Error } from '@holoscript/uaa2-client';
+import { InfinityBuilderError } from '@holoscript/infinity-builder-client';
 
 try {
   await client.build("...");
 } catch (error) {
-  const uaaError = error as UAA2Error;
-  console.error(`Error ${uaaError.code}: ${uaaError.message}`);
+  const builderError = error as InfinityBuilderError;
+  console.error(`Error ${builderError.code}: ${builderError.message}`);
 }
 ```
 
@@ -214,7 +214,7 @@ import type {
   SpawnAgentRequest,
   Pattern,
   UAA2Error
-} from '@holoscript/uaa2-client';
+} from '@holoscript/infinityassistant';
 ```
 
 ## License

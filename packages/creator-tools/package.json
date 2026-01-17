@@ -31,7 +31,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm run build:lib",
     "build:lib": "tsup src/index.ts src/components/TraitEditor.tsx src/components/PreviewDashboard.tsx src/Phase6CompleteDemo.tsx --format esm,cjs --dts",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
