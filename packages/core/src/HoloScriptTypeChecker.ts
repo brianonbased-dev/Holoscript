@@ -18,6 +18,7 @@ import type {
   ForEachLoopNode,
   ImportNode,
   ExportNode,
+  HoloScriptValue,
 } from './types';
 
 // Type system types
@@ -50,7 +51,7 @@ export interface ParameterType {
   name: string;
   type: HoloScriptType;
   optional?: boolean;
-  defaultValue?: unknown;
+  defaultValue?: HoloScriptValue;
 }
 
 export interface TypeDiagnostic {
@@ -346,7 +347,7 @@ export class HoloScriptTypeChecker {
   /**
    * Infer type from a value
    */
-  public inferType(value: unknown): TypeInfo {
+  public inferType(value: HoloScriptValue): TypeInfo {
     if (value === null || value === undefined) {
       return { type: 'any', nullable: true };
     }

@@ -32,8 +32,8 @@ import type {
   ScaleNode,
   FocusNode,
   EnvironmentNode,
-  CompositionNode,
   TemplateNode,
+  HoloScriptValue,
 } from './types';
 
 // Security configuration
@@ -622,7 +622,7 @@ export class HoloScriptCodeParser {
       dataType = this.expectIdentifier() || undefined;
     }
 
-    let value: unknown;
+    let value: HoloScriptValue;
     if (this.check('punctuation', '=')) {
       this.advance();
       const valueToken = this.currentToken();
@@ -638,9 +638,9 @@ export class HoloScriptCodeParser {
         else value = valueToken.value;
         this.advance();
       } else if (this.check('punctuation', '[')) {
-        value = this.parseArray();
+        value = this.parseArray() as HoloScriptValue;
       } else if (this.check('punctuation', '{')) {
-        value = this.parseObject();
+        value = this.parseObject() as HoloScriptValue;
       }
     }
 
