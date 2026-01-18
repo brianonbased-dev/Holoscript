@@ -7,7 +7,7 @@ A declarative language that compiles to 9 platforms from one source.
 > 💬 **Talk or type to build.** Powered by [Infinity Assistant](https://infinityassistant.io).
 >
 > - 🥽 **VR:** "Create a coffee shop with a counter and menu board"
-> - 🌍 **VRR:** "Scan my storefront and make it a virtual showroom"
+> - 🌍 **VRR:** "Scan my storefront and make it a virtual showroom" *(coming soon)*
 > - 📱 **AR:** "Place a 3D model of this chair in my living room"
 
 ```holoscript
