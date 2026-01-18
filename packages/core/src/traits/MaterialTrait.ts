@@ -120,7 +120,7 @@ export class MaterialTrait {
 
   constructor(config: MaterialConfig) {
     this.material = {
-      type: 'pbr',
+      ...{ type: 'pbr' as const },
       ...config,
     };
   }

@@ -21,7 +21,7 @@ import type {
   VRHand,
   Vector3,
   Color,
-} from '../types/AdvancedTypeSystem';
+} from '../types/HoloScriptPlus';
 import { ReactiveState, createState, ExpressionEvaluator } from '../state/ReactiveState';
 import { VRTraitRegistry, vrTraitRegistry, TraitContext, TraitEvent } from '../traits/VRTraitSystem';
 

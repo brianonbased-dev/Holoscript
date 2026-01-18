@@ -206,8 +206,8 @@ export class AIDriverTrait {
   private learningModel: Map<string, number> = new Map();
 
   constructor(config: AIDriverConfig) {
-    this.config = {
-      decisionMode: 'hybrid',
+    const defaults = {
+      decisionMode: 'hybrid' as const,
       personality: {
         sociability: 0.5,
         aggression: 0.3,
@@ -221,8 +221,8 @@ export class AIDriverTrait {
       },
       enableLearning: true,
       learningRate: 0.1,
-      ...config,
     };
+    this.config = { ...defaults, ...config };
 
     this.context = {
       npcId: config.npcId,

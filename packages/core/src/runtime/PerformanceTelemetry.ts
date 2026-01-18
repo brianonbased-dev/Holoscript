@@ -215,10 +215,10 @@ export class PerformanceTelemetry {
   /**
    * Record custom metric
    */
-  public recordMetric(metric: Omit<Metric, 'timestamp'>): void {
+  public recordMetric(metric: Omit<Metric, 'timestamp'> & { timestamp?: number }): void {
     this.metrics.push({
       ...metric,
-      timestamp: Date.now(),
+      timestamp: metric.timestamp ?? Date.now(),
     });
   }
 

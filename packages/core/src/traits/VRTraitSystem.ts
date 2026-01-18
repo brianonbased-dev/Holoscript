@@ -578,7 +578,7 @@ const rotatableHandler: TraitHandler<RotatableTrait> = {
     speed: 1,
   },
 
-  onAttach(node, config, context) {
+  onAttach(node, _config, _context) {
     const state: RotateState = {
       isRotating: false,
       initialHandRotation: [0, 0, 0],
@@ -591,7 +591,7 @@ const rotatableHandler: TraitHandler<RotatableTrait> = {
     delete (node as unknown as { __rotateState?: RotateState }).__rotateState;
   },
 
-  onUpdate(node, config, context, delta) {
+  onUpdate(node, config, context, _delta) {
     const state = (node as unknown as { __rotateState: RotateState }).__rotateState;
     if (!state?.isRotating) return;
 
@@ -658,7 +658,7 @@ const rotatableHandler: TraitHandler<RotatableTrait> = {
     context.emit('rotate_update', { node, rotation: newRotation });
   },
 
-  onEvent(node, config, context, event) {
+  onEvent(node, _config, context, event) {
     const state = (node as unknown as { __rotateState: RotateState }).__rotateState;
 
     if (event.type === 'rotate_start') {
@@ -690,7 +690,7 @@ const stackableHandler: TraitHandler<StackableTrait> = {
     snap_distance: 0.5,
   },
 
-  onAttach(node, config, context) {
+  onAttach(node, _config, _context) {
     const state: StackState = {
       stackedItems: [],
       stackParent: null,
@@ -776,7 +776,7 @@ const snappableHandler: TraitHandler<SnappableTrait> = {
     magnetic: false,
   },
 
-  onUpdate(node, config, context, delta) {
+  onUpdate(node, config, _context, _delta) {
     if (!config.snap_points || config.snap_points.length === 0) return;
     if (!config.magnetic) return;
 
@@ -968,7 +968,7 @@ export class VRTraitRegistry {
     const handler = this.handlers.get(traitName);
     if (!handler) return;
 
-    const mergedConfig = { ...handler.defaultConfig, ...(config as object) };
+    const mergedConfig = { ...(handler.defaultConfig as object), ...(config as object) };
     node.traits.set(traitName, mergedConfig);
 
     if (handler.onAttach) {

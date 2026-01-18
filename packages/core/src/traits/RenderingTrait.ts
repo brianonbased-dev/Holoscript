@@ -239,7 +239,9 @@ export class RenderingTrait {
    * Configure culling
    */
   public setCulling(config: Partial<CullingConfig>): void {
+    const defaultCulling: CullingConfig = { mode: 'back' };
     this.optimization.culling = {
+      ...defaultCulling,
       ...this.optimization.culling,
       ...config,
     };

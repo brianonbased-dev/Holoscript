@@ -13,8 +13,6 @@
  * - Cross-platform benchmark testing
  */
 
-import type { RenderingTrait } from '@holoscript/core';
-
 // ============================================================================
 // Device Capabilities
 // ============================================================================
@@ -438,9 +436,7 @@ export class PlatformPerformanceOptimizer {
 
     console.log(`Running benchmark: ${name} (${iterations} iterations)...`);
 
-    const startTime = performance.now();
     const result = await renderFunc(iterations);
-    const totalTime = performance.now() - startTime;
 
     const fps = result.fps;
     const passed = fps >= this.profile.fpsMin;

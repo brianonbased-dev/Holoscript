@@ -87,8 +87,10 @@ export interface FunctionType {
  * Type inference engine
  */
 export class TypeInferenceEngine {
-  private typeEnvironment: Map<string, HoloScriptType> = new Map();
-  private genericTypeVars: Map<string, HoloScriptType> = new Map();
+  // Reserved for future type environment tracking
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // private typeEnvironment: Map<string, HoloScriptType> = new Map();
+  // private genericTypeVars: Map<string, HoloScriptType> = new Map();
 
   /**
    * Infer type from value
@@ -104,8 +106,8 @@ export class TypeInferenceEngine {
       return { kind: 'primitive', name: 'boolean' };
     }
     if (Array.isArray(value)) {
-      const elementType = value.length > 0 ? this.inferType(value[0]) : { kind: 'primitive', name: 'void' };
-      return { kind: 'array', elementType };
+      const elementType: HoloScriptType = value.length > 0 ? this.inferType(value[0]) : { kind: 'primitive', name: 'void' };
+      return { kind: 'array', elementType } as ArrayType;
     }
     return { kind: 'primitive', name: 'void' };
   }
@@ -348,7 +350,7 @@ export class AdvancedTypeChecker {
  * HoloScript+ AST Types
  */
 export interface HSPlusNode {
-  type: 'directive' | 'trait' | 'lifecycle' | 'state' | 'for' | 'if' | 'import' | 'component' | 'element' | 'fragment';
+  type: 'directive' | 'trait' | 'lifecycle' | 'state' | 'for' | 'if' | 'import' | 'component' | 'element' | 'fragment' | 'Program';
   [key: string]: any;
 }
 
@@ -425,4 +427,68 @@ export interface VRLifecycleHook {
 export interface ControllerHook {
   name: 'trigger' | 'grip' | 'thumbstick' | 'button_a' | 'button_b';
   handler: string;
+}
+
+/**
+ * Vector3 type for 3D coordinates
+ */
+export interface Vector3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/**
+ * Color type for RGBA colors
+ */
+export interface Color {
+  r: number;
+  g: number;
+  b: number;
+  a?: number;
+}
+
+/**
+ * VR Hand representation
+ */
+export interface VRHand {
+  position: Vector3;
+  rotation: Vector3;
+  pinch: number;
+  grip: number;
+  pointing: boolean;
+}
+
+/**
+ * HoloScript+ Runtime built-in functions
+ */
+export interface HSPlusBuiltins {
+  log: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+  setTimeout: (fn: () => void, ms: number) => number;
+  clearTimeout: (id: number) => void;
+  setInterval: (fn: () => void, ms: number) => number;
+  clearInterval: (id: number) => void;
+  fetch: (url: string, options?: any) => Promise<any>;
+  emit: (event: string, data?: any) => void;
+  on: (event: string, handler: (data: any) => void) => void;
+  off: (event: string, handler?: (data: any) => void) => void;
+  [key: string]: any;
+}
+
+/**
+ * HoloScript+ Runtime interface
+ */
+export interface HSPlusRuntime {
+  state: Record<string, any>;
+  props: Record<string, any>;
+  refs: Record<string, any>;
+  builtins: HSPlusBuiltins;
+  execute: (ast: HSPlusAST) => any;
+  evaluate: (expression: string) => any;
+  callMethod: (name: string, args: any[]) => any;
+  setState: (key: string, value: any) => void;
+  getState: (key: string) => any;
+  destroy: () => void;
 }
