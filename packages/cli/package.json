@@ -1,9 +1,12 @@
 {
   "name": "@holoscript/cli",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Command-line interface for HoloScript",
   "main": "./dist/index.js",
   "sideEffects": false,
+  "files": [
+    "dist"
+  ],
   "bin": {
     "holoscript": "./dist/cli.js",
     "hs": "./dist/cli.js"
