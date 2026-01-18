@@ -73,7 +73,7 @@ export class HoloScriptParser {
       return [];
     }
 
-    const rawTokens = this.tokenizeCommand(command.command.toLowerCase());
+    const rawTokens = this.tokenizeCommand(command.command);
     const tokens = this.sanitizeTokens(rawTokens);
 
     if (tokens.length === 0) return [];
@@ -86,7 +86,7 @@ export class HoloScriptParser {
       return [];
     }
 
-    const commandType = tokens[0];
+    const commandType = tokens[0].toLowerCase();
 
     // Check if this is a 2D UI command
     if ((commandType === 'create' || commandType === 'add') && tokens.length > 1) {
@@ -174,6 +174,8 @@ export class HoloScriptParser {
       case 'orb':
       case 'sphere':
         res = [this.createOrbNode(name, position)];
+        const orbProps = this.parseProperties(tokens.slice(2));
+        (res[0] as OrbNode).properties = orbProps;
         break;
       case 'function':
         res = [this.createFunctionNode(name, tokens.slice(2), position)];
@@ -577,10 +579,18 @@ export class HoloScriptParser {
             
             // Check if it's a trait
             if (this.isTrait(name)) {
+                let config = {};
+                if (tokens[i+1] === '{') {
+                    const closingIndex = this.findClosingBrace(tokens, i + 1);
+                    if (closingIndex !== -1) {
+                        config = this.parseProperties(tokens.slice(i + 2, closingIndex));
+                        i = closingIndex;
+                    }
+                }
                 directives.push({
                     type: 'trait',
                     name: name as any,
-                    config: {} // TODO: Parse config if present
+                    config
                 });
             } else if (this.isLifecycleHook(name)) {
                 directives.push({
@@ -611,7 +621,50 @@ export class HoloScriptParser {
     if (val === 'false') return false;
     if (val === 'null') return null;
     if (!isNaN(Number(val))) return Number(val);
+    
+    // String literal with quotes
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      return val.slice(1, -1);
+    }
+    
     return val;
+  }
+
+  private parseProperties(tokens: string[]): Record<string, HoloScriptValue> {
+    const props: Record<string, HoloScriptValue> = {};
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        if (token === '{' || token === '}') continue;
+        if (token.startsWith('@')) break; // Stop at directives
+        
+        if (token.endsWith(':')) {
+            const key = token.slice(0, -1);
+            const val = tokens[i+1];
+            if (val) {
+                props[key] = this.parseLiteral(val);
+                i++;
+            }
+        } else if (tokens[i+1] === ':') {
+            const key = token;
+            const val = tokens[i+2];
+            if (val) {
+                props[key] = this.parseLiteral(val);
+                i += 2;
+            }
+        }
+    }
+    return props;
+  }
+
+  private findClosingBrace(tokens: string[], startIndex: number): number {
+    let depth = 0;
+    for (let i = startIndex; i < tokens.length; i++) {
+        if (tokens[i] === '{') depth++;
+        else if (tokens[i] === '}') depth--;
+        
+        if (depth === 0) return i;
+    }
+    return -1;
   }
 
   getAST(): ASTNode[] {

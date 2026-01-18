@@ -55,4 +55,12 @@ describe('HoloScript+ Reactivity', () => {
     
     expect(ast[0].directives?.length).toBe(2);
   });
+
+  test('should support trait configurations', async () => {
+    const code = 'create orb configOrb @grabbable { stiffness: 0.5 }';
+    const ast = parser.parseVoiceCommand({ command: code, confidence: 1, timestamp: Date.now() });
+    
+    expect(ast[0].directives![0].type).toBe('trait');
+    expect((ast[0].directives![0] as any).config.stiffness).toBe(0.5);
+  });
 });

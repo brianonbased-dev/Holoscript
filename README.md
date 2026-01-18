@@ -4,6 +4,9 @@
 
 A declarative language that compiles to 9 platforms from one source.
 
+> 💬 **Talk or type to build.** Say "Create a login form" and get working code.
+> Powered by [Infinity Assistant](https://infinityassistant.io).
+
 ```holoscript
 form#login @grabbable {
   input#email { placeholder: "Email" }

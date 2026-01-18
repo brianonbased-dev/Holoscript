@@ -69,8 +69,17 @@ export class ExpressionEvaluator {
   }
 
   evaluate(expression: string): any {
+    if (typeof expression !== 'string') return expression;
+
     // If it's a template string with ${}, we need to interpolate
-    if (typeof expression === 'string' && expression.includes('${')) {
+    if (expression.includes('${')) {
+        // Special case: if the whole string is just one interpolation, return raw value
+        // Use trim() to allow spaces like " ${ count } "
+        const trimmed = expression.trim();
+        const match = trimmed.match(/^\$\{([^}]+)\}$/);
+        if (match) {
+             return this.evaluate(match[1]);
+        }
         return this.interpolate(expression);
     }
 

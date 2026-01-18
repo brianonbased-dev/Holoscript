@@ -1832,4 +1832,8 @@ export class HoloScriptRuntime {
   getCallStack(): string[] {
     return [...this.callStack];
   }
+
+  getState(): Record<string, HoloScriptValue> {
+    return this.context.state.getSnapshot();
+  }
 }

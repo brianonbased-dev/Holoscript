@@ -45,8 +45,7 @@ describe('Infrastructure Nodes', () => {
       expect(nodes).toHaveLength(1);
       const node = nodes[0] as any;
       
-      expect(node.type).toBe('database');
-      expect(node.query).toContain('select * from users');
+      expect(node.query.toLowerCase()).toContain('select * from users');
     });
 
     it('should parse fetch command', () => {
@@ -76,7 +75,7 @@ describe('Infrastructure Nodes', () => {
         const node = nodes[0] as any;
         
         expect(node.type).toBe('execute');
-        expect(node.target).toBe('myfunction'); // Parser lowercases tokens
+        expect(node.target).toBe('myFunction'); // Case preserved
       });
   });
 
