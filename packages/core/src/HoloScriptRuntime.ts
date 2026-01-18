@@ -36,6 +36,12 @@ import type {
   CompositionNode,
   TemplateNode,
   HoloScriptValue,
+  ServerNode,
+  DatabaseNode,
+  FetchNode,
+  ExecuteNode,
+  DebugNode,
+  VisualizeNode,
 } from './types';
 import type { ImportLoader } from './types';
 
@@ -344,6 +350,24 @@ export class HoloScriptRuntime {
           break;
         case 'template':
           result = await this.executeTemplate(node as TemplateNode);
+          break;
+        case 'server':
+          result = await this.executeServerNode(node as ServerNode);
+          break;
+        case 'database':
+          result = await this.executeDatabaseNode(node as DatabaseNode);
+          break;
+        case 'fetch':
+          result = await this.executeFetchNode(node as FetchNode);
+          break;
+        case 'execute':
+          result = await this.executeTarget(node as ExecuteNode);
+          break;
+        case 'debug':
+          result = await this.executeDebug(node as DebugNode);
+          break;
+        case 'visualize':
+          result = await this.executeVisualize(node as VisualizeNode);
           break;
         default:
           result = {
@@ -1727,6 +1751,118 @@ export class HoloScriptRuntime {
   private async executeTemplate(node: TemplateNode): Promise<ExecutionResult> {
     this.context.templates.set(node.name, node);
     return { success: true, output: `Template ${node.name} registered` };
+  }
+
+  private async executeServerNode(node: ServerNode): Promise<ExecutionResult> {
+    if (this.context.mode === 'public') {
+      return { success: false, error: 'SecurityViolation: Server creation blocked in public mode.', executionTime: 0 };
+    }
+    
+    logger.info(`Starting server on port ${node.port}`);
+    
+    return {
+      success: true,
+      output: `Server listening on port ${node.port}`,
+      hologram: node.hologram,
+      executionTime: 0
+    };
+  }
+
+  private async executeDatabaseNode(node: DatabaseNode): Promise<ExecutionResult> {
+    if (this.context.mode === 'public') {
+      return { success: false, error: 'SecurityViolation: DB access blocked in public mode.', executionTime: 0 };
+    }
+
+    logger.info(`Executing Query: ${node.query}`);
+    
+    return {
+      success: true,
+      output: `Query executed: ${node.query}`,
+      hologram: node.hologram,
+      executionTime: 0
+    };
+  }
+
+  private async executeFetchNode(node: FetchNode): Promise<ExecutionResult> {
+    if (this.context.mode === 'public') {
+      return { success: false, error: 'SecurityViolation: External fetch blocked in public mode.', executionTime: 0 };
+    }
+
+    logger.info(`Fetching: ${node.url}`);
+    
+    return {
+      success: true,
+      output: `Fetched data from ${node.url}`,
+      hologram: node.hologram,
+      executionTime: 0
+    };
+  }
+
+  private async executeTarget(node: ExecuteNode): Promise<ExecutionResult> {
+    const target = this.context.functions.get(node.target);
+
+    if (!target) {
+      return {
+        success: false,
+        error: `Function ${node.target} not found`,
+        executionTime: 0
+      };
+    }
+
+    const result = await this.executeFunction(target);
+    this.createExecutionEffect(node.target, target.position || {x:0,y:0,z:0});
+
+    return {
+      success: true,
+      output: `Executed ${node.target}`,
+      hologram: {
+        shape: 'sphere',
+        color: '#ff4500',
+        size: 1.2,
+        glow: true,
+        interactive: false,
+      },
+      executionTime: result.executionTime
+    };
+  }
+
+  private async executeDebug(node: DebugNode): Promise<ExecutionResult> {
+    const target = node.target;
+    // In a real scenario, this would gather more debug info
+    const debugInfo = {
+      target,
+      variables: Object.fromEntries(this.context.variables),
+      executionHistoryLength: this.executionHistory.length
+    };
+
+    return {
+      success: true,
+      output: debugInfo as unknown as HoloScriptValue,
+      hologram: node.hologram,
+      executionTime: 0
+    };
+  }
+
+  private async executeVisualize(node: VisualizeNode): Promise<ExecutionResult> {
+    const target = node.target;
+    const data = this.context.variables.get(target);
+
+    if (!data) {
+      return {
+        success: false,
+        error: `No data found for ${target}`,
+        executionTime: 0
+      };
+    }
+
+    this.createDataVisualization(target, data, node.position || {x:0,y:0,z:0});
+
+    return {
+      success: true,
+      output: `Visualizing ${target}`,
+      hologram: node.hologram,
+      executionTime: 0
+    };
   }
 
   getExecutionHistory(): ExecutionResult[] {

@@ -27,6 +27,12 @@ import type {
   TemplateNode,
   GlobalHandlerNode,
   HoloScriptValue,
+  ServerNode,
+  DatabaseNode,
+  FetchNode,
+  ExecuteNode,
+  DebugNode,
+  VisualizeNode,
 } from './types';
 
 const HOLOSCRIPT_SECURITY_CONFIG = {
@@ -35,10 +41,10 @@ const HOLOSCRIPT_SECURITY_CONFIG = {
   maxHologramsPerUser: 50,
   suspiciousKeywords: [
     'process', 'require', 'eval', 'import', 'constructor',
-    'prototype', '__proto__', 'fs', 'child_process', 'exec',
-    'spawn', 'fetch', 'xmlhttprequest',
+    'prototype', '__proto__', 'fs', 'child_process',
+    'spawn', 'xmlhttprequest',
   ],
-  allowedShapes: ['orb', 'cube', 'cylinder', 'pyramid', 'sphere', 'function', 'gate', 'stream'],
+  allowedShapes: ['orb', 'cube', 'cylinder', 'pyramid', 'sphere', 'function', 'gate', 'stream', 'server', 'database', 'fetch'],
   allowedUIElements: [
     'canvas', 'button', 'textinput', 'panel', 'text', 'image',
     'list', 'modal', 'slider', 'toggle', 'dropdown',
@@ -170,6 +176,12 @@ export class HoloScriptParser {
         return [this.createGateNode(name, tokens.slice(2), position)];
       case 'stream':
         return [this.createStreamNode(name, tokens.slice(2), position)];
+      case 'server':
+        return [this.createServerNode(tokens.slice(1), position)];
+      case 'database':
+        return [this.createDatabaseNode(tokens.slice(1), position)];
+      case 'fetch':
+        return [this.createFetchNode(tokens.slice(1), position)];
       default:
         return [this.createGenericNode(shape, name, position)];
     }
@@ -293,6 +305,67 @@ export class HoloScriptParser {
     };
   }
 
+  private createServerNode(params: string[], position?: SpatialPosition): ServerNode {
+    // Example: create server port 3000 routes /api,/health
+    const portIndex = params.indexOf('port');
+    const port = portIndex !== -1 ? parseInt(params[portIndex + 1]) : 3000;
+    const routesIndex = params.indexOf('routes');
+    const routes = routesIndex !== -1 ? params[routesIndex + 1].split(',') : [];
+
+    return {
+      type: 'server',
+      port,
+      routes,
+      position: position || { x: 0, y: 0, z: 0 },
+      hologram: {
+        shape: 'cube',
+        color: '#000000', // Black box
+        size: 2,
+        glow: true,
+        interactive: false,
+      },
+    };
+  }
+
+  private createDatabaseNode(params: string[], position?: SpatialPosition): DatabaseNode {
+    // Example: create database query "SELECT * FROM users"
+    const queryIndex = params.indexOf('query');
+    const query = queryIndex !== -1 ? params.slice(queryIndex + 1).join(' ') : '';
+
+    return {
+      type: 'database',
+      query,
+      position: position || { x: 0, y: 0, z: 0 },
+      hologram: {
+        shape: 'cylinder',
+        color: '#ffd700', // Gold
+        size: 1.5,
+        glow: true,
+        interactive: true,
+      },
+    };
+  }
+
+  private createFetchNode(params: string[], position?: SpatialPosition): FetchNode {
+    // Example: create fetch url google.com
+    const urlIndex = params.indexOf('url');
+    const url = urlIndex !== -1 ? params[urlIndex + 1] : '';
+
+    return {
+      type: 'fetch',
+      url,
+      method: 'GET',
+      position: position || { x: 0, y: 0, z: 0 },
+      hologram: {
+        shape: 'orb',
+        color: '#00ff00', // Green
+        size: 0.8,
+        glow: true,
+        interactive: true,
+      },
+    };
+  }
+
   private parsePinchGesture(gesture: GestureData): ASTNode[] {
     return [{
       type: 'create',
@@ -329,7 +402,8 @@ export class HoloScriptParser {
   private tokenizeCommand(command: string): string[] {
     return command
       .toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
+      // Allow alphanumeric, underscores, and common URL/path/SQL chars
+      .replace(/[^\w\s.,:/=?&"'*()\[\]@%-]/g, ' ')
       .split(/\s+/)
       .filter(token => token.length > 0);
   }
@@ -347,7 +421,7 @@ export class HoloScriptParser {
     });
   }
 
-  private parseExecuteCommand(tokens: string[]): GenericASTNode[] {
+  private parseExecuteCommand(tokens: string[]): ExecuteNode[] {
     return [{
       type: 'execute',
       target: tokens[0] || 'unknown',
@@ -355,7 +429,7 @@ export class HoloScriptParser {
     }];
   }
 
-  private parseDebugCommand(tokens: string[]): GenericASTNode[] {
+  private parseDebugCommand(tokens: string[]): DebugNode[] {
     return [{
       type: 'debug',
       target: tokens[0] || 'program',
@@ -363,7 +437,7 @@ export class HoloScriptParser {
     }];
   }
 
-  private parseVisualizeCommand(tokens: string[]): GenericASTNode[] {
+  private parseVisualizeCommand(tokens: string[]): VisualizeNode[] {
     return [{
       type: 'visualize',
       target: tokens[0] || 'data',

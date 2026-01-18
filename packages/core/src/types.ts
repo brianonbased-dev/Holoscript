@@ -28,7 +28,7 @@ export interface Size2D {
 // Hologram Types
 // ============================================================================
 
-export type HologramShape = 'orb' | 'cube' | 'cylinder' | 'pyramid' | 'sphere';
+export type HologramShape = 'orb' | 'cube' | 'cylinder' | 'pyramid' | 'sphere' | 'function' | 'gate' | 'stream' | 'server' | 'database' | 'fetch';
 
 export interface HologramProperties {
   shape: HologramShape;
@@ -138,6 +138,38 @@ export interface TransformationNode extends ASTNode {
 
 export interface GenericASTNode extends ASTNode {
   [key: string]: HoloScriptValue | unknown; // keeping unknown for flexibility but preferring HoloScriptValue
+}
+
+export interface ServerNode extends ASTNode {
+  type: 'server';
+  port: number;
+  routes: string[];
+}
+
+export interface DatabaseNode extends ASTNode {
+  type: 'database';
+  query: string;
+}
+
+export interface FetchNode extends ASTNode {
+  type: 'fetch';
+  url: string;
+  method: string;
+}
+
+export interface ExecuteNode extends ASTNode {
+  type: 'execute';
+  target: string;
+}
+
+export interface DebugNode extends ASTNode {
+  type: 'debug';
+  target: string;
+}
+
+export interface VisualizeNode extends ASTNode {
+  type: 'visualize';
+  target: string;
 }
 
 
@@ -299,6 +331,7 @@ export interface RuntimeContext {
   spatialMemory: Map<string, SpatialPosition>;
   hologramState: Map<string, HologramProperties>;
   executionStack: ASTNode[];
+  mode?: 'public' | 'secure';
 
   // Scaling & Context
   currentScale: number;
