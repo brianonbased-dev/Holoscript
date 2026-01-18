@@ -4,8 +4,11 @@
 
 A declarative language that compiles to 9 platforms from one source.
 
-> 💬 **Talk or type to build.** Say "Create a login form" and get working code.
-> Powered by [Infinity Assistant](https://infinityassistant.io).
+> 💬 **Talk or type to build.** Powered by [Infinity Assistant](https://infinityassistant.io).
+>
+> - 🥽 **VR:** "Create a coffee shop with a counter and menu board"
+> - 🌍 **VRR:** "Scan my storefront and make it a virtual showroom"
+> - 📱 **AR:** "Place a 3D model of this chair in my living room"
 
 ```holoscript
 form#login @grabbable {
