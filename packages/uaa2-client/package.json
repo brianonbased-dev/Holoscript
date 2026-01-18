@@ -1,6 +1,6 @@
 {
   "name": "@holoscript/infinityassistant",
-  "version": "1.0.1",
+  "version": "2.0.1",
   "description": "Client for building universal apps with Infinity Builder from HoloScript",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
