@@ -6,7 +6,7 @@
  */
 
 import { logger } from './logger';
-import type { UI2DNode, UIElementType, Position2D } from './types';
+import type { UI2DNode, UIElementType, Position2D, HoloScriptValue } from './types';
 
 const UI_SECURITY_CONFIG = {
   maxUIElements: 500,
@@ -84,7 +84,7 @@ export class HoloScript2DParser {
       type: '2d-element',
       elementType: elementType as UIElementType,
       name,
-      properties: { ...this.getDefaultProperties(elementType as UIElementType), ...properties },
+      properties: { ...this.getDefaultProperties(elementType as UIElementType), ...properties } as Record<string, HoloScriptValue>,
       events: Object.keys(events).length > 0 ? events : undefined,
       children: children.length > 0 ? children : undefined,
     };
@@ -146,7 +146,7 @@ export class HoloScript2DParser {
       type: '2d-element',
       elementType: elementType as UIElementType,
       name,
-      properties: this.getDefaultProperties(elementType as UIElementType),
+      properties: this.getDefaultProperties(elementType as UIElementType) as Record<string, HoloScriptValue>,
     };
 
     this.uiElements.set(name, node);

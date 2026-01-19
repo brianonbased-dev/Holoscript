@@ -15,9 +15,9 @@ export class ObjectPool<T> {
   constructor(
     private factory: () => T,
     private reset: (obj: T) => void,
-    private capacity: number = 100
+    private _capacity: number = 100
   ) {
-    this.preallocate(capacity);
+    this.preallocate(this._capacity);
   }
 
   /**
@@ -154,7 +154,9 @@ export function memoize<T extends (...args: any[]) => any>(fn: T, maxSize: numbe
 
     if (cache.size >= maxSize) {
       const firstKey = cache.keys().next().value;
-      cache.delete(firstKey);
+      if (firstKey !== undefined) {
+        cache.delete(firstKey);
+      }
     }
 
     cache.set(key, result);
@@ -172,7 +174,8 @@ export function MemoizedProperty() {
 
     descriptor.get = function () {
       if (!cache.has(this)) {
-        cache.set(this, originalGetter.call(this));
+        const val = originalGetter ? originalGetter.call(this) : undefined;
+        cache.set(this, val);
       }
       return cache.get(this);
     };

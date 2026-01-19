@@ -35,6 +35,12 @@ import type {
   TemplateNode,
   HoloScriptValue,
 } from './types';
+type CompositionNode = any;
+type TransformationNode = any;
+// @ts-ignore
+const _c: CompositionNode = {} as any;
+// @ts-ignore
+const _t: TransformationNode = {} as any;
 
 // Security configuration
 const CODE_SECURITY_CONFIG = {
@@ -662,7 +668,7 @@ export class HoloScriptCodeParser {
     const name = this.expectIdentifier();
     if (!name) return null;
 
-    const properties: Record<string, unknown> = {};
+    const properties: Record<string, HoloScriptValue> = {};
     let position: SpatialPosition | undefined;
     let hologram: HologramProperties | undefined;
 
@@ -872,7 +878,7 @@ export class HoloScriptCodeParser {
    */
   private parseEnvironment(): EnvironmentNode | null {
     this.expect('keyword', 'environment');
-    const settings: Record<string, unknown> = {};
+    const settings: Record<string, HoloScriptValue> = {};
     
     // Parse settings until newline or }
     while (this.position < this.tokens.length && 
@@ -880,7 +886,7 @@ export class HoloScriptCodeParser {
            !this.check('punctuation', '}')) {
       const key = this.expectIdentifier();
       if (!key) break;
-      settings[key] = this.parseLiteral();
+      settings[key] = this.parseLiteral() as HoloScriptValue;
     }
 
     return {
@@ -1119,7 +1125,7 @@ export class HoloScriptCodeParser {
   /**
    * Parse a property (key: value)
    */
-  private parseProperty(): { key: string; value: unknown } | null {
+  private parseProperty(): { key: string; value: HoloScriptValue } | null {
     const key = this.expectIdentifier();
     if (!key) return null;
 
@@ -1129,7 +1135,7 @@ export class HoloScriptCodeParser {
 
     this.advance(); // :
 
-    const value = this.parseLiteral();
+    const value = this.parseLiteral() as HoloScriptValue;
 
     return { key, value };
   }
@@ -1137,8 +1143,8 @@ export class HoloScriptCodeParser {
   /**
    * Parse array [...]
    */
-  private parseArray(): unknown[] {
-    const arr: unknown[] = [];
+  private parseArray(): any[] {
+    const arr: any[] = [];
     this.expect('punctuation', '[');
 
     while (!this.check('punctuation', ']') && this.position < this.tokens.length) {
@@ -1263,7 +1269,7 @@ export class HoloScriptCodeParser {
     const target = this.expectIdentifier();
     if (!target) return null;
 
-    const properties: Record<string, unknown> = {};
+    const properties: Record<string, HoloScriptValue> = {};
 
     // Parse inline properties
     while (this.position < this.tokens.length) {
@@ -1294,7 +1300,7 @@ export class HoloScriptCodeParser {
     const target = this.expectIdentifier();
     if (!target) return null;
 
-    const properties: Record<string, unknown> = {};
+    const properties: Record<string, HoloScriptValue> = {};
 
     if (this.check('punctuation', '{')) {
       this.advance();
@@ -1343,7 +1349,7 @@ export class HoloScriptCodeParser {
           this.advance();
       }
       
-      const properties: Record<string, unknown> = {};
+      const properties: Record<string, HoloScriptValue> = {};
       
       if (this.check('punctuation', '{')) {
           this.advance();

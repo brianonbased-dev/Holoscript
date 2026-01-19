@@ -60,6 +60,18 @@ export interface GestureData {
   hand: HandType;
 }
 
+export interface Animation {
+  target: string;
+  property: string;
+  from: number;
+  to: number;
+  duration: number;
+  startTime: number;
+  easing: string;
+  loop?: boolean;
+  yoyo?: boolean;
+}
+
 // ============================================================================
 // AST Node Types
 // ============================================================================
@@ -72,9 +84,13 @@ export type HoloScriptValue =
   | null
   | undefined
   | HoloScriptValue[]
-  | { [key: string]: HoloScriptValue }
+  | { [key: string]: any }
   // We can include ASTNode if values can be nodes (e.g. templates)
-  | ASTNode;
+  | ASTNode
+  | Function
+  | SpatialPosition
+  | HologramProperties
+  | Animation;
 
 export interface ASTNode {
   type: string;

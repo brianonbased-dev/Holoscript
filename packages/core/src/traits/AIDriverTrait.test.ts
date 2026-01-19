@@ -4,7 +4,7 @@
  * Comprehensive tests for AI-driven NPC behavior
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { AIDriverTrait, type AIDriverConfig, type BehaviorNode, type NPCGoal } from '../traits/AIDriverTrait';
 
 describe('AIDriverTrait', () => {
@@ -275,7 +275,7 @@ describe('AIDriverTrait', () => {
         enableLearning: true,
         learningRate: 0.01,
       };
-      expect(fastLearning.learningRate).toBeGreaterThan(slowLearning.learningRate);
+      expect((fastLearning as any).learningRate).toBeGreaterThan((slowLearning as any).learningRate);
     });
   });
 

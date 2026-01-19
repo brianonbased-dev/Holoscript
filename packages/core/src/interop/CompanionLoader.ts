@@ -5,7 +5,7 @@
  * Uses ModuleResolver for actual module loading.
  */
 
-import { ModuleResolver, ExportImportHandler } from './Interoperability';
+import { ModuleResolver } from './Interoperability';
 import type { HSPlusAST } from '../types/HoloScriptPlus';
 
 export interface CompanionLoaderOptions {
@@ -28,7 +28,6 @@ export interface LoadResult {
  */
 export class CompanionLoader {
   private resolver: ModuleResolver;
-  private exportHandler: ExportImportHandler;
   private options: Required<CompanionLoaderOptions>;
 
   constructor(options: CompanionLoaderOptions = {}) {
@@ -39,7 +38,6 @@ export class CompanionLoader {
     };
     
     this.resolver = new ModuleResolver(this.options.basePath);
-    this.exportHandler = new ExportImportHandler();
   }
 
   /**

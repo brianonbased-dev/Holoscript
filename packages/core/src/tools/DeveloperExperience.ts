@@ -14,7 +14,7 @@ export class ErrorFormatter {
    * Format error with source context
    */
   static formatError(error: any, sourceCode?: string): string {
-    const { message, location, suggestion, token } = error;
+    const { message, location, suggestion, token: _token } = error;
 
     let formatted = `\n❌ Error: ${message}\n`;
 

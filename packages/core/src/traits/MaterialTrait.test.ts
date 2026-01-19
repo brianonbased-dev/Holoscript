@@ -4,7 +4,7 @@ import {
   createMaterialTrait,
   MATERIAL_PRESETS,
   type MaterialConfig,
-  type PBRMaterial,
+// type PBRMaterial,
 } from '../traits/MaterialTrait';
 
 describe('MaterialTrait', () => {

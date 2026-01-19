@@ -261,6 +261,7 @@ export type {
   // Runtime
   RuntimeContext,
   ExecutionResult,
+  HoloScriptValue,
   ParticleSystem,
 
   // Config

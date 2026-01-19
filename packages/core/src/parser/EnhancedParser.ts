@@ -44,7 +44,7 @@ export class EnhancedHoloScriptParser {
    */
   private tokenizeWithLocation(source: string): ParsedToken[] {
     const tokens: ParsedToken[] = [];
-    let pos = 0;
+
     let line = 1;
     let column = 0;
 
@@ -153,24 +153,6 @@ export class EnhancedHoloScriptParser {
   /**
    * Error recovery: skip to next statement
    */
-  private synchronize(): void {
-    this.advance();
-
-    while (!this.isAtEnd()) {
-      if (this.previous()?.type === 'newline') return;
-
-      const current = this.currentToken();
-      if (
-        current?.type === 'identifier' ||
-        current?.type === 'at' ||
-        current?.type === 'rbrace'
-      ) {
-        return;
-      }
-
-      this.advance();
-    }
-  }
 
   /**
    * Get all collected errors
@@ -191,38 +173,9 @@ export class EnhancedHoloScriptParser {
     return this.tokens[this.position];
   }
 
-  private previous(): ParsedToken | undefined {
-    return this.tokens[this.position - 1];
-  }
 
-  private advance(): ParsedToken | undefined {
-    if (!this.isAtEnd()) this.position++;
-    return this.previous();
-  }
 
-  private isAtEnd(): boolean {
-    return this.position >= this.tokens.length;
-  }
 
-  private match(...types: string[]): boolean {
-    for (const type of types) {
-      if (this.check(type)) {
-        this.advance();
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private check(type: string): boolean {
-    if (this.isAtEnd()) return false;
-    return this.currentToken()?.type === type;
-  }
-
-  private expect(type: string, message: string) {
-    if (this.check(type)) return this.advance();
-    return this.error(message);
-  }
 }
 
 /**

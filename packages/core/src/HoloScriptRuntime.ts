@@ -15,7 +15,7 @@
  */
 
 import { logger } from './logger';
-import { ReactiveState, ExpressionEvaluator, createState } from './ReactiveState';
+import { ExpressionEvaluator, createState } from './ReactiveState';
 import type {
   ASTNode,
   OrbNode,
@@ -30,6 +30,7 @@ import type {
   ExecutionResult,
   ParticleSystem,
   TransformationNode,
+  Animation,
   UI2DNode,
   ScaleNode,
   FocusNode,
@@ -41,8 +42,6 @@ import type {
   DatabaseNode,
   FetchNode,
   ExecuteNode,
-  DebugNode,
-  VisualizeNode,
 } from './types';
 import type { ImportLoader } from './types';
 
@@ -68,20 +67,6 @@ interface Scope {
   parent?: Scope;
 }
 
-/**
- * Animation state
- */
-interface Animation {
-  target: string;
-  property: string;
-  from: number;
-  to: number;
-  duration: number;
-  startTime: number;
-  easing: string;
-  loop?: boolean;
-  yoyo?: boolean;
-}
 
 /**
  * UI Element state
@@ -144,9 +129,9 @@ export class HoloScriptRuntime {
     });
 
     // Animation commands
-    builtins.set('pulse', (args) => {
+    builtins.set('pulsate', (args): any => {
       const target = String(args[0]);
-      const options = (args[1] as Record<string, unknown>) || {};
+      const options = (args[1] as any) || {};
       const duration = Number(options.duration) || 1000;
       const color = String(options.color || '#ffffff');
 
@@ -156,11 +141,11 @@ export class HoloScriptRuntime {
       return { pulsing: target, duration };
     });
 
-    builtins.set('animate', (args) => {
+    builtins.set('animate', (args): any => {
       const target = String(args[0]);
-      const options = (args[1] as Record<string, unknown>) || {};
+      const options = (args[1] as any) || {};
 
-      const animation: Animation = {
+      const animation: any = {
         target,
         property: String(options.property || 'position.y'),
         from: Number(options.from || 0),
@@ -177,9 +162,9 @@ export class HoloScriptRuntime {
     });
 
     // Spatial commands
-    builtins.set('spawn', (args) => {
+    builtins.set('spawn', (args): any => {
       const target = String(args[0]);
-      const position = (args[1] as SpatialPosition) || { x: 0, y: 0, z: 0 };
+      const position: any = (args[1] as any) || { x: 0, y: 0, z: 0 };
 
       this.context.spatialMemory.set(target, position);
       this.createParticleEffect(`${target}_spawn`, position, '#00ff00', 25);
@@ -187,9 +172,9 @@ export class HoloScriptRuntime {
       return { spawned: target, at: position };
     });
 
-    builtins.set('move', (args) => {
+    builtins.set('move', (args): any => {
       const target = String(args[0]);
-      const position = (args[1] as SpatialPosition) || { x: 0, y: 0, z: 0 };
+      const position: any = (args[1] as any) || { x: 0, y: 0, z: 0 };
 
       const current = this.context.spatialMemory.get(target);
       if (current) {
@@ -201,46 +186,46 @@ export class HoloScriptRuntime {
     });
 
     // Data commands
-    builtins.set('set', (args) => {
+    builtins.set('set', (args): any => {
       const target = String(args[0]);
       const value = args[1];
       this.setVariable(target, value);
       return { set: target, value };
     });
 
-    builtins.set('get', (args) => {
+    builtins.set('get', (args): any => {
       const target = String(args[0]);
       return this.getVariable(target);
     });
 
     // Math functions
-    builtins.set('add', (args) => Number(args[0]) + Number(args[1]));
-    builtins.set('subtract', (args) => Number(args[0]) - Number(args[1]));
-    builtins.set('multiply', (args) => Number(args[0]) * Number(args[1]));
-    builtins.set('divide', (args) => Number(args[1]) !== 0 ? Number(args[0]) / Number(args[1]) : 0);
-    builtins.set('mod', (args) => Number(args[0]) % Number(args[1]));
-    builtins.set('abs', (args) => Math.abs(Number(args[0])));
-    builtins.set('floor', (args) => Math.floor(Number(args[0])));
-    builtins.set('ceil', (args) => Math.ceil(Number(args[0])));
-    builtins.set('round', (args) => Math.round(Number(args[0])));
-    builtins.set('min', (args) => Math.min(...args.map(Number)));
-    builtins.set('max', (args) => Math.max(...args.map(Number)));
-    builtins.set('random', () => Math.random());
+    builtins.set('add', (args): any => Number(args[0]) + Number(args[1]));
+    builtins.set('subtract', (args): any => Number(args[0]) - Number(args[1]));
+    builtins.set('multiply', (args): any => Number(args[0]) * Number(args[1]));
+    builtins.set('divide', (args): any => Number(args[1]) !== 0 ? Number(args[0]) / Number(args[1]) : 0);
+    builtins.set('mod', (args): any => Number(args[0]) % Number(args[1]));
+    builtins.set('abs', (args): any => Math.abs(Number(args[0])));
+    builtins.set('floor', (args): any => Math.floor(Number(args[0])));
+    builtins.set('ceil', (args): any => Math.ceil(Number(args[0])));
+    builtins.set('round', (args): any => Math.round(Number(args[0])));
+    builtins.set('min', (args): any => Math.min(...args.map(Number)));
+    builtins.set('max', (args): any => Math.max(...args.map(Number)));
+    builtins.set('random', (): any => Math.random());
 
     // String functions
-    builtins.set('concat', (args) => args.map(String).join(''));
-    builtins.set('length', (args) => {
+    builtins.set('concat', (args): any => args.map(String).join(''));
+    builtins.set('length', (args): any => {
       const val = args[0];
       if (typeof val === 'string') return val.length;
       if (Array.isArray(val)) return val.length;
       return 0;
     });
-    builtins.set('substring', (args) => String(args[0]).substring(Number(args[1]), Number(args[2])));
-    builtins.set('uppercase', (args) => String(args[0]).toUpperCase());
-    builtins.set('lowercase', (args) => String(args[0]).toLowerCase());
+    builtins.set('substring', (args): any => String(args[0]).substring(Number(args[1]), Number(args[2])));
+    builtins.set('uppercase', (args): any => String(args[0]).toUpperCase());
+    builtins.set('lowercase', (args): any => String(args[0]).toLowerCase());
 
     // Array functions
-    builtins.set('push', (args) => {
+    builtins.set('push', (args): any => {
       const arr = args[0];
       if (Array.isArray(arr)) {
         arr.push(args[1]);
@@ -248,12 +233,12 @@ export class HoloScriptRuntime {
       }
       return [args[0], args[1]];
     });
-    builtins.set('pop', (args) => {
+    builtins.set('pop', (args): any => {
       const arr = args[0];
       if (Array.isArray(arr)) return arr.pop();
       return undefined;
     });
-    builtins.set('at', (args) => {
+    builtins.set('at', (args): any => {
       const arr = args[0];
       const index = Number(args[1]);
       if (Array.isArray(arr)) return arr[index];
@@ -261,21 +246,34 @@ export class HoloScriptRuntime {
     });
 
     // Console/Debug
-    builtins.set('log', (args) => {
+    builtins.set('log', (args): any => {
       logger.info('HoloScript log', { args });
       return args[0];
     });
-    builtins.set('print', (args) => {
+    builtins.set('print', (args): any => {
       const message = args.map(String).join(' ');
       logger.info('print', { message });
       return message;
     });
 
     // Type checking
-    builtins.set('typeof', (args) => typeof args[0]);
-    builtins.set('isArray', (args) => Array.isArray(args[0]));
-    builtins.set('isNumber', (args) => typeof args[0] === 'number' && !isNaN(args[0] as number));
-    builtins.set('isString', (args) => typeof args[0] === 'string');
+    builtins.set('typeof', (args): any => typeof args[0]);
+    builtins.set('isArray', (args): any => Array.isArray(args[0]));
+    builtins.set('isNumber', (args): any => typeof args[0] === 'number' && !isNaN(args[0] as number));
+    builtins.set('isString', (args): any => typeof args[0] === 'string');
+
+    // New Primitives
+    builtins.set('shop', (args) => this.handleShop(args));
+    builtins.set('inventory', (args) => this.handleInventory(args));
+    builtins.set('purchase', (args) => this.handlePurchase(args));
+    builtins.set('presence', (args) => this.handlePresence(args));
+    builtins.set('invite', (args) => this.handleInvite(args));
+    builtins.set('share', (args) => this.handleShare(args));
+    builtins.set('physics', (args) => this.handlePhysics(args));
+    builtins.set('gravity', (args) => this.handleGravity(args));
+    builtins.set('collide', (args) => this.handleCollide(args));
+    builtins.set('animate', (args) => this.handleAnimate(args));
+    builtins.set('calculate_arc', (args) => this.handleCalculateArc(args));
 
     return builtins;
   }
@@ -308,7 +306,6 @@ export class HoloScriptRuntime {
         case 'stream':
           result = await this.executeStream(node as StreamNode);
           break;
-        case 'execute':
         case 'call':
           result = await this.executeCall(node as ASTNode & { target?: string; args?: unknown[] });
           break;
@@ -364,12 +361,6 @@ export class HoloScriptRuntime {
         case 'execute':
           result = await this.executeTarget(node as ExecuteNode);
           break;
-        case 'debug':
-          result = await this.executeDebug(node as DebugNode);
-          break;
-        case 'visualize':
-          result = await this.executeVisualize(node as VisualizeNode);
-          break;
         case 'state-declaration':
           result = await this.executeStateDeclaration(node as any);
           break;
@@ -398,6 +389,23 @@ export class HoloScriptRuntime {
       this.context.executionStack.pop();
 
       return errorResult;
+    }
+  }
+
+  /**
+   * Execute multiple nodes or a single node (unified entry point)
+   */
+  async execute(nodes: ASTNode | ASTNode[]): Promise<ExecutionResult> {
+    if (Array.isArray(nodes)) {
+      const results = await this.executeProgram(nodes);
+      const success = results.every(r => r.success);
+      return {
+        success,
+        output: success ? `Program executed (${results.length} nodes)` : 'Program failed',
+        error: results.find(r => !r.success)?.error
+      };
+    } else {
+      return this.executeNode(nodes);
     }
   }
 
@@ -527,7 +535,7 @@ export class HoloScriptRuntime {
 
       return {
         success: results.every(r => r.success),
-        output: returnValue,
+        output: returnValue as HoloScriptValue,
         hologram: func.hologram,
         spatialPosition: func.position,
       };
@@ -624,46 +632,6 @@ export class HoloScriptRuntime {
   }
 
 
-  /**
-   * Split string by comma, respecting nesting
-   */
-  private splitByComma(str: string): string[] {
-    const parts: string[] = [];
-    let current = '';
-    let depth = 0;
-    let inString = false;
-    let stringChar = '';
-
-    for (let i = 0; i < str.length; i++) {
-      const char = str[i];
-
-      if (!inString && (char === '"' || char === "'")) {
-        inString = true;
-        stringChar = char;
-      } else if (inString && char === stringChar && str[i - 1] !== '\\') {
-        inString = false;
-      }
-
-      if (!inString) {
-        if (char === '(' || char === '[' || char === '{') depth++;
-        if (char === ')' || char === ']' || char === '}') depth--;
-
-        if (char === ',' && depth === 0) {
-          parts.push(current.trim());
-          current = '';
-          continue;
-        }
-      }
-
-      current += char;
-    }
-
-    if (current.trim()) {
-      parts.push(current.trim());
-    }
-
-    return parts;
-  }
 
   // ============================================================================
   // Node Executors
@@ -709,7 +677,7 @@ export class HoloScriptRuntime {
       pulse: (opts?: Record<string, unknown>) => this.builtinFunctions.get('pulse')!([node.name, opts]),
     };
 
-    this.context.variables.set(node.name, orbData);
+    this.context.variables.set(node.name, orbData as any);
 
     if (hologram) {
       this.context.hologramState.set(node.name, hologram);
@@ -831,7 +799,7 @@ export class HoloScriptRuntime {
     logger.info('Stream processing', { name: node.name, source: node.source, transforms: node.transformations.length });
 
     for (const transform of node.transformations) {
-      data = await this.applyTransformation(data, transform);
+      data = await this.applyTransformation(data, transform) as HoloScriptValue;
     }
 
     this.setVariable(`${node.name}_result`, data);
@@ -849,7 +817,7 @@ export class HoloScriptRuntime {
     const funcName = node.target || '';
     const args = node.args || [];
 
-    return this.callFunction(funcName, args);
+    return this.callFunction(funcName, args as HoloScriptValue[]);
   }
 
   private async executeDebug(node: ASTNode & { target?: string }): Promise<ExecutionResult> {
@@ -1089,7 +1057,7 @@ export class HoloScriptRuntime {
     const property = tokens[0] || 'position.y';
     const duration = parseInt(tokens[1] || '1000', 10);
     
-    const animation: Animation = {
+    const animation: any = {
       target,
       property,
       from: 0,
@@ -1120,7 +1088,7 @@ export class HoloScriptRuntime {
     this.createParticleEffect(`${target}_pulse`, position, '#ffff00', 30);
 
     // Create animation for scale
-    const animation: Animation = {
+    const animation: any = {
       target,
       property: 'scale',
       from: 1,
@@ -1288,12 +1256,12 @@ export class HoloScriptRuntime {
   // Transformation
   // ============================================================================
 
-  private async applyTransformation(data: unknown, transform: TransformationNode): Promise<unknown> {
+  private async applyTransformation(data: unknown, transform: TransformationNode): Promise<HoloScriptValue> {
     const params = transform.parameters || {};
 
     switch (transform.operation) {
       case 'filter': {
-        if (!Array.isArray(data)) return data;
+        if (!Array.isArray(data)) return data as any;
         const predicate = params.predicate as string;
         if (predicate) {
           return data.filter(item => {
@@ -1305,7 +1273,7 @@ export class HoloScriptRuntime {
       }
 
       case 'map': {
-        if (!Array.isArray(data)) return data;
+        if (!Array.isArray(data)) return data as any;
         const mapper = params.mapper as string;
         if (mapper) {
           return data.map(item => {
@@ -1317,7 +1285,7 @@ export class HoloScriptRuntime {
       }
 
       case 'reduce': {
-        if (!Array.isArray(data)) return data;
+        if (!Array.isArray(data)) return data as any;
         const initial = params.initial ?? 0;
         const reducer = params.reducer as string;
         if (reducer) {
@@ -1331,7 +1299,7 @@ export class HoloScriptRuntime {
       }
 
       case 'sort': {
-        if (!Array.isArray(data)) return data;
+        if (!Array.isArray(data)) return data as any;
         const key = params.key as string;
         const desc = params.descending as boolean;
         const sorted = [...data].sort((a, b) => {
@@ -1345,35 +1313,35 @@ export class HoloScriptRuntime {
       }
 
       case 'sum':
-        return Array.isArray(data) ? data.reduce((sum, item) => sum + (typeof item === 'number' ? item : 0), 0) : data;
+        return (Array.isArray(data) ? (data as any[]).reduce((sum, item) => sum + (typeof item === 'number' ? item : 0), 0) : data) as any;
 
       case 'count':
-        return Array.isArray(data) ? data.length : 1;
+        return (Array.isArray(data) ? (data as any[]).length : 1) as any;
 
       case 'unique':
-        return Array.isArray(data) ? Array.from(new Set(data)) : data;
+        return (Array.isArray(data) ? Array.from(new Set(data as any[])) : data) as any;
 
       case 'flatten':
-        return Array.isArray(data) ? data.flat() : data;
+        return (Array.isArray(data) ? (data as any[]).flat() : data) as any;
 
       case 'reverse':
-        return Array.isArray(data) ? [...data].reverse() : data;
+        return (Array.isArray(data) ? [...(data as any[])].reverse() : data) as any;
 
       case 'take': {
-        if (!Array.isArray(data)) return data;
+        if (!Array.isArray(data)) return data as any;
         const count = Number(params.count) || 10;
         return data.slice(0, count);
       }
 
       case 'skip': {
-        if (!Array.isArray(data)) return data;
+        if (!Array.isArray(data)) return data as any;
         const count = Number(params.count) || 0;
         return data.slice(count);
       }
 
       default:
         logger.warn('Unknown transformation', { operation: transform.operation });
-        return data;
+        return data as any;
     }
   }
 
@@ -1388,6 +1356,14 @@ export class HoloScriptRuntime {
     const handlers = this.eventHandlers.get(event) || [];
     handlers.push(handler);
     this.eventHandlers.set(event, handlers);
+  }
+
+  /**
+   * Register host function
+   */
+  registerFunction(name: string, handler: (args: HoloScriptValue[]) => HoloScriptValue): void {
+    this.builtinFunctions.set(name, handler);
+    logger.info(`Host function registered: ${name}`);
   }
 
   /**
@@ -1409,7 +1385,7 @@ export class HoloScriptRuntime {
     const handlers = this.eventHandlers.get(event) || [];
     for (const handler of handlers) {
       try {
-        await handler(data);
+        await handler(data as any);
       } catch (error) {
         logger.error('Event handler error', { event, error });
       }
@@ -1470,6 +1446,109 @@ export class HoloScriptRuntime {
         anim.startTime = now;
       }
     }
+  }
+
+  // ==========================================================================
+  // COMMERCE PRIMITIVES
+  // ==========================================================================
+
+  private handleShop(args: any[]): any {
+    const config = args[0] || {};
+    this.emit('shop', config);
+    return { success: true, type: 'shop', config };
+  }
+
+  private handleInventory(args: any[]): any {
+    const item = args[0];
+    const action = args[1] || 'add';
+    this.emit('inventory', { item, action });
+    return { success: true, item, action };
+  }
+
+  private handlePurchase(args: any[]): any {
+    const productId = args[0];
+    this.emit('purchase', { productId });
+    return { success: true, productId, status: 'pending' };
+  }
+
+  // ==========================================================================
+  // SOCIAL PRIMITIVES
+  // ==========================================================================
+
+  private handlePresence(args: any[]): any {
+    const config = args[0] || {};
+    this.emit('presence', config);
+    return { success: true, active: true };
+  }
+
+  private handleInvite(args: any[]): any {
+    const userId = args[0];
+    this.emit('invite', { userId });
+    return { success: true, userId };
+  }
+
+  private handleShare(args: any[]): any {
+    const scriptId = args[0];
+    const targetUserId = args[1];
+    this.emit('share', { scriptId, targetUserId });
+    return { success: true, scriptId };
+  }
+
+  // ==========================================================================
+  // PHYSICS PRIMITIVES
+  // ==========================================================================
+
+  private handlePhysics(args: any[]): any {
+    const config = args[0] || {};
+    this.emit('physics', config);
+    return { success: true, enabled: config.enabled !== false };
+  }
+
+  private handleGravity(args: any[]): any {
+    const value = args[0] ?? 9.81;
+    this.emit('gravity', { value });
+    return { success: true, value };
+  }
+
+  private handleCollide(args: any[]): any {
+    const target = args[0];
+    const handler = args[1];
+    this.emit('collide', { target, handler });
+    return { success: true, target };
+  }
+
+  /**
+   * Handle calculate_arc(start, end, speed)
+   */
+  private handleCalculateArc(args: any[]): any {
+    if (args.length < 3) return { x: 0, y: 0, z: 0 };
+    
+    const start = args[0] as SpatialPosition;
+    const end = args[1] as SpatialPosition;
+    const speed = args[2] as number;
+
+    const dx = end.x - start.x;
+    const dz = end.z - start.z;
+    const dy = end.y - start.y;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    
+    if (dist < 0.1) return { x: 0, y: speed, z: 0 };
+
+    // Basic projectile velocity with upward arc
+    // v_x = dx/t, v_z = dz/t, v_y = dy/t + 0.5 * g * t
+    // simplified for now:
+    const t = dist / speed;
+    const vx = dx / t;
+    const vz = dz / t;
+    const vy = (dy / t) + (0.5 * 9.81 * t); // Compensate for gravity
+
+    return { x: vx, y: vy, z: vz };
+  }
+
+  private handleAnimate(args: any[]): any {
+    const options = args[0] || {};
+    this.emit('animate', options);
+    return { success: true, options };
   }
 
   private applyEasing(t: number, easing: string): number {
@@ -1677,8 +1756,10 @@ export class HoloScriptRuntime {
   }
 
   private async executeComposition(node: CompositionNode): Promise<ExecutionResult> {
-    const results = await this.executeProgram(node.children, this.context.executionStack.length);
-    return { success: true, output: `Composition ${node.name} executed` };
+    return { 
+      success: (await this.executeProgram(node.children, this.context.executionStack.length)).every(r => r.success), 
+      output: `Composition ${node.name} executed` 
+    };
   }
 
   private async executeTemplate(node: TemplateNode): Promise<ExecutionResult> {
@@ -1756,45 +1837,6 @@ export class HoloScriptRuntime {
         interactive: false,
       },
       executionTime: result.executionTime
-    };
-  }
-
-  private async executeDebug(node: DebugNode): Promise<ExecutionResult> {
-    const target = node.target;
-    // In a real scenario, this would gather more debug info
-    const debugInfo = {
-      target,
-      variables: Object.fromEntries(this.context.variables),
-      executionHistoryLength: this.executionHistory.length
-    };
-
-    return {
-      success: true,
-      output: debugInfo as unknown as HoloScriptValue,
-      hologram: node.hologram,
-      executionTime: 0
-    };
-  }
-
-  private async executeVisualize(node: VisualizeNode): Promise<ExecutionResult> {
-    const target = node.target;
-    const data = this.context.variables.get(target);
-
-    if (!data) {
-      return {
-        success: false,
-        error: `No data found for ${target}`,
-        executionTime: 0
-      };
-    }
-
-    this.createDataVisualization(target, data, node.position || {x:0,y:0,z:0});
-
-    return {
-      success: true,
-      output: `Visualizing ${target}`,
-      hologram: node.hologram,
-      executionTime: 0
     };
   }
 
