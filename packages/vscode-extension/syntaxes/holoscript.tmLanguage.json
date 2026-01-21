@@ -1,0 +1,56 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "HoloScript",
+  "patterns": [
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#traits"
+    }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.holoscript",
+          "match": "\\b(orb|function|connect|gate|stream|const|let|for|while|if|else|return|import|export)\\b"
+        }
+      ]
+    },
+    "traits": {
+      "patterns": [
+        {
+          "name": "entity.name.function.decorator.holoscript",
+          "match": "@\\w+"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.holoscript",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.holoscript",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.holoscript",
+          "match": "//.*$"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.holoscript"
+}

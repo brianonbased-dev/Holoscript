@@ -1,0 +1,66 @@
+{
+  "name": "@holoscript/vrchat-export",
+  "version": "1.0.0",
+  "description": "Export HoloScript+ projects to VRChat/Unity with UdonSharp - Bridge to bring VRChat creators to the open metaverse",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./generators": {
+      "types": "./dist/generators/index.d.ts",
+      "import": "./dist/generators/index.js",
+      "require": "./dist/generators/index.cjs"
+    },
+    "./unity": {
+      "types": "./dist/unity/index.d.ts",
+      "import": "./dist/unity/index.js",
+      "require": "./dist/unity/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "holoscript",
+    "vrchat",
+    "udon",
+    "udonsharp",
+    "unity",
+    "vr",
+    "metaverse",
+    "export",
+    "transpiler"
+  ],
+  "author": "HoloScript Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/holoscript/holoscript.git",
+    "directory": "packages/vrchat-export"
+  },
+  "dependencies": {
+    "@holoscript/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@holoscript/core": ">=2.0.0"
+  }
+}

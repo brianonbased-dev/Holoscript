@@ -1,0 +1,49 @@
+{
+  "name": "holoscript-vscode",
+  "displayName": "HoloScript Enhanced",
+  "description": "Language support for HoloScript+ with AI integration and Spatial Profiling",
+  "version": "1.0.0",
+  "publisher": "holoscript",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Visualization"
+  ],
+  "activationEvents": [
+    "onLanguage:holoscript"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "holoscript",
+        "aliases": ["HoloScript", "hosl"],
+        "extensions": [".holo", ".hs", ".hsplus"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "holoscript",
+        "scopeName": "source.holoscript",
+        "path": "./syntaxes/holoscript.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "build": "npm run compile",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"  
+  } 
+}
