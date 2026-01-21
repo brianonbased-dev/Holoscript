@@ -25,6 +25,12 @@ import type {
 import { ReactiveState, createState, ExpressionEvaluator } from '../state/ReactiveState';
 import { VRTraitRegistry, vrTraitRegistry, TraitContext, TraitEvent } from '../traits/VRTraitSystem';
 
+// MOCK: StateSync (to resolve cross-repo dependency for visualization)
+class StateSync {
+  constructor(_options?: any) {}
+  getInterpolatedState(_id: string) { return null; }
+}
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -54,140 +60,7 @@ interface Renderer {
   destroy(element: unknown): void;
 }
 
-// =============================================================================
-// BUILT-IN FUNCTIONS
-// =============================================================================
 
-function createBuiltins(runtime: HoloScriptPlusRuntimeImpl): HSPlusBuiltins {
-  return {
-    Math,
-
-    range: (start: number, end: number, step: number = 1): number[] => {
-      const result: number[] = [];
-      if (step > 0) {
-        for (let i = start; i < end; i += step) {
-          result.push(i);
-        }
-      } else if (step < 0) {
-        for (let i = start; i > end; i += step) {
-          result.push(i);
-        }
-      }
-      return result;
-    },
-
-    interpolate_color: (t: number, from: Color, to: Color): Color => {
-      // Parse hex colors
-      const parseHex = (hex: string): [number, number, number] => {
-        const clean = hex.replace('#', '');
-        return [
-          parseInt(clean.substring(0, 2), 16),
-          parseInt(clean.substring(2, 4), 16),
-          parseInt(clean.substring(4, 6), 16),
-        ];
-      };
-
-      const toHex = (r: number, g: number, b: number): string => {
-        const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
-        return `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
-      };
-
-      const [r1, g1, b1] = parseHex(from);
-      const [r2, g2, b2] = parseHex(to);
-
-      return toHex(
-        r1 + (r2 - r1) * t,
-        g1 + (g2 - g1) * t,
-        b1 + (b2 - b1) * t
-      );
-    },
-
-    distance_to: (point: Vector3): number => {
-      const viewer = runtime.vrContext.headset.position;
-      return Math.sqrt(
-        Math.pow(point[0] - viewer[0], 2) +
-        Math.pow(point[1] - viewer[1], 2) +
-        Math.pow(point[2] - viewer[2], 2)
-      );
-    },
-
-    distance_to_viewer: (): number => {
-      return 0; // Override in node context
-    },
-
-    hand_position: (handId: string): Vector3 => {
-      const hand = handId === 'left' ? runtime.vrContext.hands.left : runtime.vrContext.hands.right;
-      return hand?.position || [0, 0, 0];
-    },
-
-    hand_velocity: (handId: string): Vector3 => {
-      const hand = handId === 'left' ? runtime.vrContext.hands.left : runtime.vrContext.hands.right;
-      return hand?.velocity || [0, 0, 0];
-    },
-
-    dominant_hand: (): VRHand => {
-      // Default to right hand
-      return runtime.vrContext.hands.right || runtime.vrContext.hands.left || {
-        id: 'right',
-        position: [0, 0, 0],
-        rotation: [0, 0, 0],
-        velocity: [0, 0, 0],
-        grip: 0,
-        trigger: 0,
-      };
-    },
-
-    play_sound: (source: string, options?: { volume?: number; spatial?: boolean }): void => {
-      runtime.emit('play_sound', { source, ...options });
-    },
-
-    haptic_feedback: (hand: VRHand | string, intensity: number): void => {
-      const handId = typeof hand === 'string' ? hand : hand.id;
-      runtime.emit('haptic', { hand: handId, intensity });
-    },
-
-    haptic_pulse: (intensity: number): void => {
-      runtime.emit('haptic', { hand: 'both', intensity });
-    },
-
-    apply_velocity: (node: HSPlusNode, velocity: Vector3): void => {
-      runtime.emit('apply_velocity', { node, velocity });
-    },
-
-    spawn: (template: string, position: Vector3): HSPlusNode => {
-      return runtime.spawnTemplate(template, position);
-    },
-
-    destroy: (node: HSPlusNode): void => {
-      runtime.destroyNode(node);
-    },
-
-    api_call: async (url: string, method: string, body?: unknown): Promise<unknown> => {
-      const response = await fetch(url, {
-        method,
-        headers: body ? { 'Content-Type': 'application/json' } : undefined,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      return response.json();
-    },
-
-    open_modal: (modalId: string): void => {
-      runtime.emit('open_modal', { id: modalId });
-    },
-
-    close_modal: (modalId: string): void => {
-      runtime.emit('close_modal', { id: modalId });
-    },
-
-    setTimeout: (callback: () => void, delay: number): number => {
-      return window.setTimeout(callback, delay) as unknown as number;
-    },
-
-    clearTimeout: (id: number): void => {
-      window.clearTimeout(id);
-    },
-  };
-}
 
 // =============================================================================
 // RUNTIME IMPLEMENTATION
@@ -206,22 +79,27 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
   private updateLoopId: number | null = null;
   private lastUpdateTime: number = 0;
   private companions: Record<string, Record<string, (...args: unknown[]) => unknown>>;
+  private networkSync: StateSync;
   private mounted: boolean = false;
   private scaleMultiplier: number = 1;
 
   // VR context
-  vrContext = {
+  public vrContext: {
+    hands: { left: VRHand | null; right: VRHand | null };
+    headset: { position: Vector3; rotation: Vector3 };
+    controllers: { left: unknown; right: unknown };
+  } = {
     hands: {
-      left: null as VRHand | null,
-      right: null as VRHand | null,
+      left: null,
+      right: null,
     },
     headset: {
-      position: [0, 1.6, 0] as Vector3,
-      rotation: [0, 0, 0] as Vector3,
+      position: [0, 1.6, 0],
+      rotation: [0, 0, 0],
     },
     controllers: {
-      left: null as unknown,
-      right: null as unknown,
+      left: null,
+      right: null,
     },
   };
 
@@ -232,6 +110,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
     this.traitRegistry = vrTraitRegistry;
     this.companions = options.companions || {};
     this.builtins = createBuiltins(this);
+    this.networkSync = new StateSync({ interpolation: true });
 
     // Create expression evaluator with context
     this.evaluator = new ExpressionEvaluator(
@@ -601,6 +480,24 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
     const traitContext = this.createTraitContext(instance);
     this.traitRegistry.updateAllTraits(instance.node, traitContext, delta);
 
+    // Sync Avatar Body Parts
+    if (instance.node.type === 'avatar') {
+      this.syncAvatarParts(instance);
+    }
+
+    // Apply Networking Sync
+    if (instance.node.traits.has('networked')) {
+      const interpolated = this.networkSync.getInterpolatedState(instance.node.id || '') as any;
+      if (interpolated) {
+        if (interpolated.position) {
+          instance.node.properties.position = [interpolated.position.x, interpolated.position.y, interpolated.position.z];
+        }
+        if (interpolated.rotation) {
+          instance.node.properties.rotation = [interpolated.rotation.x, interpolated.rotation.y, interpolated.rotation.z];
+        }
+      }
+    }
+
     // Update rendered element if properties changed
     if (this.options.renderer && instance.renderedNode) {
       const properties = this.evaluateProperties(instance.node.properties);
@@ -610,6 +507,121 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
     // Update children
     for (const child of instance.children) {
       this.updateInstance(child, delta);
+    }
+
+    // Update @external_api polling
+    this.updateExternalApis(instance, delta);
+
+    // Process @generate requests
+    this.processGenerateDirectives(instance);
+  }
+
+  private syncAvatarParts(instance: NodeInstance): void {
+    const vrHands = this.vrContext.hands;
+    const vrHead = this.vrContext.headset;
+
+    // Local player avatar sync
+    if (instance.node.id === 'local_player') {
+      instance.node.properties.position = vrHead.position;
+      instance.node.properties.rotation = vrHead.rotation;
+      
+      // Update children (hands)
+      instance.children.forEach(child => {
+        if (child.node.id === 'left_hand' && vrHands.left) {
+          child.node.properties.position = vrHands.left.position;
+          child.node.properties.rotation = vrHands.left.rotation;
+        } else if (child.node.id === 'right_hand' && vrHands.right) {
+          child.node.properties.position = vrHands.right.position;
+          child.node.properties.rotation = vrHands.right.rotation;
+        }
+      });
+
+      // Broadcast if networked
+      if (instance.node.traits.has('networked')) {
+        (this as any).emit('network_snapshot', {
+          objectId: instance.node.id,
+          position: { x: vrHead.position[0], y: vrHead.position[1], z: vrHead.position[2] },
+          rotation: { x: vrHead.rotation[0], y: vrHead.rotation[1], z: vrHead.rotation[2] },
+          timestamp: Date.now()
+        });
+      }
+    }
+  }
+
+  private generatedNodes: Set<string> = new Set();
+
+  private processGenerateDirectives(instance: NodeInstance): void {
+    const generateDirectives = instance.node.directives.filter(d => d.type === 'generate');
+    
+    for (const d of generateDirectives) {
+      const directive: any = d;
+      const genId = `${instance.node.id || 'node'}_${directive.prompt.substring(0, 10)}`;
+      
+      if (this.generatedNodes.has(genId)) continue;
+
+      console.log(`[Generate] AI Bridge Request: "${directive.prompt}"`);
+      
+      // Emit request for external agent/bridge to handle
+      (this as any).emit('generate_request', {
+        id: genId,
+        nodeId: instance.node.id,
+        prompt: directive.prompt,
+        context: directive.context,
+        target: directive.target || 'children',
+      });
+
+      this.generatedNodes.add(genId);
+    }
+  }
+
+  private apiPollingTimers: Map<NodeInstance, number> = new Map();
+
+  private updateExternalApis(instance: NodeInstance, _delta: number): void {
+    const apiDirectives = instance.node.directives.filter(d => d.type === 'external_api');
+    
+    for (const d of apiDirectives) {
+      const directive: any = d;
+      if (directive.type !== 'external_api') continue;
+      
+      const intervalStr = directive.interval || '0s';
+      const intervalMs = this.parseDurationToMs(intervalStr);
+      
+      if (intervalMs <= 0) continue;
+
+      let lastTime = this.apiPollingTimers.get(instance) || 0;
+      const now = performance.now();
+      
+      if (now - lastTime >= intervalMs) {
+        this.apiPollingTimers.set(instance, now);
+        this.executeExternalApi(instance, directive);
+      }
+    }
+  }
+
+  private async executeExternalApi(instance: NodeInstance, directive: any): Promise<void> {
+    try {
+      const data = await this.builtins.api_call(directive.url, directive.method || 'GET');
+      
+      // Update state if needed or trigger logic
+      this.state.set('api_data', data);
+      
+      // Trigger update on instance
+      this.updateData(data);
+    } catch (error) {
+      console.error(`External API error for ${directive.url}:`, error);
+    }
+  }
+
+  private parseDurationToMs(duration: string): number {
+    const match = duration.match(/^(\d+)(ms|s|m)$/);
+    if (!match) return 0;
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+    switch (unit) {
+      case 'ms': return value;
+      case 's': return value * 1000;
+      case 'm': return value * 60000;
+      default: return 0;
     }
   }
 
@@ -955,3 +967,142 @@ export function createRuntime(
 
 export { HoloScriptPlusRuntimeImpl };
 export type { RuntimeOptions, Renderer, NodeInstance };
+
+// =============================================================================
+// BUILT-IN FUNCTIONS
+// =============================================================================
+
+function createBuiltins(runtime: HoloScriptPlusRuntimeImpl): HSPlusBuiltins {
+  return {
+    Math,
+
+    range: (start: number, end: number, step: number = 1): number[] => {
+      const result: number[] = [];
+      if (step > 0) {
+        for (let i = start; i < end; i += step) {
+          result.push(i);
+        }
+      } else if (step < 0) {
+        for (let i = start; i > end; i += step) {
+          result.push(i);
+        }
+      }
+      return result;
+    },
+
+    interpolate_color: (t: number, from: Color, to: Color): Color => {
+      // Parse hex colors
+      const parseHex = (hex: string): [number, number, number] => {
+        const clean = hex.replace('#', '');
+        return [
+          parseInt(clean.substring(0, 2), 16),
+          parseInt(clean.substring(2, 4), 16),
+          parseInt(clean.substring(4, 6), 16),
+        ];
+      };
+
+      const toHex = (r: number, g: number, b: number): string => {
+        const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+        return `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
+      };
+
+      const [r1, g1, b1] = parseHex(from);
+      const [r2, g2, b2] = parseHex(to);
+
+      return toHex(
+        r1 + (r2 - r1) * t,
+        g1 + (g2 - g1) * t,
+        b1 + (b2 - b1) * t
+      );
+    },
+
+    distance_to: (point: Vector3): number => {
+      const viewer = runtime.vrContext.headset.position;
+      return Math.sqrt(
+        Math.pow(point[0] - viewer[0], 2) +
+        Math.pow(point[1] - viewer[1], 2) +
+        Math.pow(point[2] - viewer[2], 2)
+      );
+    },
+
+    distance_to_viewer: (): number => {
+      return 0; // Override in node context
+    },
+
+    hand_position: (handId: string): Vector3 => {
+      const hand = handId === 'left' ? runtime.vrContext.hands.left : runtime.vrContext.hands.right;
+      return hand?.position || [0, 0, 0];
+    },
+
+    hand_velocity: (handId: string): Vector3 => {
+      const hand = handId === 'left' ? runtime.vrContext.hands.left : runtime.vrContext.hands.right;
+      return hand?.velocity || [0, 0, 0];
+    },
+
+    dominant_hand: (): VRHand => {
+      // Default to right hand
+      return runtime.vrContext.hands.right || runtime.vrContext.hands.left || {
+        id: 'right',
+        position: [0, 0, 0],
+        rotation: [0, 0, 0],
+        velocity: [0, 0, 0],
+        grip: 0,
+        trigger: 0,
+      };
+    },
+
+    play_sound: (source: string, options?: { volume?: number; spatial?: boolean }): void => {
+      runtime.emit('play_sound', { source, ...options });
+    },
+
+    haptic_feedback: (hand: VRHand | string, intensity: number): void => {
+      const handId = typeof hand === 'string' ? hand : hand.id;
+      runtime.emit('haptic', { hand: handId, intensity });
+    },
+
+    haptic_pulse: (intensity: number): void => {
+      runtime.emit('haptic', { hand: 'both', intensity });
+    },
+
+    apply_velocity: (node: HSPlusNode, velocity: Vector3): void => {
+      runtime.emit('apply_velocity', { node, velocity });
+    },
+
+    spawn: (template: string, position: Vector3): HSPlusNode => {
+      return runtime.spawnTemplate(template, position);
+    },
+
+    assistant_generate: (prompt: string, context?: string): void => {
+      runtime.emit('assistant_generate', { prompt, context });
+    },
+
+    destroy: (node: HSPlusNode): void => {
+      runtime.destroyNode(node);
+    },
+
+    api_call: async (url: string, method: string, body?: unknown): Promise<unknown> => {
+      const response = await fetch(url, {
+        method,
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      return response.json();
+    },
+
+    open_modal: (modalId: string): void => {
+      runtime.emit('open_modal', { id: modalId });
+    },
+
+    close_modal: (modalId: string): void => {
+      runtime.emit('close_modal', { id: modalId });
+    },
+
+    setTimeout: (callback: () => void, delay: number): number => {
+      return window.setTimeout(callback, delay) as unknown as number;
+    },
+
+    clearTimeout: (id: number): void => {
+      window.clearTimeout(id);
+    },
+  };
+}

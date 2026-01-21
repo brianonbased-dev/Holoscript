@@ -350,7 +350,7 @@ export class AdvancedTypeChecker {
  * HoloScript+ AST Types
  */
 export interface HSPlusNode {
-  type: 'directive' | 'trait' | 'lifecycle' | 'state' | 'for' | 'if' | 'import' | 'component' | 'element' | 'fragment' | 'Program';
+  type: 'directive' | 'trait' | 'lifecycle' | 'state' | 'for' | 'if' | 'import' | 'component' | 'element' | 'fragment' | 'Program' | 'external_api' | 'generate';
   [key: string]: any;
 }
 
@@ -366,7 +366,7 @@ export interface HSPlusAST extends HSPlusNode {
 }
 
 export interface HSPlusDirective extends HSPlusNode {
-  type: 'directive' | 'trait' | 'lifecycle' | 'state' | 'for' | 'if' | 'import' | 'fragment';
+  type: 'directive' | 'trait' | 'lifecycle' | 'state' | 'for' | 'if' | 'import' | 'fragment' | 'external_api' | 'generate';
   name: string;
   args: string[];
   enableTypeScriptImports?: boolean;
@@ -405,7 +405,9 @@ export type VRTraitName =
   | 'pressable'
   | 'stackable'
   | 'snappable'
-  | 'breakable';
+  | 'breakable'
+  | 'networked'
+  | 'proactive';
 
 export interface StateDeclaration {
   name: string;
@@ -476,6 +478,7 @@ export interface HSPlusBuiltins {
   off: (event: string, handler?: (data: any) => void) => void;
   showSettings: () => void;
   openChat: (config?: any) => void;
+  assistant_generate: (prompt: string, context?: string) => void;
   [key: string]: any;
 }
 

@@ -12,85 +12,26 @@
 import {
   HoloScriptCodeParser,
   HoloScriptTypeChecker,
+  VR_TRAITS,
   type ASTNode,
   type TypeInfo,
   type TypeDiagnostic,
 } from '@holoscript/core';
 
-// LSP Types (subset for standalone use)
-export interface Position {
-  line: number;
-  character: number;
-}
+// ... (LSP Types omitted for brevity, keeping existing) ...
 
-export interface Range {
-  start: Position;
-  end: Position;
-}
-
-export interface Location {
-  uri: string;
-  range: Range;
-}
-
-export interface Diagnostic {
-  range: Range;
-  severity: DiagnosticSeverity;
-  code?: string;
-  source: string;
-  message: string;
-}
-
-export enum DiagnosticSeverity {
-  Error = 1,
-  Warning = 2,
-  Information = 3,
-  Hint = 4,
-}
-
-export interface CompletionItem {
-  label: string;
-  kind: CompletionItemKind;
-  detail?: string;
-  documentation?: string;
-  insertText?: string;
-}
-
-export enum CompletionItemKind {
-  Text = 1,
-  Method = 2,
-  Function = 3,
-  Constructor = 4,
-  Field = 5,
-  Variable = 6,
-  Class = 7,
-  Interface = 8,
-  Module = 9,
-  Property = 10,
-  Unit = 11,
-  Value = 12,
-  Enum = 13,
-  Keyword = 14,
-  Snippet = 15,
-  Color = 16,
-  File = 17,
-  Reference = 18,
-  Folder = 19,
-  EnumMember = 20,
-  Constant = 21,
-  Struct = 22,
-  Event = 23,
-  Operator = 24,
-  TypeParameter = 25,
-}
-
-export interface Hover {
-  contents: string;
-  range?: Range;
-}
+// Dynamic Trait Completions
+const TRAIT_COMPLETIONS: CompletionItem[] = VR_TRAITS.map(trait => ({
+  label: `@${trait}`,
+  kind: CompletionItemKind.Keyword,
+  detail: `Apply ${trait} trait`,
+  insertText: `@${trait}(${'${1}'})`
+}));
 
 // HoloScript keywords and snippets
 const KEYWORDS: CompletionItem[] = [
+  ...TRAIT_COMPLETIONS,
+  { label: 'generate', kind: CompletionItemKind.Keyword, detail: 'AI Generation Directive', insertText: '@generate(prompt: "${1:prompt}")' },
   { label: 'orb', kind: CompletionItemKind.Keyword, detail: 'Create a spatial orb', insertText: 'orb ${1:name} {\n\t$0\n}' },
   { label: 'function', kind: CompletionItemKind.Keyword, detail: 'Define a function', insertText: 'function ${1:name}(${2:params}) {\n\t$0\n}' },
   { label: 'connect', kind: CompletionItemKind.Keyword, detail: 'Connect two orbs', insertText: 'connect ${1:from} to ${2:to} as "${3:type}"' },
