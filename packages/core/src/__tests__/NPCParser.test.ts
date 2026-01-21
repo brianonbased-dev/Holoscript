@@ -18,9 +18,11 @@ describe('HoloScript+ NPC & Dialog System', () => {
     const result = parser.parse(source);
     
     if (result.errors.length > 0) {
-        console.error('PARSE ERRORS:', JSON.stringify(result.errors, null, 2));
+        const fs = require('fs');
+        fs.writeFileSync('parse_error.log', JSON.stringify(result.errors, null, 2));
     } else {
-        console.log('PARSE SUCCESS:', JSON.stringify(result.ast, null, 2));
+        const fs = require('fs');
+        fs.writeFileSync('parse_success.log', JSON.stringify(result.ast, null, 2));
     }
 
     expect(result.success).toBe(true);
