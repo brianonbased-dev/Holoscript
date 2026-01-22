@@ -749,6 +749,22 @@ export class HoloScriptPlusParser {
       return { type: 'for' as const, variable, iterable, body } as any;
     }
 
+    if (name === 'forEach') {
+      this.hasControlFlow = true;
+      const variable = this.expect('IDENTIFIER', 'Expected variable name').value;
+      this.expect('IDENTIFIER', 'Expected "in"');
+      const collection = this.parseInlineExpression();
+      const body = this.parseControlFlowBody();
+      return { type: 'forEach' as const, variable, collection, body } as any;
+    }
+
+    if (name === 'while') {
+      this.hasControlFlow = true;
+      const condition = this.parseInlineExpression();
+      const body = this.parseControlFlowBody();
+      return { type: 'while' as const, condition, body } as any;
+    }
+
     if (name === 'if') {
       this.hasControlFlow = true;
       const condition = this.parseInlineExpression();

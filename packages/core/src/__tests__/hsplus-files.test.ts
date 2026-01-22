@@ -2,77 +2,68 @@
  * HoloScript+ File Tests
  *
  * Tests that parse actual .hsplus files from fixtures and examples
- *
- * NOTE: This test file causes memory issues in vitest worker pools.
- * The tests pass but the worker runs out of memory during cleanup.
- * Skip this file until vitest memory handling is improved.
+ * Optimized to use a single parser instance to avoid memory issues.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  loadFixture,
-  loadExample,
-  getAllFixtures,
-  getAllExamples,
-  createTestParser,
-  serializeAST,
-  ALL_VR_TRAITS,
-  testAllTraitsparse,
-} from './test-utils';
+import { describe, it, expect } from 'vitest';
+import { readFileSync, existsSync, readdirSync } from 'fs';
+import { join, resolve } from 'path';
 import { HoloScriptPlusParser } from '../parser/HoloScriptPlusParser';
+import { VR_TRAITS } from '../constants';
 
-describe.skip('HoloScript+ File Parsing', () => {
-  let parser: HoloScriptPlusParser;
+// Single parser instance - reused across all tests
+const parser = new HoloScriptPlusParser({ enableVRTraits: true });
 
-  beforeEach(() => {
-    parser = createTestParser();
-  });
+// Inline file loading to avoid module overhead
+const fixturesDir = resolve(__dirname, 'fixtures');
+const examplesDir = resolve(__dirname, '../../../../examples');
 
+function loadFixture(name: string): string {
+  const filePath = name.endsWith('.hsplus') ? join(fixturesDir, name) : join(fixturesDir, `${name}.hsplus`);
+  return readFileSync(filePath, 'utf-8');
+}
+
+function loadExample(name: string): string {
+  const filePath = name.endsWith('.hsplus') ? join(examplesDir, name) : join(examplesDir, `${name}.hsplus`);
+  return readFileSync(filePath, 'utf-8');
+}
+
+describe('HoloScript+ File Parsing', () => {
   // ==========================================================================
   // Fixture File Tests
   // ==========================================================================
 
   describe('Fixture Files', () => {
     it('parses basic-orb.hsplus', () => {
-      const source = loadFixture('basic-orb');
-      const result = parser.parse(source);
-
-      // Parser should return a result (even if success is undefined for simple parse)
+      const result = parser.parse(loadFixture('basic-orb'));
       expect(result).toBeDefined();
       expect(result.ast).toBeDefined();
     });
 
     it('parses traits-basic.hsplus', () => {
-      const source = loadFixture('traits-basic');
-      const result = parser.parse(source);
-
+      const result = parser.parse(loadFixture('traits-basic'));
       expect(result).toBeDefined();
       expect(result.ast).toBeDefined();
     });
 
     it('parses humanoid-avatar.hsplus', () => {
-      const source = loadFixture('humanoid-avatar');
-      const result = parser.parse(source);
-
+      const result = parser.parse(loadFixture('humanoid-avatar'));
       expect(result).toBeDefined();
       expect(result.ast).toBeDefined();
     });
 
     it('parses stretchable-atoms.hsplus', () => {
-      const source = loadFixture('stretchable-atoms');
-      const result = parser.parse(source);
-
+      const result = parser.parse(loadFixture('stretchable-atoms'));
       expect(result).toBeDefined();
       expect(result.ast).toBeDefined();
     });
 
     it('parses all fixtures without throwing', () => {
-      const fixtures = getAllFixtures();
+      const fixtures = readdirSync(fixturesDir).filter(f => f.endsWith('.hsplus'));
       expect(fixtures.length).toBeGreaterThan(0);
 
       for (const fixture of fixtures) {
-        const source = loadFixture(fixture);
-        expect(() => parser.parse(source)).not.toThrow();
+        expect(() => parser.parse(loadFixture(fixture))).not.toThrow();
       }
     });
   });
@@ -83,28 +74,24 @@ describe.skip('HoloScript+ File Parsing', () => {
 
   describe('Example Files', () => {
     it('parses vr-interactions.hsplus', () => {
-      const source = loadExample('vr-interactions');
-      const result = parser.parse(source);
-
+      const result = parser.parse(loadExample('vr-interactions'));
       expect(result).toBeDefined();
       expect(result.ast).toBeDefined();
     });
 
     it('parses researcher-viralist.hsplus', () => {
-      const source = loadExample('researcher-viralist');
-      const result = parser.parse(source);
-
+      const result = parser.parse(loadExample('researcher-viralist'));
       expect(result).toBeDefined();
       expect(result.ast).toBeDefined();
     });
 
     it('parses all examples without throwing', () => {
-      const examples = getAllExamples();
+      if (!existsSync(examplesDir)) return;
+      const examples = readdirSync(examplesDir).filter(f => f.endsWith('.hsplus'));
       expect(examples.length).toBeGreaterThan(0);
 
       for (const example of examples) {
-        const source = loadExample(example);
-        expect(() => parser.parse(source)).not.toThrow();
+        expect(() => parser.parse(loadExample(example))).not.toThrow();
       }
     });
   });
@@ -114,50 +101,18 @@ describe.skip('HoloScript+ File Parsing', () => {
   // ==========================================================================
 
   describe('Trait Coverage', () => {
-    it('recognizes all defined VR traits', () => {
-      // Test that the parser can at least attempt to parse each trait
-      const results = testAllTraitsparse(parser);
-
-      // Log any failures for debugging
-      const failures = results.filter(r => !r.success);
-      if (failures.length > 0) {
-        console.log('Trait parsing failures:', failures);
+    it('parses all VR traits without errors', () => {
+      for (const trait of VR_TRAITS) {
+        const source = `orb#test @${trait} { position: [0, 0, 0] }`;
+        expect(() => parser.parse(source)).not.toThrow();
       }
-
-      // At minimum, the parser should not throw for any trait
-      expect(results.every(r => r.error === undefined)).toBe(true);
     });
 
-    it('exports ALL_VR_TRAITS constant with expected traits', () => {
-      // Should match VR_TRAITS from constants.ts
-      // 11 core + 11 humanoid + 2 networking + 4 media + 4 analytics + 4 social + 4 effects + 3 audio + 4 AI + 2 timeline = 49
-      expect(ALL_VR_TRAITS.length).toBeGreaterThanOrEqual(40); // At least 40 traits
-      expect(ALL_VR_TRAITS).toContain('grabbable');
-      expect(ALL_VR_TRAITS).toContain('skeleton');
-      expect(ALL_VR_TRAITS).toContain('stretchable');
-    });
-  });
-
-  // ==========================================================================
-  // Snapshot Tests
-  // ==========================================================================
-
-  describe('AST Snapshots', () => {
-    // Skip snapshot tests - they cause memory issues in vitest
-    it.skip('basic-orb AST matches snapshot', () => {
-      const source = loadFixture('basic-orb');
-      const result = parser.parse(source);
-      const serialized = serializeAST(result.ast);
-
-      expect(serialized).toMatchSnapshot();
-    });
-
-    it.skip('traits-basic AST matches snapshot', () => {
-      const source = loadFixture('traits-basic');
-      const result = parser.parse(source);
-      const serialized = serializeAST(result.ast);
-
-      expect(serialized).toMatchSnapshot();
+    it('has expected number of VR traits', () => {
+      expect(VR_TRAITS.length).toBeGreaterThanOrEqual(40);
+      expect(VR_TRAITS).toContain('grabbable');
+      expect(VR_TRAITS).toContain('skeleton');
+      expect(VR_TRAITS).toContain('stretchable');
     });
   });
 
@@ -171,31 +126,24 @@ describe.skip('HoloScript+ File Parsing', () => {
     });
 
     it('handles comment-only file', () => {
-      const source = `
-        // This is a comment
-        // Another comment
-      `;
-      expect(() => parser.parse(source)).not.toThrow();
+      expect(() => parser.parse('// comment\n// another')).not.toThrow();
     });
 
-    it('handles file with only whitespace', () => {
+    it('handles whitespace-only file', () => {
       expect(() => parser.parse('   \n\n   \t\t   ')).not.toThrow();
     });
 
     it('handles multiple traits on single line', () => {
-      const source = `orb#test @grabbable @throwable @hoverable { position: [0,0,0] }`;
-      const result = parser.parse(source);
+      const result = parser.parse('orb#test @grabbable @throwable @hoverable { position: [0,0,0] }');
       expect(result).toBeDefined();
+      expect(result.ast.root.traits.has('grabbable')).toBe(true);
     });
 
     it('handles traits with complex config', () => {
-      const source = `
-        avatar#npc @skeleton(type: "humanoid", ik_enabled: true, ik_targets: { left_hand: "ik_lh", right_hand: "ik_rh" }) {
-          name: "NPC"
-        }
-      `;
+      const source = `avatar#npc @skeleton(type: "humanoid", ik_enabled: true) { name: "NPC" }`;
       const result = parser.parse(source);
       expect(result).toBeDefined();
+      expect(result.ast.root.traits.has('skeleton')).toBe(true);
     });
   });
 });

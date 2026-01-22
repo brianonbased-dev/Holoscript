@@ -41,3 +41,53 @@ describe('HoloScriptPlusParser - Extended Features', () => {
     expect(node.directives.some((d: any) => d.type === 'external_api')).toBe(true);
   });
 });
+
+describe('HoloScriptPlusParser - Control Flow', () => {
+  const parser = new HoloScriptPlusParser({ enableVRTraits: true });
+
+  it('Parses @while loop correctly', () => {
+    const source = `scene#main {
+      @while count < 10 {
+        orb#item { size: 1 }
+      }
+    }`;
+    const result = parser.parse(source);
+    expect(result.success).toBe(true);
+
+    const node = result.ast.root;
+    const whileDirective = node.directives.find((d: any) => d.type === 'while') as any;
+    expect(whileDirective).toBeDefined();
+    expect(whileDirective.condition).toContain('count');
+  });
+
+  it('Parses @forEach loop correctly', () => {
+    const source = `scene#main {
+      @forEach item in items {
+        orb#item { size: 1 }
+      }
+    }`;
+    const result = parser.parse(source);
+    expect(result.success).toBe(true);
+
+    const node = result.ast.root;
+    const forEachDirective = node.directives.find((d: any) => d.type === 'forEach') as any;
+    expect(forEachDirective).toBeDefined();
+    expect(forEachDirective.variable).toBe('item');
+    expect(forEachDirective.collection).toContain('items');
+  });
+
+  it('Parses @for loop correctly', () => {
+    const source = `scene#main {
+      @for i in range(5) {
+        orb#item { size: 1 }
+      }
+    }`;
+    const result = parser.parse(source);
+    expect(result.success).toBe(true);
+
+    const node = result.ast.root;
+    const forDirective = node.directives.find((d: any) => d.type === 'for') as any;
+    expect(forDirective).toBeDefined();
+    expect(forDirective.variable).toBe('i');
+  });
+});
