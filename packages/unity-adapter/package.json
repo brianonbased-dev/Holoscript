@@ -1,0 +1,50 @@
+{
+  "name": "@holoscript/unity-adapter",
+  "version": "1.0.0",
+  "description": "Unity/C# adapter for HoloScript - Generate Unity-ready C# scripts and prefabs",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "holoscript",
+    "unity",
+    "c#",
+    "csharp",
+    "3d",
+    "vr",
+    "xr",
+    "game-engine"
+  ],
+  "author": "Brian on Base Team",
+  "license": "MIT",
+  "dependencies": {
+    "@holoscript/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brianonbased-dev/holoscript",
+    "directory": "packages/unity-adapter"
+  }
+}

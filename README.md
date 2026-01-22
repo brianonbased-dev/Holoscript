@@ -119,6 +119,8 @@ const result = parser.parse(`
 | `@holoscript/three-adapter` | 1.0.0 | Three.js 3D world + physics + audio | ✅ |
 | `@holoscript/babylon-adapter` | 1.0.0 | Babylon.js 3D world | ✅ **New** |
 | `@holoscript/playcanvas-adapter` | 1.0.0 | PlayCanvas 3D world | ✅ **New** |
+| `@holoscript/unity-adapter` | 1.0.0 | Unity C# + XR export | ✅ **New** |
+| `@holoscript/vrchat-export` | 1.0.0 | VRChat/UdonSharp export | 🟡 *alpha* |
 | `@holoscript/network` | 1.0.0 | Multiplayer networking (@networked) | ✅ **New** |
 | `@holoscript/infinityassistant` | 1.0.0 | AI building client | ✅ |
 | `@holoscript/creator-tools` | 0.9.0 | Visual editors | 🟡 *beta* |
