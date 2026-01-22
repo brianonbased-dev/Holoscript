@@ -729,6 +729,8 @@ export type AllLifecycleHooks =
 export type HSPlusDirective =
   | { type: 'state'; body: StateDeclaration }
   | { type: 'for'; variable: string; iterable: string; body: HSPlusNode[] }
+  | { type: 'forEach'; variable: string; collection: string; body: HSPlusNode[] }
+  | { type: 'while'; condition: string; body: HSPlusNode[] }
   | { type: 'if'; condition: string; body: HSPlusNode[]; else?: HSPlusNode[] }
   | { type: 'import'; path: string; alias: string }
   | { type: 'lifecycle'; hook: AllLifecycleHooks; params?: string[]; body: string }

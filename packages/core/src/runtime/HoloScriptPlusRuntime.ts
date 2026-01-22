@@ -300,7 +300,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
   private processControlFlow(children: HSPlusNode[], directives: HSPlusDirective[]): HSPlusNode[] {
     const result: HSPlusNode[] = [];
 
-    // Process @for directives
+    // Process control flow directives
     for (const directive of directives) {
       if (directive.type === 'for') {
         const items = this.evaluateExpression(directive.iterable);
@@ -322,6 +322,53 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
               result.push(cloned);
             }
           });
+        }
+      } else if (directive.type === 'forEach') {
+        // @forEach item in collection { ... }
+        const items = this.evaluateExpression(directive.collection);
+        if (Array.isArray(items)) {
+          items.forEach((item, index) => {
+            const iterContext = {
+              [directive.variable]: item,
+              index,
+              first: index === 0,
+              last: index === items.length - 1,
+              even: index % 2 === 0,
+              odd: index % 2 !== 0,
+            };
+
+            for (const bodyNode of directive.body) {
+              const cloned = this.cloneNodeWithContext(bodyNode, iterContext);
+              result.push(cloned);
+            }
+          });
+        }
+      } else if (directive.type === 'while') {
+        // @while condition { ... }
+        // Runtime evaluation - expand once at instantiation time
+        // Note: For true reactive while loops, this would need re-evaluation on state change
+        const MAX_ITERATIONS = 1000; // Safety limit
+        let iterations = 0;
+
+        while (iterations < MAX_ITERATIONS) {
+          const condition = this.evaluateExpression(directive.condition);
+          if (!condition) break;
+
+          const iterContext = {
+            iteration: iterations,
+            index: iterations,
+          };
+
+          for (const bodyNode of directive.body) {
+            const cloned = this.cloneNodeWithContext(bodyNode, iterContext);
+            result.push(cloned);
+          }
+
+          iterations++;
+        }
+
+        if (iterations >= MAX_ITERATIONS) {
+          console.warn('@while loop hit maximum iteration limit (1000)');
         }
       } else if (directive.type === 'if') {
         const condition = this.evaluateExpression(directive.condition);

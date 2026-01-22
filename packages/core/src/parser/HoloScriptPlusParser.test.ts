@@ -91,3 +91,49 @@ describe('HoloScriptPlusParser - Control Flow', () => {
     expect(forDirective.variable).toBe('i');
   });
 });
+
+describe('HoloScriptPlusParser - Import Statements', () => {
+  const parser = new HoloScriptPlusParser({ enableVRTraits: true, enableTypeScriptImports: true });
+
+  it('Parses @import with path', () => {
+    const source = `@import "./utils/helpers.ts"
+    scene#main { size: 1 }`;
+    const result = parser.parse(source);
+    expect(result.success).toBe(true);
+    expect(result.ast.imports.length).toBe(1);
+    expect(result.ast.imports[0].path).toBe('./utils/helpers.ts');
+    expect(result.ast.imports[0].alias).toBe('helpers');
+  });
+
+  it('Parses @import with alias', () => {
+    const source = `@import "./utils/math-helpers.ts" as MathUtils
+    scene#main { size: 1 }`;
+    const result = parser.parse(source);
+    expect(result.success).toBe(true);
+    expect(result.ast.imports.length).toBe(1);
+    expect(result.ast.imports[0].path).toBe('./utils/math-helpers.ts');
+    expect(result.ast.imports[0].alias).toBe('MathUtils');
+  });
+
+  it('Parses multiple @import statements', () => {
+    const source = `@import "./utils.ts"
+    @import "./helpers.ts" as H
+    @import "./config.ts"
+    scene#main { size: 1 }`;
+    const result = parser.parse(source);
+    expect(result.success).toBe(true);
+    expect(result.ast.imports.length).toBe(3);
+    expect(result.ast.imports[0].alias).toBe('utils');
+    expect(result.ast.imports[1].alias).toBe('H');
+    expect(result.ast.imports[2].alias).toBe('config');
+  });
+
+  it('Disables @import when enableTypeScriptImports is false', () => {
+    const disabledParser = new HoloScriptPlusParser({ enableTypeScriptImports: false });
+    const source = `@import "./utils.ts"
+    scene#main { size: 1 }`;
+    const result = disabledParser.parse(source);
+    expect(result.ast.imports.length).toBe(0);
+    expect(result.warnings?.length).toBeGreaterThan(0);
+  });
+});
