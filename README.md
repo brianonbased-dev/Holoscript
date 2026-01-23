@@ -20,16 +20,14 @@ A declarative language that compiles to 9 platforms from one source.
 
 ## 📁 File Types
 
-**Which should I use?**
-- **`.hsplus`** → Production apps, multiplayer, advanced features (**recommended**)
-- **`.holo`** → Learning tutorials and simple prototypes
+**Two complementary formats for different purposes:**
 
-| Extension | What It Does |
-|-----------|-------------|
-| `.hsplus` | HoloScript Plus – full language with networking, physics, NPCs |
-| `.holo` | Standard HoloScript – simpler syntax for beginners |
+| Extension | Purpose | Best For |
+|-----------|---------|----------|
+| `.holo` | Declarative, visual | World layouts, agent definitions, AI-generated content |
+| `.hsplus` | Imperative, full language | Complex logic, networking, custom systems |
 
-> 💡 **New projects should use `.hsplus`**. Use `.holo` only for learning.
+> 💡 **Use both together:** `.holo` for *what exists*, `.hsplus` for *how it behaves*.
 
 ---
 
