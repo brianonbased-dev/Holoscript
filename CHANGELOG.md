@@ -1,3 +1,34 @@
+## [2.1.0] - 2026-01-22
+
+### 🏗️ Repository Reorganization
+
+Major structural change: HoloScript is now the dedicated language repository, separate from Hololand platform.
+
+### Added
+- **Dev Tools** - Consolidated all language tooling in this repo:
+  - `@holoscript/formatter` - Code formatting (from Hololand)
+  - `@holoscript/linter` - Static analysis (from Hololand)
+  - `@holoscript/lsp` - Language Server Protocol (from Hololand)
+  - `@holoscript/std` - Standard library (from Hololand)
+  - `@holoscript/fs` - File system utilities (from Hololand)
+
+### Removed
+- Platform adapters moved to Hololand repo:
+  - `@holoscript/babylon-adapter` → `@hololand/babylon-adapter`
+  - `@holoscript/three-adapter` → `@hololand/three-adapter`
+  - `@holoscript/playcanvas-adapter` → `@hololand/playcanvas-adapter`
+  - `@holoscript/unity-adapter` → `@hololand/unity-adapter`
+  - `@holoscript/vrchat-export` → `@hololand/vrchat-export`
+  - `@holoscript/creator-tools` → `@hololand/creator-tools`
+
+### Changed
+- HoloScript is now the **language repo** (parser, runtime, dev tools)
+- Hololand is now the **platform repo** (adapters, Brittney AI, apps)
+- Updated LSP dependency from `@hololand/core` to `@holoscript/core`
+
+### Fixed
+- Runtime timing.ts TypeScript error with `requestIdleCallback` narrowing
+
 ## [2.0.2] - 2026-01-18
 
 ### Added

@@ -1,4 +1,4 @@
-# @hololand/holoscript-formatter
+# @holoscript/formatter
 
 Code formatting tool for HoloScript (.holo) and HoloScript+ (.hsplus) files.
 
@@ -15,7 +15,7 @@ Code formatting tool for HoloScript (.holo) and HoloScript+ (.hsplus) files.
 ## Installation
 
 ```bash
-pnpm add @hololand/holoscript-formatter
+pnpm add @holoscript/formatter
 ```
 
 ## CLI Usage
@@ -43,7 +43,7 @@ holoscript-format --quiet --write src/
 ## Programmatic Usage
 
 ```typescript
-import { HoloScriptFormatter, format, check, createFormatter } from '@hololand/holoscript-formatter';
+import { HoloScriptFormatter, format, check, createFormatter } from '@holoscript/formatter';
 
 // Create formatter with custom config
 const formatter = new HoloScriptFormatter({

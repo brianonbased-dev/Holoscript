@@ -1,4 +1,4 @@
-# @hololand/holoscript-linter
+# @holoscript/linter
 
 Static analysis tool for HoloScript (.holo) and HoloScript+ (.hsplus) files.
 
@@ -15,7 +15,7 @@ Static analysis tool for HoloScript (.holo) and HoloScript+ (.hsplus) files.
 ## Installation
 
 ```bash
-pnpm add @hololand/holoscript-linter
+pnpm add @holoscript/linter
 ```
 
 ## CLI Usage

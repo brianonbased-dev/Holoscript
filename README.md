@@ -112,18 +112,31 @@ const result = parser.parse(`
 
 ## Packages
 
+### Core Language (This Repo)
+
 | Package | Version | What it does | Status |
 |---------|---------|--------------|--------|
 | `@holoscript/core` | 2.1.0 | Parser, runtime, types | ✅ |
-| `@holoscript/cli` | 1.0.0 | Command line tools + LSP | ✅ |
-| `@holoscript/three-adapter` | 1.0.0 | Three.js 3D world + physics + audio | ✅ |
-| `@holoscript/babylon-adapter` | 1.0.0 | Babylon.js 3D world | ✅ **New** |
-| `@holoscript/playcanvas-adapter` | 1.0.0 | PlayCanvas 3D world | ✅ **New** |
-| `@holoscript/unity-adapter` | 1.0.0 | Unity C# + XR export | ✅ **New** |
-| `@holoscript/vrchat-export` | 1.0.0 | VRChat/UdonSharp export | 🟡 *alpha* |
-| `@holoscript/network` | 1.0.0 | Multiplayer networking (@networked) | ✅ **New** |
-| `@holoscript/infinityassistant` | 1.0.0 | AI building client | ✅ |
-| `@holoscript/creator-tools` | 0.9.0 | Visual editors | 🟡 *beta* |
+| `@holoscript/runtime` | 2.1.0 | Execution engine | ✅ |
+| `@holoscript/cli` | 2.1.0 | Command line tools | ✅ |
+| `@holoscript/formatter` | 2.0.0 | Code formatting | ✅ |
+| `@holoscript/linter` | 2.0.0 | Static analysis | ✅ |
+| `@holoscript/lsp` | 1.0.0 | Language Server Protocol | ✅ |
+| `@holoscript/std` | 1.0.0 | Standard library | ✅ |
+| `@holoscript/fs` | 1.0.0 | File system utilities | ✅ |
+| `@holoscript/network` | 1.0.0 | Multiplayer networking | ✅ |
+| `@holoscript/llm` | 1.0.0 | AI/LLM integration | ✅ |
+
+### Platform Adapters ([Hololand Repo](https://github.com/brianonbased-dev/Hololand))
+
+| Package | What it does | Status |
+|---------|--------------|--------|
+| `@hololand/three-adapter` | Three.js 3D world + physics + audio | ✅ |
+| `@hololand/babylon-adapter` | Babylon.js 3D world | ✅ |
+| `@hololand/playcanvas-adapter` | PlayCanvas 3D world | ✅ |
+| `@hololand/unity-adapter` | Unity C# + XR export | ✅ |
+| `@hololand/vrchat-export` | VRChat/UdonSharp export | 🟡 *alpha* |
+| `@hololand/creator-tools` | Visual editors | ✅ |
 
 ## 🌐 Three.js World Integration
 
