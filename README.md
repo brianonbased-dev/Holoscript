@@ -22,15 +22,13 @@ A declarative language that compiles to 9 platforms from one source.
 
 | Format | What | When |
 |--------|------|------|
-| `.holo` | Structure | Worlds, agents, objects |
-| `.hsplus` | Logic | Systems, networking, behaviors |
+| `.holo` | Graph | Worlds, agents, UI, objects, events |
+| `.hsplus` | Code | Systems, networking, behaviors |
 
-```
-.holo   = "What exists"     (declarative graph)
-.hsplus = "How it works"    (imperative code)
-```
+**.holo** — Worlds, agents, UI panels, traits, dialogue, AR anchors, templates  
+**.hsplus** — Game systems, networking, physics, procedural generation
 
-**Both are AI-writable.** Use together.
+**Both AI-writable.** Use together.
 
 ---
 
