@@ -233,6 +233,77 @@ export {
   type LobbyConfig,
 } from './traits/LobbyTrait';
 
+// HoloScript+ Dialog Trait (NEW - Phase 5: AI/NPC)
+export {
+  DialogTrait,
+  createDialogTrait,
+  type DialogNodeType,
+  type DialogCondition,
+  type DialogAction,
+  type DialogChoice,
+  type DialogNode,
+  type DialogTree,
+  type DialogConfig,
+  type DialogState,
+  type DialogEvent,
+} from './traits/DialogTrait';
+
+// HoloScript+ Voice Output Trait (NEW - Phase 5: AI/NPC)
+export {
+  VoiceOutputTrait,
+  createVoiceOutputTrait,
+  type VoiceGender,
+  type VoiceSynthEngine,
+  type VoiceStyle,
+  type VoiceDefinition,
+  type SpeechSegment,
+  type SpeechRequest,
+  type VoiceOutputConfig,
+} from './traits/VoiceOutputTrait';
+
+// HoloScript+ Character Trait (NEW - Phase 5: Character Controller)
+export {
+  CharacterTrait,
+  createCharacterTrait,
+  type MovementMode,
+  type GroundState,
+  type MovementInput,
+  type GroundHit,
+  type StepInfo,
+  type CharacterState,
+  type CharacterConfig,
+} from './traits/CharacterTrait';
+
+// HoloScript+ Morph Trait (NEW - Phase 5: Blend Shapes)
+export {
+  MorphTrait as BlendShapeTrait,
+  createMorphTrait as createBlendShapeTrait,
+  type MorphTarget as BlendShapeTarget,
+  type MorphPreset as BlendShapePreset,
+  type MorphKeyframe as BlendShapeKeyframe,
+  type MorphClip as BlendShapeClip,
+  type MorphConfig as BlendShapeConfig,
+  type MorphEvent as BlendShapeEvent,
+} from './traits/MorphTrait';
+
+// HoloScript+ Animation Trait (NEW - Phase 5: Animation)
+export {
+  AnimationTrait,
+  createAnimationTrait,
+  type AnimationWrapMode,
+  type AnimationBlendMode,
+  type AnimationClipDef,
+  type AnimationEventDef,
+  type AnimationStateDef,
+  type TransitionCondition,
+  type AnimationTransition,
+  type AnimationParameter,
+  type AnimationLayer as AnimationTraitLayer,
+  type AnimationEventType,
+  type AnimationEvent as AnimationTraitEvent,
+  type AnimationConfig,
+} from './traits/AnimationTrait';
+
 // Performance Telemetry (NEW - Phase 1)
 export {
   PerformanceTelemetry,

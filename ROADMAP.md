@@ -110,20 +110,20 @@ HoloScript is a declarative language that compiles to 9+ platforms from a single
 
 ### 3.2: AI Integration
 - [x] `@ai_driver` - behavior tree AI ✅ (AIDriverTrait.ts)
-- [ ] `@dialog` - conversational NPCs
+- [x] `@dialog` - conversational NPCs ✅ (DialogTrait.ts)
 - [x] `@voice_input` - speech recognition ✅ (VoiceInputTrait.ts)
-- [ ] `@voice_output` - text-to-speech
+- [x] `@voice_output` - text-to-speech ✅ (VoiceOutputTrait.ts)
 
 ### 3.3: Physics Traits
 - [x] `@rigidbody` - physics simulation ✅ (RigidbodyTrait.ts)
 - [x] `@joint` - connected bodies ✅ (JointTrait.ts - 7 joint types)
 - [x] `@trigger` - collision events ✅ (TriggerTrait.ts)
-- [ ] `@character` - character controller
+- [x] `@character` - character controller ✅ (CharacterTrait.ts)
 
 ### 3.4: Animation Traits
 - [x] `@skeleton` - bone-based animation ✅ (SkeletonTrait.ts)
-- [ ] `@morph` - blend shapes
-- [ ] `@animation` - animation clips
+- [x] `@morph` - blend shapes ✅ (MorphTrait.ts)
+- [x] `@animation` - animation clips ✅ (AnimationTrait.ts)
 - [x] `@ik` - inverse kinematics ✅ (IKTrait.ts - FABRIK solver)
 
 ---
