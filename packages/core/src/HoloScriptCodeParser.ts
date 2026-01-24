@@ -943,9 +943,9 @@ export class HoloScriptCodeParser {
     // Check for ID syntax: orb#id
     if (this.check('punctuation', '#')) {
       this.advance(); // #
-      name = this.expectIdentifier() || `orb_${Date.now()}`;
+      name = this.expectName() || `orb_${Date.now()}`;
     } else {
-      name = this.expectIdentifier() || `orb_${Date.now()}`;
+      name = this.expectName() || `orb_${Date.now()}`;
     }
 
     const properties: Record<string, HoloScriptValue> = {};
@@ -1244,7 +1244,7 @@ export class HoloScriptCodeParser {
    */
   private parseComposition(): CompositionNode | null {
     this.expect('keyword', 'composition');
-    const name = this.expectIdentifier() || 'unnamed';
+    const name = this.expectName() || 'unnamed';
     
     const children: ASTNode[] = [];
     if (this.check('punctuation', '{')) {
@@ -1270,7 +1270,7 @@ export class HoloScriptCodeParser {
    */
   private parseTemplate(): TemplateNode | null {
     this.expect('keyword', 'template');
-    const name = this.expectIdentifier() || 'template';
+    const name = this.expectName() || 'template';
     
     const params: string[] = [];
     if (this.check('punctuation', '(')) {
@@ -1408,7 +1408,7 @@ export class HoloScriptCodeParser {
    */
   private parseBuilding(): ASTNode | null {
     this.expect('keyword', 'building');
-    const name = this.expectIdentifier();
+    const name = this.expectName();
     if (!name) return null;
 
     if (this.check('punctuation', '{')) {
@@ -1614,6 +1614,34 @@ export class HoloScriptCodeParser {
       `Expected identifier, got ${token?.type || 'EOF'}`,
       token,
       token?.type === 'number' ? 'Identifiers cannot start with a number' : undefined
+    ));
+    return null;
+  }
+
+  /**
+   * Expect an identifier OR a string literal for named declarations
+   * Allows both: composition MyScene { } and composition "MyScene" { }
+   */
+  private expectName(): string | null {
+    const token = this.currentToken();
+    if (token?.type === 'identifier' || token?.type === 'keyword') {
+      this.advance();
+      return token.value;
+    }
+    if (token?.type === 'string') {
+      this.advance();
+      // Strip quotes from string value
+      const val = token.value;
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        return val.slice(1, -1);
+      }
+      return val;
+    }
+    
+    this.addError(this.createError(
+      'HS002',
+      `Expected name (identifier or string), got ${token?.type || 'EOF'}`,
+      token
     ));
     return null;
   }
