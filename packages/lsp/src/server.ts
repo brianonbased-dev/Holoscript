@@ -50,7 +50,7 @@ import {
   type OrbNode,
   type ParseResult,
   type ValidationError,
-} from '@hololand/core';
+} from '@holoscript/core';
 
 import { getTraitDoc, formatTraitDocCompact, getAllTraitNames, TRAIT_DOCS } from './traitDocs';
 

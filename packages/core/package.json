@@ -62,7 +62,6 @@
     "directory": "packages/core"
   },
   "devDependencies": {
-    "@hololand/network": "link:c:/Users/josep/Documents/GitHub/Hololand/packages/network",
     "tsup": "^8.0.1",
     "typedoc": "^0.28.16",
     "typescript": "^5.3.3",

@@ -676,12 +676,12 @@ module CompletionProvider {
   
   @method getImportPathCompletions(): CompletionItem[] {
     return [
-      { label: "@hololand/core", kind: CompletionItemKind.Module },
-      { label: "@hololand/network", kind: CompletionItemKind.Module },
-      { label: "@hololand/physics", kind: CompletionItemKind.Module },
-      { label: "@hololand/ui", kind: CompletionItemKind.Module },
-      { label: "@hololand/audio", kind: CompletionItemKind.Module },
-      { label: "@hololand/animation", kind: CompletionItemKind.Module },
+      { label: "@holoscript/core", kind: CompletionItemKind.Module },
+      { label: "@holoscript/network", kind: CompletionItemKind.Module },
+      { label: "@holoscript/std", kind: CompletionItemKind.Module },
+      { label: "@holoscript/fs", kind: CompletionItemKind.Module },
+      { label: "@holoscript/commerce", kind: CompletionItemKind.Module },
+      { label: "@holoscript/llm", kind: CompletionItemKind.Module },
       { label: "./", kind: CompletionItemKind.Folder }
     ]
   }
