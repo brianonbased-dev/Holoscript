@@ -133,6 +133,56 @@ export {
   type RenderingOptimization,
 } from './traits/RenderingTrait';
 
+// HoloScript+ Shader Trait (NEW - Phase 3: Advanced Graphics)
+export {
+  ShaderTrait,
+  createShaderTrait,
+  SHADER_PRESETS,
+  SHADER_CHUNKS,
+  type ShaderType,
+  type UniformType,
+  type UniformValue,
+  type UniformDefinition,
+  type ShaderChunk,
+  type InlineShader,
+  type ShaderConfig,
+} from './traits/ShaderTrait';
+
+// HoloScript+ Networked Trait (NEW - Phase 3: Multiplayer)
+export {
+  NetworkedTrait,
+  createNetworkedTrait,
+  type SyncMode,
+  type InterpolationType,
+  type NetworkAuthority,
+  type InterpolationConfig,
+  type SyncedProperty,
+  type NetworkedConfig,
+} from './traits/NetworkedTrait';
+
+// HoloScript+ Joint Trait (NEW - Phase 3: Physics)
+export {
+  JointTrait,
+  createJointTrait,
+  type JointType,
+  type JointLimit,
+  type JointMotor,
+  type JointDrive,
+  type JointSpring,
+  type JointConfig,
+} from './traits/JointTrait';
+
+// HoloScript+ IK Trait (NEW - Phase 3: Animation)
+export {
+  IKTrait,
+  createIKTrait,
+  type IKSolverType,
+  type BoneConstraint,
+  type IKChain,
+  type IKTarget,
+  type IKConfig,
+} from './traits/IKTrait';
+
 // Performance Telemetry (NEW - Phase 1)
 export {
   PerformanceTelemetry,
@@ -264,7 +314,7 @@ export type {
   PoseableTrait,
   MorphTrait,
 
-  NetworkedTrait,
+  // NetworkedTrait is exported separately with createNetworkedTrait
   ProactiveTrait,
 
   // Media Production Traits

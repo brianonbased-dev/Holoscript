@@ -43,9 +43,9 @@ HoloScript is a declarative language that compiles to 9+ platforms from a single
 - [ ] Parse validation caching - faster repeated builds
 
 ### 1.2: Type System
-- [ ] Generic types - `Collection<T>`
-- [ ] Union types - `string | number`
-- [ ] Optional chaining - `obj?.prop`
+- [x] Generic types - `Collection<T>` ✅ (TypeAnnotationParser)
+- [x] Union types - `string | number` ✅ (TypeAnnotationParser)
+- [x] Optional chaining - `obj?.prop` ✅ (OptionalChainingParser)
 - [ ] Null coalescing - `value ?? default`
 - [ ] Type guards - `is` keyword
 
@@ -81,12 +81,12 @@ HoloScript is a declarative language that compiles to 9+ platforms from a single
 - [ ] Range formatting (format selection)
 
 ### 2.3: LSP Features
-- [ ] Go to definition
-- [ ] Find all references
+- [x] Go to definition ✅ (server.ts)
+- [x] Find all references ✅ (server.ts)
 - [ ] Rename symbol
 - [ ] Code actions (quick fixes)
 - [ ] Workspace-wide diagnostics
-- [ ] Semantic highlighting
+- [x] Semantic highlighting ✅ (SemanticTokensProvider)
 
 ### 2.4: VS Code Extension
 - [ ] Publish to marketplace
@@ -103,9 +103,9 @@ HoloScript is a declarative language that compiles to 9+ platforms from a single
 **Goal**: Features for complex applications.
 
 ### 3.1: Networking Traits
-- [ ] `@networked` - automatic state sync
-- [ ] `@replicated` - owner-authoritative sync
-- [ ] `@rpc` - remote procedure calls
+- [x] `@networked` - automatic state sync ✅ (NetworkedTrait.ts)
+- [x] `@replicated` - owner-authoritative sync ✅ (NetworkedTrait syncMode: 'owner')
+- [x] `@rpc` - remote procedure calls ✅ (Parser support)
 - [ ] `@lobby` - room/session management
 
 ### 3.2: AI Integration
@@ -116,7 +116,7 @@ HoloScript is a declarative language that compiles to 9+ platforms from a single
 
 ### 3.3: Physics Traits
 - [ ] `@rigidbody` - physics simulation
-- [ ] `@joint` - connected bodies
+- [x] `@joint` - connected bodies ✅ (JointTrait.ts - 7 joint types)
 - [ ] `@trigger` - collision events
 - [ ] `@character` - character controller
 
@@ -124,7 +124,7 @@ HoloScript is a declarative language that compiles to 9+ platforms from a single
 - [ ] `@skeleton` - bone-based animation
 - [ ] `@morph` - blend shapes
 - [ ] `@animation` - animation clips
-- [ ] `@ik` - inverse kinematics
+- [x] `@ik` - inverse kinematics ✅ (IKTrait.ts - FABRIK solver)
 
 ---
 
@@ -213,4 +213,4 @@ pnpm test
 
 ---
 
-*Last updated: 2026-01-22*
+*Last updated: 2026-01-24*

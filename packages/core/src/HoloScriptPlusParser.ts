@@ -22,13 +22,14 @@ import type {
 import { MaterialTrait } from './traits/MaterialTrait';
 import { LightingTrait, LIGHTING_PRESETS } from './traits/LightingTrait';
 import { RenderingTrait } from './traits/RenderingTrait';
+import { ShaderTrait, SHADER_PRESETS, type ShaderConfig } from './traits/ShaderTrait';
 
 // ============================================================================
 // Trait Annotation Types
 // ============================================================================
 
 export interface TraitAnnotation {
-  type: 'material' | 'lighting' | 'rendering';
+  type: 'material' | 'lighting' | 'rendering' | 'shader' | 'networked' | 'rpc' | 'joint' | 'ik';
   config: Record<string, unknown>;
   line?: number;
   column?: number;
@@ -91,10 +92,107 @@ export interface RenderingTraitAnnotation extends TraitAnnotation {
   };
 }
 
+export interface ShaderTraitAnnotation extends TraitAnnotation {
+  type: 'shader';
+  config: {
+    /** Preset shader name (hologram, forceField, dissolve) */
+    preset?: string;
+    /** Inline vertex shader GLSL */
+    vertex?: string;
+    /** Inline fragment shader GLSL */
+    fragment?: string;
+    /** Shader language (default: glsl) */
+    language?: 'glsl' | 'hlsl' | 'wgsl';
+    /** Uniform definitions */
+    uniforms?: Record<string, { type: string; value: unknown; min?: number; max?: number }>;
+    /** Include shader chunks (noise, hologram, fresnel, pbr, uv) */
+    includes?: string[];
+    /** Blend mode */
+    blendMode?: 'opaque' | 'blend' | 'additive' | 'multiply';
+    /** Depth testing */
+    depthTest?: boolean;
+    /** Depth writing */
+    depthWrite?: boolean;
+    /** Face culling */
+    cullFace?: 'none' | 'front' | 'back';
+  };
+}
+
+export interface NetworkedTraitAnnotation extends TraitAnnotation {
+  type: 'networked';
+  config: {
+    /** Sync mode */
+    mode?: 'owner' | 'shared' | 'server';
+    /** Properties to sync */
+    syncProperties?: string[];
+    /** Sync rate in Hz */
+    syncRate?: number;
+    /** Interpolation enabled */
+    interpolation?: boolean;
+    /** Network channel */
+    channel?: string;
+  };
+}
+
+export interface RPCTraitAnnotation extends TraitAnnotation {
+  type: 'rpc';
+  config: {
+    /** RPC method name */
+    method: string;
+    /** Target (all, owner, server) */
+    target?: 'all' | 'owner' | 'server';
+    /** Reliable delivery */
+    reliable?: boolean;
+  };
+}
+
+export interface JointTraitAnnotation extends TraitAnnotation {
+  type: 'joint';
+  config: {
+    /** Joint type */
+    jointType: 'fixed' | 'hinge' | 'ball' | 'slider' | 'spring';
+    /** Connected body ID */
+    connectedBody?: string;
+    /** Anchor point */
+    anchor?: { x: number; y: number; z: number };
+    /** Axis of rotation/movement */
+    axis?: { x: number; y: number; z: number };
+    /** Limits */
+    limits?: { min: number; max: number };
+    /** Spring settings */
+    spring?: { stiffness: number; damping: number };
+    /** Break force */
+    breakForce?: number;
+  };
+}
+
+export interface IKTraitAnnotation extends TraitAnnotation {
+  type: 'ik';
+  config: {
+    /** IK chain name */
+    chain: string;
+    /** Target transform/object */
+    target?: string;
+    /** Pole target for elbow/knee direction */
+    poleTarget?: string;
+    /** Chain length (bones) */
+    chainLength?: number;
+    /** Iterations for solver */
+    iterations?: number;
+    /** Weight (0-1) */
+    weight?: number;
+  };
+}
+
 export type AnyTraitAnnotation =
   | MaterialTraitAnnotation
   | LightingTraitAnnotation
-  | RenderingTraitAnnotation;
+  | RenderingTraitAnnotation
+  | ShaderTraitAnnotation
+  | NetworkedTraitAnnotation
+  | RPCTraitAnnotation
+  | JointTraitAnnotation
+  | IKTraitAnnotation;
 
 // ============================================================================
 // Enhanced OrbNode with Graphics Traits
@@ -104,6 +202,11 @@ export interface GraphicsConfiguration {
   material?: MaterialTraitAnnotation['config'];
   lighting?: LightingTraitAnnotation['config'];
   rendering?: RenderingTraitAnnotation['config'];
+  shader?: ShaderTraitAnnotation['config'];
+  networked?: NetworkedTraitAnnotation['config'];
+  rpc?: RPCTraitAnnotation['config'];
+  joint?: JointTraitAnnotation['config'];
+  ik?: IKTraitAnnotation['config'];
 }
 
 export interface EnhancedOrbNode extends OrbNode {
@@ -175,15 +278,17 @@ export class HoloScriptPlusParser {
    */
   extractTraitAnnotations(code: string, _orbLine?: number): AnyTraitAnnotation[] {
     const traits: AnyTraitAnnotation[] = [];
-    const traitRegex = /@(material|lighting|rendering)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g;
+    
+    // Extended regex to match all trait types including inline shader code
+    const traitRegex = /@(material|lighting|rendering|shader|networked|rpc|joint|ik)\s*\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g;
 
     let match;
     while ((match = traitRegex.exec(code)) !== null) {
-      const type = match[1] as 'material' | 'lighting' | 'rendering';
+      const type = match[1] as AnyTraitAnnotation['type'];
       const configStr = match[2];
 
       try {
-        const config = this.parseObjectLiteral(configStr);
+        const config = this.parseTraitConfig(configStr, type);
 
         switch (type) {
           case 'material':
@@ -206,6 +311,41 @@ export class HoloScriptPlusParser {
               config: config as RenderingTraitAnnotation['config'],
             });
             break;
+            
+          case 'shader':
+            traits.push({
+              type: 'shader',
+              config: config as ShaderTraitAnnotation['config'],
+            });
+            break;
+            
+          case 'networked':
+            traits.push({
+              type: 'networked',
+              config: config as NetworkedTraitAnnotation['config'],
+            });
+            break;
+            
+          case 'rpc':
+            traits.push({
+              type: 'rpc',
+              config: config as RPCTraitAnnotation['config'],
+            });
+            break;
+            
+          case 'joint':
+            traits.push({
+              type: 'joint',
+              config: config as JointTraitAnnotation['config'],
+            });
+            break;
+            
+          case 'ik':
+            traits.push({
+              type: 'ik',
+              config: config as IKTraitAnnotation['config'],
+            });
+            break;
         }
       } catch (e) {
         console.warn(`Failed to parse ${type} trait annotation:`, e);
@@ -213,6 +353,46 @@ export class HoloScriptPlusParser {
     }
 
     return traits;
+  }
+
+  /**
+   * Parse trait configuration with support for inline code (backticks)
+   */
+  parseTraitConfig(str: string, traitType: string): Record<string, unknown> {
+    // For shader traits, handle backtick strings for inline GLSL
+    if (traitType === 'shader') {
+      return this.parseShaderConfig(str);
+    }
+    return this.parseObjectLiteral(str);
+  }
+
+  /**
+   * Parse shader configuration with inline GLSL support
+   */
+  parseShaderConfig(str: string): Record<string, unknown> {
+    const config: Record<string, unknown> = {};
+    
+    // First, extract backtick strings and replace with placeholders
+    const backtickStrings: string[] = [];
+    let processedStr = str.replace(/`([^`]*)`/g, (_, content) => {
+      backtickStrings.push(content);
+      return `__BACKTICK_${backtickStrings.length - 1}__`;
+    });
+    
+    // Parse the config
+    const parsed = this.parseObjectLiteral(processedStr);
+    
+    // Restore backtick strings
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === 'string' && value.startsWith('__BACKTICK_')) {
+        const index = parseInt(value.replace('__BACKTICK_', '').replace('__', ''));
+        config[key] = backtickStrings[index];
+      } else {
+        config[key] = value;
+      }
+    }
+    
+    return config;
   }
 
   /**
@@ -312,6 +492,26 @@ export class HoloScriptPlusParser {
         case 'rendering':
           config.rendering = (trait as RenderingTraitAnnotation).config;
           break;
+          
+        case 'shader':
+          config.shader = (trait as ShaderTraitAnnotation).config;
+          break;
+          
+        case 'networked':
+          config.networked = (trait as NetworkedTraitAnnotation).config;
+          break;
+          
+        case 'rpc':
+          config.rpc = (trait as RPCTraitAnnotation).config;
+          break;
+          
+        case 'joint':
+          config.joint = (trait as JointTraitAnnotation).config;
+          break;
+          
+        case 'ik':
+          config.ik = (trait as IKTraitAnnotation).config;
+          break;
       }
     }
 
@@ -335,6 +535,22 @@ export class HoloScriptPlusParser {
 
       case 'rendering':
         errors.push(...this.validateRenderingTrait(trait as RenderingTraitAnnotation));
+        break;
+        
+      case 'shader':
+        errors.push(...this.validateShaderTrait(trait as ShaderTraitAnnotation));
+        break;
+        
+      case 'networked':
+        errors.push(...this.validateNetworkedTrait(trait as NetworkedTraitAnnotation));
+        break;
+        
+      case 'joint':
+        errors.push(...this.validateJointTrait(trait as JointTraitAnnotation));
+        break;
+        
+      case 'ik':
+        errors.push(...this.validateIKTrait(trait as IKTraitAnnotation));
         break;
     }
 
@@ -431,12 +647,14 @@ export class HoloScriptPlusParser {
     material: MaterialTrait | null;
     lighting: LightingTrait | null;
     rendering: RenderingTrait | null;
+    shader: ShaderTrait | null;
   } {
     // This will be called by the runtime to create actual trait instances
     return {
       material: config.material ? this.createMaterialTrait(config.material) : null,
       lighting: config.lighting ? this.createLightingTrait(config.lighting) : null,
       rendering: config.rendering ? this.createRenderingTrait(config.rendering) : null,
+      shader: config.shader ? this.createShaderTrait(config.shader) : null,
     };
   }
 
@@ -541,6 +759,133 @@ export class HoloScriptPlusParser {
     }
 
     return rendering;
+  }
+
+  /**
+   * Create ShaderTrait from config
+   */
+  private createShaderTrait(config: ShaderTraitAnnotation['config']): ShaderTrait {
+    // Check for preset
+    if (config.preset && SHADER_PRESETS[config.preset as keyof typeof SHADER_PRESETS]) {
+      const preset = SHADER_PRESETS[config.preset as keyof typeof SHADER_PRESETS];
+      return new ShaderTrait(preset as unknown as ShaderConfig);
+    }
+
+    // Create custom shader
+    const shaderConfig: ShaderConfig = {
+      source: {
+        language: (config.language as 'glsl' | 'hlsl' | 'wgsl') || 'glsl',
+        vertex: config.vertex,
+        fragment: config.fragment,
+      },
+      uniforms: config.uniforms as any,
+      includes: config.includes?.map(path => ({ path })),
+      blendMode: config.blendMode,
+      depthTest: config.depthTest,
+      depthWrite: config.depthWrite,
+      cullFace: config.cullFace,
+    };
+
+    return new ShaderTrait(shaderConfig);
+  }
+
+  /**
+   * Validate shader trait configuration
+   */
+  private validateShaderTrait(trait: ShaderTraitAnnotation): string[] {
+    const errors: string[] = [];
+    const { config } = trait;
+
+    // Must have either preset or custom shader code
+    if (!config.preset && !config.vertex && !config.fragment) {
+      errors.push('shader must have either preset or vertex/fragment code');
+    }
+
+    // Validate preset name if provided
+    if (config.preset && !SHADER_PRESETS[config.preset as keyof typeof SHADER_PRESETS]) {
+      errors.push(`shader.preset "${config.preset}" is not a valid preset. Available: hologram, forceField, dissolve`);
+    }
+
+    // Validate language
+    if (config.language && !['glsl', 'hlsl', 'wgsl'].includes(config.language)) {
+      errors.push('shader.language must be one of: glsl, hlsl, wgsl');
+    }
+
+    // Validate blend mode
+    if (config.blendMode && !['opaque', 'blend', 'additive', 'multiply'].includes(config.blendMode)) {
+      errors.push('shader.blendMode must be one of: opaque, blend, additive, multiply');
+    }
+
+    // Validate cull face
+    if (config.cullFace && !['none', 'front', 'back'].includes(config.cullFace)) {
+      errors.push('shader.cullFace must be one of: none, front, back');
+    }
+
+    return errors;
+  }
+
+  /**
+   * Validate networked trait configuration
+   */
+  private validateNetworkedTrait(trait: NetworkedTraitAnnotation): string[] {
+    const errors: string[] = [];
+    const { config } = trait;
+
+    if (config.mode && !['owner', 'shared', 'server'].includes(config.mode)) {
+      errors.push('networked.mode must be one of: owner, shared, server');
+    }
+
+    if (config.syncRate !== undefined && (config.syncRate < 1 || config.syncRate > 60)) {
+      errors.push('networked.syncRate must be between 1 and 60 Hz');
+    }
+
+    return errors;
+  }
+
+  /**
+   * Validate joint trait configuration
+   */
+  private validateJointTrait(trait: JointTraitAnnotation): string[] {
+    const errors: string[] = [];
+    const { config } = trait;
+
+    if (!config.jointType) {
+      errors.push('joint.jointType is required');
+    } else if (!['fixed', 'hinge', 'ball', 'slider', 'spring'].includes(config.jointType)) {
+      errors.push('joint.jointType must be one of: fixed, hinge, ball, slider, spring');
+    }
+
+    if (config.breakForce !== undefined && config.breakForce < 0) {
+      errors.push('joint.breakForce must be >= 0');
+    }
+
+    return errors;
+  }
+
+  /**
+   * Validate IK trait configuration
+   */
+  private validateIKTrait(trait: IKTraitAnnotation): string[] {
+    const errors: string[] = [];
+    const { config } = trait;
+
+    if (!config.chain) {
+      errors.push('ik.chain is required');
+    }
+
+    if (config.chainLength !== undefined && config.chainLength < 1) {
+      errors.push('ik.chainLength must be >= 1');
+    }
+
+    if (config.iterations !== undefined && config.iterations < 1) {
+      errors.push('ik.iterations must be >= 1');
+    }
+
+    if (config.weight !== undefined && (config.weight < 0 || config.weight > 1)) {
+      errors.push('ik.weight must be between 0 and 1');
+    }
+
+    return errors;
   }
 }
 

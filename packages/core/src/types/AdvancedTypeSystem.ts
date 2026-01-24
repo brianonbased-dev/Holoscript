@@ -497,3 +497,662 @@ export interface HSPlusRuntime {
   getState: (key: string) => any;
   destroy: () => void;
 }
+
+// ============================================================================
+// Optional Chaining Support
+// ============================================================================
+
+/**
+ * Optional chaining expression: obj?.prop, arr?.[0], fn?.()
+ */
+export interface OptionalChainExpression {
+  kind: 'optional-chain';
+  base: Expression;
+  chain: OptionalChainSegment[];
+}
+
+export type OptionalChainSegment =
+  | { type: 'property'; name: string; optional: boolean }
+  | { type: 'index'; index: Expression; optional: boolean }
+  | { type: 'call'; args: Expression[]; optional: boolean };
+
+export type Expression =
+  | { kind: 'identifier'; name: string }
+  | { kind: 'literal'; value: string | number | boolean | null }
+  | { kind: 'member'; object: Expression; property: string }
+  | { kind: 'index'; object: Expression; index: Expression }
+  | { kind: 'call'; callee: Expression; arguments: Expression[] }
+  | { kind: 'binary'; operator: string; left: Expression; right: Expression }
+  | { kind: 'unary'; operator: string; operand: Expression }
+  | OptionalChainExpression
+  | NullCoalescingExpression;
+
+/**
+ * Null coalescing expression: a ?? b
+ */
+export interface NullCoalescingExpression {
+  kind: 'null-coalescing';
+  left: Expression;
+  right: Expression;
+}
+
+/**
+ * Parse and evaluate optional chaining expressions
+ */
+export class OptionalChainingEvaluator {
+  /**
+   * Evaluate optional chain expression
+   */
+  evaluate(expr: OptionalChainExpression, context: Record<string, unknown>): unknown {
+    let value: unknown = this.evaluateExpression(expr.base, context);
+
+    for (const segment of expr.chain) {
+      // If value is null/undefined and this is optional, short-circuit
+      if (value == null) {
+        if (segment.optional) {
+          return undefined;
+        }
+        throw new Error(`Cannot access property of ${value}`);
+      }
+
+      switch (segment.type) {
+        case 'property':
+          value = (value as Record<string, unknown>)[segment.name];
+          break;
+        case 'index':
+          const index = this.evaluateExpression(segment.index, context);
+          value = (value as unknown[])[index as number];
+          break;
+        case 'call':
+          const args = segment.args.map(arg => this.evaluateExpression(arg, context));
+          value = (value as Function)(...args);
+          break;
+      }
+    }
+
+    return value;
+  }
+
+  /**
+   * Evaluate null coalescing expression
+   */
+  evaluateNullCoalescing(expr: NullCoalescingExpression, context: Record<string, unknown>): unknown {
+    const left = this.evaluateExpression(expr.left, context);
+    if (left != null) {
+      return left;
+    }
+    return this.evaluateExpression(expr.right, context);
+  }
+
+  /**
+   * Evaluate any expression
+   */
+  evaluateExpression(expr: Expression, context: Record<string, unknown>): unknown {
+    switch (expr.kind) {
+      case 'identifier':
+        return context[expr.name];
+      case 'literal':
+        return expr.value;
+      case 'member':
+        const obj = this.evaluateExpression(expr.object, context);
+        return (obj as Record<string, unknown>)?.[expr.property];
+      case 'index':
+        const arr = this.evaluateExpression(expr.object, context);
+        const idx = this.evaluateExpression(expr.index, context);
+        return (arr as unknown[])?.[idx as number];
+      case 'call':
+        const fn = this.evaluateExpression(expr.callee, context);
+        const args = expr.arguments.map(arg => this.evaluateExpression(arg, context));
+        return (fn as Function)?.(...args);
+      case 'optional-chain':
+        return this.evaluate(expr, context);
+      case 'null-coalescing':
+        return this.evaluateNullCoalescing(expr, context);
+      case 'binary':
+        return this.evaluateBinary(expr, context);
+      case 'unary':
+        return this.evaluateUnary(expr, context);
+      default:
+        return undefined;
+    }
+  }
+
+  private evaluateBinary(
+    expr: { kind: 'binary'; operator: string; left: Expression; right: Expression },
+    context: Record<string, unknown>
+  ): unknown {
+    const left = this.evaluateExpression(expr.left, context);
+    const right = this.evaluateExpression(expr.right, context);
+
+    switch (expr.operator) {
+      case '+': return (left as number) + (right as number);
+      case '-': return (left as number) - (right as number);
+      case '*': return (left as number) * (right as number);
+      case '/': return (left as number) / (right as number);
+      case '%': return (left as number) % (right as number);
+      case '==': return left == right;
+      case '===': return left === right;
+      case '!=': return left != right;
+      case '!==': return left !== right;
+      case '<': return (left as number) < (right as number);
+      case '>': return (left as number) > (right as number);
+      case '<=': return (left as number) <= (right as number);
+      case '>=': return (left as number) >= (right as number);
+      case '&&': return left && right;
+      case '||': return left || right;
+      default: return undefined;
+    }
+  }
+
+  private evaluateUnary(
+    expr: { kind: 'unary'; operator: string; operand: Expression },
+    context: Record<string, unknown>
+  ): unknown {
+    const operand = this.evaluateExpression(expr.operand, context);
+
+    switch (expr.operator) {
+      case '!': return !operand;
+      case '-': return -(operand as number);
+      case '+': return +(operand as number);
+      case 'typeof': return typeof operand;
+      default: return undefined;
+    }
+  }
+}
+
+/**
+ * Parse optional chaining syntax from string
+ */
+export class OptionalChainingParser {
+  private input: string = '';
+  private pos: number = 0;
+
+  /**
+   * Parse expression string with optional chaining
+   */
+  parse(input: string): Expression {
+    this.input = input.trim();
+    this.pos = 0;
+    return this.parseExpression();
+  }
+
+  private parseExpression(): Expression {
+    return this.parseNullCoalescing();
+  }
+
+  private parseNullCoalescing(): Expression {
+    let left = this.parseOr();
+
+    while (this.match('??')) {
+      const right = this.parseOr();
+      left = {
+        kind: 'null-coalescing',
+        left,
+        right,
+      };
+    }
+
+    return left;
+  }
+
+  private parseOr(): Expression {
+    let left = this.parseAnd();
+
+    while (this.match('||')) {
+      const right = this.parseAnd();
+      left = { kind: 'binary', operator: '||', left, right };
+    }
+
+    return left;
+  }
+
+  private parseAnd(): Expression {
+    let left = this.parseEquality();
+
+    while (this.match('&&')) {
+      const right = this.parseEquality();
+      left = { kind: 'binary', operator: '&&', left, right };
+    }
+
+    return left;
+  }
+
+  private parseEquality(): Expression {
+    let left = this.parseComparison();
+
+    while (true) {
+      if (this.match('===')) {
+        left = { kind: 'binary', operator: '===', left, right: this.parseComparison() };
+      } else if (this.match('!==')) {
+        left = { kind: 'binary', operator: '!==', left, right: this.parseComparison() };
+      } else if (this.match('==')) {
+        left = { kind: 'binary', operator: '==', left, right: this.parseComparison() };
+      } else if (this.match('!=')) {
+        left = { kind: 'binary', operator: '!=', left, right: this.parseComparison() };
+      } else {
+        break;
+      }
+    }
+
+    return left;
+  }
+
+  private parseComparison(): Expression {
+    let left = this.parseTerm();
+
+    while (true) {
+      if (this.match('<=')) {
+        left = { kind: 'binary', operator: '<=', left, right: this.parseTerm() };
+      } else if (this.match('>=')) {
+        left = { kind: 'binary', operator: '>=', left, right: this.parseTerm() };
+      } else if (this.match('<')) {
+        left = { kind: 'binary', operator: '<', left, right: this.parseTerm() };
+      } else if (this.match('>')) {
+        left = { kind: 'binary', operator: '>', left, right: this.parseTerm() };
+      } else {
+        break;
+      }
+    }
+
+    return left;
+  }
+
+  private parseTerm(): Expression {
+    let left = this.parseFactor();
+
+    while (true) {
+      if (this.match('+')) {
+        left = { kind: 'binary', operator: '+', left, right: this.parseFactor() };
+      } else if (this.match('-')) {
+        left = { kind: 'binary', operator: '-', left, right: this.parseFactor() };
+      } else {
+        break;
+      }
+    }
+
+    return left;
+  }
+
+  private parseFactor(): Expression {
+    let left = this.parseUnary();
+
+    while (true) {
+      if (this.match('*')) {
+        left = { kind: 'binary', operator: '*', left, right: this.parseUnary() };
+      } else if (this.match('/')) {
+        left = { kind: 'binary', operator: '/', left, right: this.parseUnary() };
+      } else if (this.match('%')) {
+        left = { kind: 'binary', operator: '%', left, right: this.parseUnary() };
+      } else {
+        break;
+      }
+    }
+
+    return left;
+  }
+
+  private parseUnary(): Expression {
+    if (this.match('!')) {
+      return { kind: 'unary', operator: '!', operand: this.parseUnary() };
+    }
+    if (this.match('-')) {
+      return { kind: 'unary', operator: '-', operand: this.parseUnary() };
+    }
+    if (this.match('+')) {
+      return { kind: 'unary', operator: '+', operand: this.parseUnary() };
+    }
+
+    return this.parsePostfix();
+  }
+
+  private parsePostfix(): Expression {
+    let expr = this.parsePrimary();
+
+    while (true) {
+      if (this.match('?.')) {
+        // Optional property access
+        const name = this.parseIdentifier();
+        expr = {
+          kind: 'optional-chain',
+          base: expr,
+          chain: [{ type: 'property', name, optional: true }],
+        };
+      } else if (this.match('?.[')) {
+        // Optional index access
+        const index = this.parseExpression();
+        this.expect(']');
+        expr = {
+          kind: 'optional-chain',
+          base: expr,
+          chain: [{ type: 'index', index, optional: true }],
+        };
+      } else if (this.match('?.(')) {
+        // Optional function call
+        const args = this.parseArguments();
+        this.expect(')');
+        expr = {
+          kind: 'optional-chain',
+          base: expr,
+          chain: [{ type: 'call', args, optional: true }],
+        };
+      } else if (this.match('.')) {
+        // Regular property access
+        const name = this.parseIdentifier();
+        expr = { kind: 'member', object: expr, property: name };
+      } else if (this.match('[')) {
+        // Regular index access
+        const index = this.parseExpression();
+        this.expect(']');
+        expr = { kind: 'index', object: expr, index };
+      } else if (this.match('(')) {
+        // Regular function call
+        const args = this.parseArguments();
+        this.expect(')');
+        expr = { kind: 'call', callee: expr, arguments: args };
+      } else {
+        break;
+      }
+    }
+
+    return expr;
+  }
+
+  private parsePrimary(): Expression {
+    this.skipWhitespace();
+
+    // Number
+    if (/[0-9]/.test(this.peek())) {
+      return { kind: 'literal', value: this.parseNumber() };
+    }
+
+    // String
+    if (this.peek() === '"' || this.peek() === "'") {
+      return { kind: 'literal', value: this.parseString() };
+    }
+
+    // Boolean / null
+    if (this.matchWord('true')) return { kind: 'literal', value: true };
+    if (this.matchWord('false')) return { kind: 'literal', value: false };
+    if (this.matchWord('null')) return { kind: 'literal', value: null };
+
+    // Parenthesized expression
+    if (this.match('(')) {
+      const expr = this.parseExpression();
+      this.expect(')');
+      return expr;
+    }
+
+    // Identifier
+    return { kind: 'identifier', name: this.parseIdentifier() };
+  }
+
+  private parseArguments(): Expression[] {
+    const args: Expression[] = [];
+    this.skipWhitespace();
+
+    if (this.peek() === ')') return args;
+
+    args.push(this.parseExpression());
+    while (this.match(',')) {
+      args.push(this.parseExpression());
+    }
+
+    return args;
+  }
+
+  private parseIdentifier(): string {
+    this.skipWhitespace();
+    let name = '';
+    while (this.pos < this.input.length && /[a-zA-Z0-9_$]/.test(this.input[this.pos])) {
+      name += this.input[this.pos++];
+    }
+    return name;
+  }
+
+  private parseNumber(): number {
+    let numStr = '';
+    while (this.pos < this.input.length && /[0-9.]/.test(this.input[this.pos])) {
+      numStr += this.input[this.pos++];
+    }
+    return parseFloat(numStr);
+  }
+
+  private parseString(): string {
+    const quote = this.input[this.pos++];
+    let str = '';
+    while (this.pos < this.input.length && this.input[this.pos] !== quote) {
+      if (this.input[this.pos] === '\\') {
+        this.pos++;
+        str += this.input[this.pos++];
+      } else {
+        str += this.input[this.pos++];
+      }
+    }
+    this.pos++; // consume closing quote
+    return str;
+  }
+
+  private peek(): string {
+    this.skipWhitespace();
+    return this.input[this.pos] || '';
+  }
+
+  private match(str: string): boolean {
+    this.skipWhitespace();
+    if (this.input.slice(this.pos, this.pos + str.length) === str) {
+      this.pos += str.length;
+      return true;
+    }
+    return false;
+  }
+
+  private matchWord(word: string): boolean {
+    this.skipWhitespace();
+    if (this.input.slice(this.pos, this.pos + word.length) === word) {
+      const nextChar = this.input[this.pos + word.length];
+      if (!nextChar || !/[a-zA-Z0-9_]/.test(nextChar)) {
+        this.pos += word.length;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private expect(str: string): void {
+    this.skipWhitespace();
+    if (!this.match(str)) {
+      throw new Error(`Expected '${str}' at position ${this.pos}`);
+    }
+  }
+
+  private skipWhitespace(): void {
+    while (this.pos < this.input.length && /\s/.test(this.input[this.pos])) {
+      this.pos++;
+    }
+  }
+}
+
+// ============================================================================
+// Type Parser for Generic and Union Types
+// ============================================================================
+
+/**
+ * Parse type annotations from strings
+ * Supports: string, number, Array<T>, Map<K, V>, T | U, T & U
+ */
+export class TypeAnnotationParser {
+  private input: string = '';
+  private pos: number = 0;
+
+  /**
+   * Parse type annotation string
+   */
+  parse(input: string): HoloScriptType {
+    this.input = input.trim();
+    this.pos = 0;
+    return this.parseType();
+  }
+
+  private parseType(): HoloScriptType {
+    return this.parseUnionType();
+  }
+
+  private parseUnionType(): HoloScriptType {
+    const types: HoloScriptType[] = [this.parseIntersectionType()];
+
+    while (this.match('|')) {
+      types.push(this.parseIntersectionType());
+    }
+
+    if (types.length === 1) return types[0];
+    return { kind: 'union', members: types };
+  }
+
+  private parseIntersectionType(): HoloScriptType {
+    const types: HoloScriptType[] = [this.parseArrayType()];
+
+    while (this.match('&')) {
+      types.push(this.parseArrayType());
+    }
+
+    if (types.length === 1) return types[0];
+    return { kind: 'intersection', members: types };
+  }
+
+  private parseArrayType(): HoloScriptType {
+    let type = this.parsePrimaryType();
+
+    while (this.match('[]')) {
+      type = { kind: 'array', elementType: type };
+    }
+
+    return type;
+  }
+
+  private parsePrimaryType(): HoloScriptType {
+    this.skipWhitespace();
+
+    // Literal type
+    if (this.peek() === '"' || this.peek() === "'") {
+      const value = this.parseString();
+      return { kind: 'literal', value };
+    }
+
+    // Number literal type
+    if (/[0-9]/.test(this.peek())) {
+      const value = this.parseNumber();
+      return { kind: 'literal', value };
+    }
+
+    // Boolean literal
+    if (this.matchWord('true')) return { kind: 'literal', value: true };
+    if (this.matchWord('false')) return { kind: 'literal', value: false };
+
+    // Primitive types
+    if (this.matchWord('string')) return { kind: 'primitive', name: 'string' };
+    if (this.matchWord('number')) return { kind: 'primitive', name: 'number' };
+    if (this.matchWord('boolean')) return { kind: 'primitive', name: 'boolean' };
+    if (this.matchWord('void')) return { kind: 'primitive', name: 'void' };
+
+    // Parenthesized type
+    if (this.match('(')) {
+      const type = this.parseType();
+      this.expect(')');
+      return type;
+    }
+
+    // Generic or named type
+    const name = this.parseIdentifier();
+
+    if (this.match('<')) {
+      // Generic type
+      const typeArgs = this.parseTypeArguments();
+      this.expect('>');
+      return { kind: 'generic', name, typeArgs };
+    }
+
+    // Custom/named type
+    return {
+      kind: 'custom',
+      name,
+      properties: new Map(),
+      methods: new Map(),
+    };
+  }
+
+  private parseTypeArguments(): HoloScriptType[] {
+    const args: HoloScriptType[] = [this.parseType()];
+
+    while (this.match(',')) {
+      args.push(this.parseType());
+    }
+
+    return args;
+  }
+
+  private parseIdentifier(): string {
+    this.skipWhitespace();
+    let name = '';
+    while (this.pos < this.input.length && /[a-zA-Z0-9_$]/.test(this.input[this.pos])) {
+      name += this.input[this.pos++];
+    }
+    return name;
+  }
+
+  private parseString(): string {
+    const quote = this.input[this.pos++];
+    let str = '';
+    while (this.pos < this.input.length && this.input[this.pos] !== quote) {
+      str += this.input[this.pos++];
+    }
+    this.pos++;
+    return str;
+  }
+
+  private parseNumber(): number {
+    let numStr = '';
+    while (this.pos < this.input.length && /[0-9.]/.test(this.input[this.pos])) {
+      numStr += this.input[this.pos++];
+    }
+    return parseFloat(numStr);
+  }
+
+  private peek(): string {
+    this.skipWhitespace();
+    return this.input[this.pos] || '';
+  }
+
+  private match(str: string): boolean {
+    this.skipWhitespace();
+    if (this.input.slice(this.pos, this.pos + str.length) === str) {
+      this.pos += str.length;
+      return true;
+    }
+    return false;
+  }
+
+  private matchWord(word: string): boolean {
+    this.skipWhitespace();
+    if (this.input.slice(this.pos, this.pos + word.length) === word) {
+      const nextChar = this.input[this.pos + word.length];
+      if (!nextChar || !/[a-zA-Z0-9_]/.test(nextChar)) {
+        this.pos += word.length;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private expect(str: string): void {
+    if (!this.match(str)) {
+      throw new Error(`Expected '${str}' at position ${this.pos}`);
+    }
+  }
+
+  private skipWhitespace(): void {
+    while (this.pos < this.input.length && /\s/.test(this.input[this.pos])) {
+      this.pos++;
+    }
+  }
+}
+
