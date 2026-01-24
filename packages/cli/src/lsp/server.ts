@@ -27,6 +27,10 @@ import {
   Hover,
   Location,
   Range,
+  TextEdit,
+  WorkspaceEdit,
+  CodeAction,
+  CodeActionKind,
 } from 'vscode-languageserver/node';
 
 // Dynamic Trait Completions
@@ -297,6 +301,226 @@ export class HoloScriptLanguageServer {
     return locations;
   }
 
+  /**
+   * Prepare rename - check if symbol at position can be renamed
+   */
+  prepareRename(uri: string, position: Position): { range: Range; placeholder: string } | null {
+    const doc = this.documentCache.get(uri);
+    if (!doc) return null;
+
+    const word = this.getWordAtPosition(doc.content, position);
+    if (!word) return null;
+
+    // Don't allow renaming keywords or built-ins
+    if (KEYWORDS.some(k => k.label === word)) return null;
+    if (BUILTIN_FUNCTIONS.some(f => f.label === word)) return null;
+
+    // Find the range of the word at cursor
+    const lines = doc.content.split('\n');
+    const line = lines[position.line];
+    if (!line) return null;
+
+    let start = position.character;
+    let end = position.character;
+    while (start > 0 && /\w/.test(line[start - 1])) start--;
+    while (end < line.length && /\w/.test(line[end])) end++;
+
+    return {
+      range: {
+        start: { line: position.line, character: start },
+        end: { line: position.line, character: end },
+      },
+      placeholder: word,
+    };
+  }
+
+  /**
+   * Rename symbol - return workspace edit with all occurrences
+   */
+  rename(uri: string, position: Position, newName: string): WorkspaceEdit | null {
+    const doc = this.documentCache.get(uri);
+    if (!doc) return null;
+
+    const word = this.getWordAtPosition(doc.content, position);
+    if (!word) return null;
+
+    // Find all references
+    const locations = this.findReferences(uri, position);
+    if (locations.length === 0) return null;
+
+    // Create text edits for each location
+    const edits: TextEdit[] = locations.map(loc => ({
+      range: loc.range,
+      newText: newName,
+    }));
+
+    return {
+      changes: {
+        [uri]: edits,
+      },
+    };
+  }
+
+  /**
+   * Get code actions for diagnostics at range
+   */
+  getCodeActions(uri: string, range: Range, diagnostics: Diagnostic[]): CodeAction[] {
+    const doc = this.documentCache.get(uri);
+    if (!doc) return [];
+
+    const actions: CodeAction[] = [];
+
+    for (const diagnostic of diagnostics) {
+      // Quick fix for 'var' -> 'let'
+      if (diagnostic.message.includes('Use "let" or "const" instead of "var"')) {
+        actions.push({
+          title: 'Replace var with let',
+          kind: CodeActionKind.QuickFix,
+          diagnostics: [diagnostic],
+          edit: {
+            changes: {
+              [uri]: [{
+                range: diagnostic.range,
+                newText: 'let',
+              }],
+            },
+          },
+          isPreferred: true,
+        });
+        actions.push({
+          title: 'Replace var with const',
+          kind: CodeActionKind.QuickFix,
+          diagnostics: [diagnostic],
+          edit: {
+            changes: {
+              [uri]: [{
+                range: diagnostic.range,
+                newText: 'const',
+              }],
+            },
+          },
+        });
+      }
+
+      // Quick fix for empty blocks
+      if (diagnostic.message.includes('Empty block')) {
+        actions.push({
+          title: 'Add TODO comment',
+          kind: CodeActionKind.QuickFix,
+          diagnostics: [diagnostic],
+          edit: {
+            changes: {
+              [uri]: [{
+                range: diagnostic.range,
+                newText: '{ /* TODO */ }',
+              }],
+            },
+          },
+          isPreferred: true,
+        });
+      }
+
+      // Quick fix for prefer-const
+      if (diagnostic.message.includes('Use const instead of let')) {
+        const line = doc.content.split('\n')[diagnostic.range.start.line];
+        const match = line?.match(/\blet\b/);
+        if (match) {
+          const letStart = line.indexOf('let');
+          actions.push({
+            title: 'Change let to const',
+            kind: CodeActionKind.QuickFix,
+            diagnostics: [diagnostic],
+            edit: {
+              changes: {
+                [uri]: [{
+                  range: {
+                    start: { line: diagnostic.range.start.line, character: letStart },
+                    end: { line: diagnostic.range.start.line, character: letStart + 3 },
+                  },
+                  newText: 'const',
+                }],
+              },
+            },
+            isPreferred: true,
+          });
+        }
+      }
+
+      // Quick fix for naming conventions
+      if (diagnostic.message.includes('should use camelCase')) {
+        const word = this.getWordFromMessage(diagnostic.message);
+        if (word) {
+          const camelCase = this.toCamelCase(word);
+          actions.push({
+            title: `Rename to "${camelCase}"`,
+            kind: CodeActionKind.QuickFix,
+            diagnostics: [diagnostic],
+            edit: {
+              changes: {
+                [uri]: [{
+                  range: diagnostic.range,
+                  newText: camelCase,
+                }],
+              },
+            },
+          });
+        }
+      }
+
+      // Quick fix for missing type annotation
+      if (diagnostic.message.includes('has no type annotation')) {
+        const paramName = this.getWordFromMessage(diagnostic.message);
+        if (paramName) {
+          actions.push({
+            title: `Add type annotation: ${paramName}: any`,
+            kind: CodeActionKind.QuickFix,
+            diagnostics: [diagnostic],
+            edit: {
+              changes: {
+                [uri]: [{
+                  range: diagnostic.range,
+                  newText: `${paramName}: any`,
+                }],
+              },
+            },
+          });
+        }
+      }
+
+      // Quick fix for "Did you mean" suggestions
+      if (diagnostic.message.includes('Did you mean')) {
+        const match = diagnostic.message.match(/Did you mean '(\w+)'/);
+        if (match) {
+          const suggestion = match[1];
+          actions.push({
+            title: `Change to "${suggestion}"`,
+            kind: CodeActionKind.QuickFix,
+            diagnostics: [diagnostic],
+            edit: {
+              changes: {
+                [uri]: [{
+                  range: diagnostic.range,
+                  newText: suggestion,
+                }],
+              },
+            },
+            isPreferred: true,
+          });
+        }
+      }
+    }
+
+    // Add extract function refactoring
+    if (this.hasSelectedCode(doc.content, range)) {
+      actions.push({
+        title: 'Extract to function',
+        kind: CodeActionKind.RefactorExtract,
+      });
+    }
+
+    return actions;
+  }
+
   // Helper methods
 
   private convertTypeDiagnostic(diagnostic: TypeDiagnostic): Diagnostic {
@@ -406,6 +630,29 @@ export class HoloScriptLanguageServer {
     }
 
     return result;
+  }
+
+  private getWordFromMessage(message: string): string | null {
+    // Extract word in quotes like: Variable "MyVar" should use camelCase
+    const match = message.match(/"(\w+)"|'(\w+)'|Parameter "?(\w+)"?/);
+    return match ? (match[1] || match[2] || match[3]) : null;
+  }
+
+  private toCamelCase(str: string): string {
+    // Handle PascalCase -> camelCase
+    if (/^[A-Z][a-z]/.test(str)) {
+      return str.charAt(0).toLowerCase() + str.slice(1);
+    }
+    // Handle SCREAMING_SNAKE_CASE or snake_case -> camelCase
+    return str.toLowerCase().replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+  }
+
+  private hasSelectedCode(content: string, range: Range): boolean {
+    // Check if range spans more than one character
+    if (range.start.line === range.end.line) {
+      return range.end.character - range.start.character > 1;
+    }
+    return range.end.line > range.start.line;
   }
 }
 
