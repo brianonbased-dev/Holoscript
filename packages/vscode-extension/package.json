@@ -26,7 +26,9 @@
   ],
   "activationEvents": [
     "onLanguage:holoscript",
-    "onLanguage:holoscriptplus"
+    "onLanguage:holoscriptplus",
+    "onCommand:holoscript.openPreview",
+    "onCommand:holoscript.openPreviewToSide"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -133,17 +135,21 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run esbuild-base -- --production",
+    "esbuild-base": "node esbuild.js",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
     "compile": "tsc -p ./",
-    "build": "npm run compile",
-    "watch": "tsc -watch -p ./",
-    "package": "vsce package",
+    "build": "npm run esbuild",
+    "watch": "npm run esbuild-watch",
+    "package": "vsce package --no-dependencies",
     "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^2.32.0",
+    "esbuild": "^0.27.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {

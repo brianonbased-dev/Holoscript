@@ -1,119 +1,9 @@
-"use strict";
-/**
- * HoloScript Live Preview Panel
- *
- * Provides a real-time 3D preview of HoloScript scenes in VS Code.
- * Uses a WebView with Three.js for rendering.
- */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.HoloScriptPreviewPanel = void 0;
-const vscode = require("vscode");
-const path = require("path");
-class HoloScriptPreviewPanel {
-    static createOrShow(extensionUri, document) {
-        const column = vscode.ViewColumn.Beside;
-        // If we already have a panel, show it
-        if (HoloScriptPreviewPanel.currentPanel) {
-            HoloScriptPreviewPanel.currentPanel._panel.reveal(column);
-            if (document) {
-                HoloScriptPreviewPanel.currentPanel.updateContent(document);
-            }
-            return;
-        }
-        // Otherwise, create a new panel
-        const panel = vscode.window.createWebviewPanel(HoloScriptPreviewPanel.viewType, 'HoloScript Preview', column, {
-            enableScripts: true,
-            retainContextWhenHidden: true,
-            localResourceRoots: [
-                vscode.Uri.joinPath(extensionUri, 'media'),
-                vscode.Uri.joinPath(extensionUri, 'node_modules'),
-            ],
-        });
-        HoloScriptPreviewPanel.currentPanel = new HoloScriptPreviewPanel(panel, extensionUri);
-        if (document) {
-            HoloScriptPreviewPanel.currentPanel.updateContent(document);
-        }
-    }
-    static revive(panel, extensionUri) {
-        HoloScriptPreviewPanel.currentPanel = new HoloScriptPreviewPanel(panel, extensionUri);
-    }
-    constructor(panel, extensionUri) {
-        this._disposables = [];
-        this._panel = panel;
-        this._extensionUri = extensionUri;
-        // Set the webview's initial html content
-        this._update();
-        // Listen for when the panel is disposed
-        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
-        // Update the content based on view state changes
-        this._panel.onDidChangeViewState(_e => {
-            if (this._panel.visible) {
-                this._update();
-            }
-        }, null, this._disposables);
-        // Handle messages from the webview
-        this._panel.webview.onDidReceiveMessage(message => {
-            switch (message.command) {
-                case 'error':
-                    vscode.window.showErrorMessage(message.text);
-                    return;
-                case 'info':
-                    vscode.window.showInformationMessage(message.text);
-                    return;
-                case 'ready':
-                    // Webview is ready, send current content
-                    if (this._currentDocument) {
-                        this._sendUpdate();
-                    }
-                    return;
-            }
-        }, null, this._disposables);
-        // Watch for document changes
-        vscode.workspace.onDidChangeTextDocument(e => {
-            if (this._currentDocument && e.document === this._currentDocument) {
-                this._sendUpdate();
-            }
-        }, null, this._disposables);
-    }
-    updateContent(document) {
-        this._currentDocument = document;
-        this._panel.title = `Preview: ${path.basename(document.fileName)}`;
-        this._sendUpdate();
-    }
-    _sendUpdate() {
-        if (!this._currentDocument)
-            return;
-        const content = this._currentDocument.getText();
-        const fileName = this._currentDocument.fileName;
-        this._panel.webview.postMessage({
-            command: 'update',
-            content,
-            fileName,
-            isHoloPlus: fileName.endsWith('.hsplus'),
-        });
-    }
-    dispose() {
-        HoloScriptPreviewPanel.currentPanel = undefined;
-        this._panel.dispose();
-        while (this._disposables.length) {
-            const disposable = this._disposables.pop();
-            if (disposable) {
-                disposable.dispose();
-            }
-        }
-    }
-    _update() {
-        this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
-    }
-    _getHtmlForWebview(webview) {
-        // Use a nonce to only allow specific scripts to be run
-        const nonce = getNonce();
-        return `<!DOCTYPE html>
+"use strict";var p=Object.create;var i=Object.defineProperty;var m=Object.getOwnPropertyDescriptor;var h=Object.getOwnPropertyNames;var u=Object.getPrototypeOf,b=Object.prototype.hasOwnProperty;var g=(t,e)=>{for(var o in e)i(t,o,{get:e[o],enumerable:!0})},c=(t,e,o,n)=>{if(e&&typeof e=="object"||typeof e=="function")for(let a of h(e))!b.call(t,a)&&a!==o&&i(t,a,{get:()=>e[a],enumerable:!(n=m(e,a))||n.enumerable});return t};var l=(t,e,o)=>(o=t!=null?p(u(t)):{},c(e||!t||!t.__esModule?i(o,"default",{value:t,enumerable:!0}):o,t)),f=t=>c(i({},"__esModule",{value:!0}),t);var v={};g(v,{HoloScriptPreviewPanel:()=>s});module.exports=f(v);var r=l(require("vscode")),d=l(require("path")),s=class t{constructor(e,o){this._disposables=[];this._panel=e,this._extensionUri=o,this._update(),this._panel.onDidDispose(()=>this.dispose(),null,this._disposables),this._panel.onDidChangeViewState(n=>{this._panel.visible&&this._update()},null,this._disposables),this._panel.webview.onDidReceiveMessage(n=>{switch(n.command){case"error":r.window.showErrorMessage(n.text);return;case"info":r.window.showInformationMessage(n.text);return;case"ready":this._currentDocument&&this._sendUpdate();return}},null,this._disposables),r.workspace.onDidChangeTextDocument(n=>{this._currentDocument&&n.document===this._currentDocument&&this._sendUpdate()},null,this._disposables)}static{this.viewType="holoscriptPreview"}static createOrShow(e,o){let n=r.ViewColumn.Beside;if(t.currentPanel){t.currentPanel._panel.reveal(n),o&&t.currentPanel.updateContent(o);return}let a=r.window.createWebviewPanel(t.viewType,"HoloScript Preview",n,{enableScripts:!0,retainContextWhenHidden:!0,localResourceRoots:[r.Uri.joinPath(e,"media"),r.Uri.joinPath(e,"node_modules")]});t.currentPanel=new t(a,e),o&&t.currentPanel.updateContent(o)}static revive(e,o){t.currentPanel=new t(e,o)}updateContent(e){this._currentDocument=e,this._panel.title=`Preview: ${d.basename(e.fileName)}`,this._sendUpdate()}_sendUpdate(){if(!this._currentDocument)return;let e=this._currentDocument.getText(),o=this._currentDocument.fileName;this._panel.webview.postMessage({command:"update",content:e,fileName:o,isHoloPlus:o.endsWith(".hsplus")})}dispose(){for(t.currentPanel=void 0,this._panel.dispose();this._disposables.length;){let e=this._disposables.pop();e&&e.dispose()}}_update(){this._panel.webview.html=this._getHtmlForWebview(this._panel.webview)}_getHtmlForWebview(e){let o=w();return`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' 'unsafe-eval'; img-src ${webview.cspSource} https: data:; connect-src https:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${e.cspSource} 'unsafe-inline'; script-src 'nonce-${o}' 'unsafe-eval'; img-src ${e.cspSource} https: data:; connect-src https:;">
   <title>HoloScript Preview</title>
   <style>
     * {
@@ -228,10 +118,10 @@ class HoloScriptPreviewPanel {
       <span id="file-name">No file loaded</span>
     </div>
     <div id="toolbar">
-      <button class="toolbar-btn" id="btn-reset" title="Reset Camera">🎥 Reset</button>
-      <button class="toolbar-btn" id="btn-wireframe" title="Toggle Wireframe">🔲 Wire</button>
-      <button class="toolbar-btn" id="btn-grid" title="Toggle Grid">📐 Grid</button>
-      <button class="toolbar-btn" id="btn-axes" title="Toggle Axes">📊 Axes</button>
+      <button class="toolbar-btn" id="btn-reset" title="Reset Camera">\u{1F3A5} Reset</button>
+      <button class="toolbar-btn" id="btn-wireframe" title="Toggle Wireframe">\u{1F532} Wire</button>
+      <button class="toolbar-btn" id="btn-grid" title="Toggle Grid">\u{1F4D0} Grid</button>
+      <button class="toolbar-btn" id="btn-axes" title="Toggle Axes">\u{1F4CA} Axes</button>
     </div>
     <div id="stats">
       <div>Objects: <span id="stat-objects">0</span></div>
@@ -244,7 +134,7 @@ class HoloScriptPreviewPanel {
     </div>
   </div>
 
-  <script nonce="${nonce}">
+  <script nonce="${o}">
     // Import Three.js from CDN
     const scriptLoader = document.createElement('script');
     scriptLoader.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
@@ -528,17 +418,4 @@ class HoloScriptPreviewPanel {
     });
   </script>
 </body>
-</html>`;
-    }
-}
-exports.HoloScriptPreviewPanel = HoloScriptPreviewPanel;
-HoloScriptPreviewPanel.viewType = 'holoscriptPreview';
-function getNonce() {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-}
-//# sourceMappingURL=previewPanel.js.map
+</html>`}};function w(){let t="",e="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";for(let o=0;o<32;o++)t+=e.charAt(Math.floor(Math.random()*e.length));return t}0&&(module.exports={HoloScriptPreviewPanel});
