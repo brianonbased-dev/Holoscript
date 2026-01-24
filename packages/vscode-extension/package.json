@@ -30,6 +30,12 @@
         "scopeName": "source.holoscript",
         "path": "./syntaxes/holoscript.tmLanguage.json"
       }
+    ],
+    "snippets": [
+      {
+        "language": "holoscript",
+        "path": "./snippets/holoscript.json"
+      }
     ]
   },
   "scripts": {

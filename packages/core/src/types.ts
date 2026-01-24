@@ -354,6 +354,20 @@ export interface VariableDeclarationNode extends ASTNode {
 }
 
 // ============================================================================
+// Type Guard Expression (is keyword)
+// ============================================================================
+
+export interface TypeGuardExpression extends ASTNode {
+  type: 'type-guard';
+  /** The value being checked */
+  subject: string;
+  /** The type being tested against */
+  guardType: string;
+  /** Whether this is a negated check (is not) */
+  negated?: boolean;
+}
+
+// ============================================================================
 // 2D UI Types
 // ============================================================================
 

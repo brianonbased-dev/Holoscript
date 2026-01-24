@@ -87,24 +87,42 @@ export const DEFAULT_CONFIG: LinterConfig = {
     // Syntax rules
     'no-syntax-errors': 'error',
     'valid-trait-syntax': 'error',
+    'no-empty-blocks': 'warn',
+    'no-unreachable-code': 'error',
 
     // Naming rules
     'composition-naming': 'warn',
     'object-naming': 'warn',
     'template-naming': 'warn',
+    'variable-naming': 'warn',
+    'function-naming': 'warn',
 
     // Best practices
     'no-unused-templates': 'warn',
     'no-duplicate-ids': 'error',
     'prefer-templates': 'warn',
+    'no-magic-numbers': 'warn',
+    'no-console-in-production': 'warn',
+    'prefer-const': 'warn',
+    'no-var': 'error',
 
     // Performance
     'no-deep-nesting': 'warn',
     'limit-objects-per-group': 'warn',
+    'no-expensive-operations-in-loop': 'warn',
+    'prefer-event-delegation': 'info',
 
     // Style
     'consistent-spacing': 'info',
     'sorted-properties': 'info',
+    'max-line-length': 'warn',
+    'trailing-comma': 'info',
+    'quotes': 'info',
+
+    // Type safety
+    'no-implicit-any': 'warn',
+    'explicit-return-type': 'info',
+    'no-unsafe-type-assertion': 'warn',
   },
   ignorePatterns: ['node_modules/**', 'dist/**', '*.min.holo'],
   maxErrors: 100,
@@ -313,6 +331,471 @@ const BUILT_IN_RULES: Rule[] = [
             severity: 'warning',
             line,
             column: 1,
+          });
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // No empty blocks
+  {
+    id: 'no-empty-blocks',
+    name: 'No Empty Blocks',
+    description: 'Disallow empty code blocks',
+    category: 'syntax',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const emptyBlockRegex = /\{\s*\}/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        let match;
+        while ((match = emptyBlockRegex.exec(line)) !== null) {
+          diagnostics.push({
+            ruleId: 'no-empty-blocks',
+            message: 'Empty block - add content or remove the block',
+            severity: 'warning',
+            line: i + 1,
+            column: match.index + 1,
+            fix: {
+              range: { start: match.index, end: match.index + match[0].length },
+              replacement: '{ /* TODO */ }',
+            },
+          });
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // Variable naming (camelCase)
+  {
+    id: 'variable-naming',
+    name: 'Variable Naming',
+    description: 'Variables should use camelCase',
+    category: 'naming',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const varRegex = /\b(const|let|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        let match;
+        while ((match = varRegex.exec(line)) !== null) {
+          const name = match[2];
+          // Check for camelCase (starts lowercase, no underscores except start)
+          if (!/^[a-z_][a-zA-Z0-9]*$/.test(name) && !name.startsWith('_')) {
+            diagnostics.push({
+              ruleId: 'variable-naming',
+              message: `Variable "${name}" should use camelCase`,
+              severity: 'warning',
+              line: i + 1,
+              column: match.index + match[1].length + 2,
+            });
+          }
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // Function naming (camelCase)
+  {
+    id: 'function-naming',
+    name: 'Function Naming',
+    description: 'Functions should use camelCase',
+    category: 'naming',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const funcRegex = /\bfunction\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        let match;
+        while ((match = funcRegex.exec(line)) !== null) {
+          const name = match[1];
+          if (!/^[a-z_][a-zA-Z0-9]*$/.test(name)) {
+            diagnostics.push({
+              ruleId: 'function-naming',
+              message: `Function "${name}" should use camelCase`,
+              severity: 'warning',
+              line: i + 1,
+              column: match.index + 10,
+            });
+          }
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // No magic numbers
+  {
+    id: 'no-magic-numbers',
+    name: 'No Magic Numbers',
+    description: 'Avoid unexplained numeric literals',
+    category: 'best-practice',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const allowedNumbers = new Set(['0', '1', '-1', '2', '100', '1000']);
+      const numberRegex = /(?<![a-zA-Z_])(-?\d+\.?\d*)(?![a-zA-Z_])/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        // Skip comments and property definitions
+        if (line.trim().startsWith('//') || line.includes(':')) continue;
+
+        let match;
+        while ((match = numberRegex.exec(line)) !== null) {
+          const num = match[1];
+          if (!allowedNumbers.has(num) && !line.includes('const') && !line.includes('position')) {
+            diagnostics.push({
+              ruleId: 'no-magic-numbers',
+              message: `Magic number ${num} - consider extracting to a named constant`,
+              severity: 'warning',
+              line: i + 1,
+              column: match.index + 1,
+            });
+          }
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // Prefer const
+  {
+    id: 'prefer-const',
+    name: 'Prefer Const',
+    description: 'Use const for variables that are never reassigned',
+    category: 'best-practice',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const letDeclarations = new Map<string, { line: number; column: number }>();
+      const reassignments = new Set<string>();
+
+      const letRegex = /\blet\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+      const assignRegex = /\b([a-zA-Z_][a-zA-Z0-9_]*)\s*[+\-*\/]?=/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        let match;
+        while ((match = letRegex.exec(line)) !== null) {
+          letDeclarations.set(match[1], { line: i + 1, column: match.index + 1 });
+        }
+        while ((match = assignRegex.exec(line)) !== null) {
+          if (!line.includes('let ' + match[1]) && !line.includes('const ' + match[1])) {
+            reassignments.add(match[1]);
+          }
+        }
+      }
+
+      for (const [name, loc] of letDeclarations) {
+        if (!reassignments.has(name)) {
+          diagnostics.push({
+            ruleId: 'prefer-const',
+            message: `"${name}" is never reassigned. Use const instead of let`,
+            severity: 'warning',
+            line: loc.line,
+            column: loc.column,
+            fix: {
+              range: { start: loc.column - 1, end: loc.column + 2 },
+              replacement: 'const',
+            },
+          });
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // No var
+  {
+    id: 'no-var',
+    name: 'No Var',
+    description: 'Use let or const instead of var',
+    category: 'best-practice',
+    defaultSeverity: 'error',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const varRegex = /\bvar\s+/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        let match;
+        while ((match = varRegex.exec(line)) !== null) {
+          diagnostics.push({
+            ruleId: 'no-var',
+            message: 'Use "let" or "const" instead of "var"',
+            severity: 'error',
+            line: i + 1,
+            column: match.index + 1,
+            fix: {
+              range: { start: match.index, end: match.index + 3 },
+              replacement: 'let',
+            },
+          });
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // Max line length
+  {
+    id: 'max-line-length',
+    name: 'Max Line Length',
+    description: 'Lines should not exceed maximum length',
+    category: 'style',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const maxLength = (context.config['maxLength'] as number) || 120;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        if (line.length > maxLength) {
+          diagnostics.push({
+            ruleId: 'max-line-length',
+            message: `Line exceeds ${maxLength} characters (${line.length})`,
+            severity: 'warning',
+            line: i + 1,
+            column: maxLength + 1,
+          });
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // Consistent quotes
+  {
+    id: 'quotes',
+    name: 'Consistent Quotes',
+    description: 'Use consistent quote style',
+    category: 'style',
+    defaultSeverity: 'info',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const preferDouble = (context.config['style'] as string) !== 'single';
+      const badQuote = preferDouble ? "'" : '"';
+      const goodQuote = preferDouble ? '"' : "'";
+      const quoteRegex = preferDouble ? /'/g : /"/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        let match;
+        while ((match = quoteRegex.exec(line)) !== null) {
+          diagnostics.push({
+            ruleId: 'quotes',
+            message: `Use ${goodQuote} instead of ${badQuote}`,
+            severity: 'info',
+            line: i + 1,
+            column: match.index + 1,
+            fix: {
+              range: { start: match.index, end: match.index + 1 },
+              replacement: goodQuote,
+            },
+          });
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // No implicit any
+  {
+    id: 'no-implicit-any',
+    name: 'No Implicit Any',
+    description: 'Function parameters should have explicit types',
+    category: 'type-safety',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      if (context.fileType !== 'hsplus') return diagnostics;
+
+      const paramRegex = /function\s+\w+\(([^)]+)\)/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        let match;
+        while ((match = paramRegex.exec(line)) !== null) {
+          const params = match[1].split(',');
+          for (const param of params) {
+            const trimmed = param.trim();
+            if (trimmed && !trimmed.includes(':')) {
+              diagnostics.push({
+                ruleId: 'no-implicit-any',
+                message: `Parameter "${trimmed}" has no type annotation`,
+                severity: 'warning',
+                line: i + 1,
+                column: match.index + 1,
+              });
+            }
+          }
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // Object naming (snake_case or camelCase)
+  {
+    id: 'object-naming',
+    name: 'Object Naming',
+    description: 'Object names should use consistent casing',
+    category: 'naming',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const objectRegex = /object\s+["']([^"']+)["']/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        let match;
+        while ((match = objectRegex.exec(line)) !== null) {
+          const name = match[1];
+          // Allow PascalCase, camelCase, snake_case, or kebab-case
+          if (!/^[A-Za-z][a-zA-Z0-9_-]*$/.test(name)) {
+            diagnostics.push({
+              ruleId: 'object-naming',
+              message: `Object name "${name}" should use valid naming convention`,
+              severity: 'warning',
+              line: i + 1,
+              column: match.index + 1,
+            });
+          }
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // Template naming (PascalCase)
+  {
+    id: 'template-naming',
+    name: 'Template Naming',
+    description: 'Templates should use PascalCase',
+    category: 'naming',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const templateRegex = /template\s+["']([^"']+)["']/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        let match;
+        while ((match = templateRegex.exec(line)) !== null) {
+          const name = match[1];
+          if (!/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
+            diagnostics.push({
+              ruleId: 'template-naming',
+              message: `Template "${name}" should use PascalCase`,
+              severity: 'warning',
+              line: i + 1,
+              column: match.index + 1,
+            });
+          }
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // Limit objects per group
+  {
+    id: 'limit-objects-per-group',
+    name: 'Limit Objects Per Group',
+    description: 'Avoid too many objects in a single group',
+    category: 'performance',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      const maxObjects = (context.config['maxObjects'] as number) || 50;
+      let objectCount = 0;
+      let groupStartLine = 0;
+      let inGroup = false;
+
+      const groupStartRegex = /spatial_group|group\s*{/;
+      const objectRegex = /\bobject\s+["']/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+
+        if (groupStartRegex.test(line)) {
+          inGroup = true;
+          groupStartLine = i + 1;
+          objectCount = 0;
+        }
+
+        if (inGroup) {
+          const matches = line.match(objectRegex);
+          if (matches) {
+            objectCount += matches.length;
+          }
+
+          if (line.includes('}')) {
+            if (objectCount > maxObjects) {
+              diagnostics.push({
+                ruleId: 'limit-objects-per-group',
+                message: `Group has ${objectCount} objects (max ${maxObjects}). Consider splitting into sub-groups`,
+                severity: 'warning',
+                line: groupStartLine,
+                column: 1,
+              });
+            }
+            inGroup = false;
+          }
+        }
+      }
+
+      return diagnostics;
+    },
+  },
+
+  // Consistent spacing
+  {
+    id: 'consistent-spacing',
+    name: 'Consistent Spacing',
+    description: 'Ensure consistent spacing around operators',
+    category: 'style',
+    defaultSeverity: 'info',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      // Check for missing spaces around operators
+      const badSpacingRegex = /[a-zA-Z0-9][=+\-*\/][a-zA-Z0-9]/g;
+
+      for (let i = 0; i < context.lines.length; i++) {
+        const line = context.lines[i];
+        // Skip strings and comments
+        if (line.trim().startsWith('//')) continue;
+
+        let match;
+        while ((match = badSpacingRegex.exec(line)) !== null) {
+          diagnostics.push({
+            ruleId: 'consistent-spacing',
+            message: 'Add spaces around operator',
+            severity: 'info',
+            line: i + 1,
+            column: match.index + 2,
           });
         }
       }

@@ -43,6 +43,84 @@ const _c: CompositionNode = {} as any;
 // @ts-ignore
 const _t: TransformationNode = {} as any;
 
+// =============================================================================
+// OBJECT POOL - Reduces GC pressure by reusing objects
+// =============================================================================
+
+/**
+ * Simple object pool for reducing garbage collection pressure
+ * on frequently created/destroyed objects during parsing.
+ */
+class ObjectPool<T extends object> {
+  private pool: T[] = [];
+  private createFn: () => T;
+  private resetFn: (obj: T) => void;
+  private maxSize: number;
+
+  constructor(
+    createFn: () => T,
+    resetFn: (obj: T) => void,
+    maxSize = 100
+  ) {
+    this.createFn = createFn;
+    this.resetFn = resetFn;
+    this.maxSize = maxSize;
+  }
+
+  /** Get an object from pool or create new one */
+  acquire(): T {
+    if (this.pool.length > 0) {
+      return this.pool.pop()!;
+    }
+    return this.createFn();
+  }
+
+  /** Return object to pool for reuse */
+  release(obj: T): void {
+    if (this.pool.length < this.maxSize) {
+      this.resetFn(obj);
+      this.pool.push(obj);
+    }
+  }
+
+  /** Clear the pool */
+  clear(): void {
+    this.pool.length = 0;
+  }
+
+  /** Get pool statistics */
+  get stats(): { pooled: number; maxSize: number } {
+    return { pooled: this.pool.length, maxSize: this.maxSize };
+  }
+}
+
+// Token pool for reusing token objects
+const tokenPool = new ObjectPool<{ type: string; value: string; line: number; column: number }>(
+  () => ({ type: '', value: '', line: 0, column: 0 }),
+  (t) => { t.type = ''; t.value = ''; t.line = 0; t.column = 0; }
+);
+
+// Array pool for reusing arrays
+const arrayPool = new ObjectPool<unknown[]>(
+  () => [],
+  (arr) => { arr.length = 0; },
+  50
+);
+
+/** Export pool utilities for advanced usage */
+export const ParserPools = {
+  token: tokenPool,
+  array: arrayPool,
+  clearAll: () => {
+    tokenPool.clear();
+    arrayPool.clear();
+  },
+  getStats: () => ({
+    token: tokenPool.stats,
+    array: arrayPool.stats,
+  }),
+};
+
 // Security configuration
 const CODE_SECURITY_CONFIG = {
   maxCodeLength: 50000,
@@ -65,7 +143,32 @@ export interface ParseError {
   line: number;
   column: number;
   message: string;
+  /** Error code for documentation reference (e.g., HS001) */
+  code?: string;
+  /** The source snippet around the error */
+  context?: string;
+  /** Suggested fix (e.g., "Did you mean 'object'?") */
+  suggestion?: string;
+  /** Severity of the error */
+  severity?: 'error' | 'warning' | 'info';
+  /** End position for range highlighting */
+  endLine?: number;
+  endColumn?: number;
 }
+
+/** Error codes with descriptions */
+export const ERROR_CODES = {
+  HS001: 'Expected keyword - a required keyword is missing',
+  HS002: 'Expected identifier - a name is required here',
+  HS003: 'Expected operator - an operator like = or : is required',
+  HS004: 'Unexpected token - this token is not valid in this context',
+  HS005: 'Unclosed block - missing closing brace }',
+  HS006: 'Unclosed string - missing closing quote',
+  HS007: 'Invalid number - numeric literal is malformed',
+  HS008: 'Unknown keyword - this keyword is not recognized',
+  HS009: 'Too many items - limit exceeded for performance',
+  HS010: 'Security violation - blocked for security reasons',
+} as const;
 
 interface Token {
   type: 'keyword' | 'identifier' | 'number' | 'string' | 'operator' | 'punctuation' | 'newline';
@@ -88,7 +191,7 @@ export class HoloScriptCodeParser {
       'if', 'else', 'nexus', 'building', 'pillar', 'foundation',
       'for', 'while', 'forEach', 'in', 'of', 'break', 'continue',
       'import', 'export', 'module', 'use',
-      'type', 'interface', 'extends', 'implements',
+      'type', 'interface', 'extends', 'implements', 'is',
       'async', 'await', 'spawn', 'parallel',
       'class', 'new', 'this', 'super', 'static', 'private', 'public',
       'try', 'catch', 'finally', 'throw',
@@ -96,6 +199,118 @@ export class HoloScriptCodeParser {
       'animate', 'modify', 'pulse', 'move', 'show', 'hide',
       'scale', 'focus', 'environment', 'composition', 'template', 'settings', 'chat'
     ]);
+  }
+
+  /** Source code lines for error context */
+  private sourceLines: string[] = [];
+
+  /**
+   * Create a rich error with context and suggestions
+   */
+  private createError(
+    code: keyof typeof ERROR_CODES,
+    message: string,
+    token?: Token | null,
+    suggestion?: string
+  ): ParseError {
+    const line = token?.line || 0;
+    const column = token?.column || 0;
+    
+    // Get source context (line before, current, line after)
+    let context = '';
+    if (this.sourceLines.length > 0 && line > 0) {
+      const lines = [];
+      if (line > 1) lines.push(`${line - 1} | ${this.sourceLines[line - 2] || ''}`);
+      lines.push(`${line} | ${this.sourceLines[line - 1] || ''}`);
+      lines.push(`    ${' '.repeat(column)}^`);
+      if (line < this.sourceLines.length) lines.push(`${line + 1} | ${this.sourceLines[line] || ''}`);
+      context = lines.join('\n');
+    }
+
+    return {
+      line,
+      column,
+      message,
+      code,
+      context,
+      suggestion,
+      severity: 'error',
+    };
+  }
+
+  /**
+   * Find similar keywords for "did you mean" suggestions
+   */
+  private findSimilarKeyword(word: string): string | undefined {
+    if (!word) return undefined;
+    const lower = word.toLowerCase();
+    let bestMatch: string | undefined;
+    let bestScore = 0;
+
+    for (const keyword of this.keywordSet) {
+      const score = this.similarity(lower, keyword);
+      if (score > bestScore && score > 0.6) {
+        bestScore = score;
+        bestMatch = keyword;
+      }
+    }
+    return bestMatch;
+  }
+
+  /**
+   * Simple Levenshtein-based similarity (0-1)
+   */
+  private similarity(a: string, b: string): number {
+    if (a === b) return 1;
+    if (a.length === 0 || b.length === 0) return 0;
+    
+    const len = Math.max(a.length, b.length);
+    let matches = 0;
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      if (a[i] === b[i]) matches++;
+    }
+    // Also check if one starts with the other
+    if (a.startsWith(b) || b.startsWith(a)) {
+      matches = Math.max(matches, Math.min(a.length, b.length));
+    }
+    return matches / len;
+  }
+
+  /**
+   * Add error and continue parsing (error recovery)
+   */
+  private addError(error: ParseError): void {
+    // Avoid duplicate errors on same line
+    if (!this.errors.some(e => e.line === error.line && e.message === error.message)) {
+      this.errors.push(error);
+    }
+  }
+
+  /**
+   * Recover from error by skipping to next statement boundary
+   */
+  private synchronize(): void {
+    while (this.position < this.tokens.length) {
+      const token = this.currentToken();
+      if (!token) break;
+      
+      // Stop at statement boundaries
+      if (token.type === 'newline') {
+        this.advance();
+        break;
+      }
+      if (token.type === 'keyword' && [
+        'orb', 'function', 'gate', 'for', 'while', 'if', 'return',
+        'object', 'template', 'composition', 'spatial_group', 'logic'
+      ].includes(token.value)) {
+        break;
+      }
+      if (token.type === 'punctuation' && ['}', ';'].includes(token.value)) {
+        this.advance();
+        break;
+      }
+      this.advance();
+    }
   }
 
   /**
@@ -106,13 +321,20 @@ export class HoloScriptCodeParser {
     this.warnings = [];
     this.tokens = [];
     this.position = 0;
+    this.sourceLines = code.split('\n'); // Store for error context
 
     // Security: Check code length
     if (code.length > CODE_SECURITY_CONFIG.maxCodeLength) {
       return {
         success: false,
         ast: [],
-        errors: [{ line: 0, column: 0, message: `Code exceeds max length (${CODE_SECURITY_CONFIG.maxCodeLength})` }],
+        errors: [{
+          line: 0,
+          column: 0,
+          message: `Code exceeds max length (${CODE_SECURITY_CONFIG.maxCodeLength})`,
+          code: 'HS009',
+          severity: 'error'
+        }],
         warnings: [],
       };
     }
@@ -124,7 +346,13 @@ export class HoloScriptCodeParser {
         return {
           success: false,
           ast: [],
-          errors: [{ line: 0, column: 0, message: `Suspicious keyword detected: ${keyword}` }],
+          errors: [{
+            line: 0,
+            column: 0,
+            message: `Suspicious keyword detected: ${keyword}`,
+            code: 'HS010',
+            severity: 'error'
+          }],
           warnings: [],
         };
       }
@@ -134,7 +362,7 @@ export class HoloScriptCodeParser {
       // Tokenize
       this.tokens = this.tokenize(code);
 
-      // Parse tokens into AST
+      // Parse tokens into AST with error recovery
       const ast = this.parseProgram();
 
       return {
@@ -144,10 +372,18 @@ export class HoloScriptCodeParser {
         warnings: this.warnings,
       };
     } catch (error) {
+      // Don't lose previous errors on exception
+      this.addError({
+        line: 0,
+        column: 0,
+        message: String(error),
+        code: 'HS004',
+        severity: 'error'
+      });
       return {
         success: false,
         ast: [],
-        errors: [{ line: 0, column: 0, message: String(error) }],
+        errors: this.errors,
         warnings: this.warnings,
       };
     }
@@ -289,8 +525,21 @@ export class HoloScriptCodeParser {
   private parseProgram(): ASTNode[] {
     const nodes: ASTNode[] = [];
     let blockCount = 0;
+    const maxErrors = 50; // Stop after too many errors
 
     while (this.position < this.tokens.length) {
+      // Stop if too many errors
+      if (this.errors.length >= maxErrors) {
+        this.addError({
+          line: 0,
+          column: 0,
+          message: `Too many errors (${maxErrors}+), stopping parse`,
+          code: 'HS009',
+          severity: 'error'
+        });
+        break;
+      }
+
       // Skip newlines
       while (this.currentToken()?.type === 'newline') {
         this.advance();
@@ -301,13 +550,24 @@ export class HoloScriptCodeParser {
       // Security: limit blocks
       blockCount++;
       if (blockCount > CODE_SECURITY_CONFIG.maxBlocks) {
-        this.errors.push({ line: 0, column: 0, message: 'Too many blocks in program' });
+        this.addError({
+          line: 0,
+          column: 0,
+          message: 'Too many blocks in program',
+          code: 'HS009',
+          severity: 'error'
+        });
         break;
       }
 
+      const errorCountBefore = this.errors.length;
       const node = this.parseDeclaration();
+      
       if (node) {
         nodes.push(node);
+      } else if (this.errors.length > errorCountBefore) {
+        // Error occurred - try to recover
+        this.synchronize();
       }
     }
 
@@ -1323,11 +1583,22 @@ export class HoloScriptCodeParser {
       return true;
     }
     const token = this.currentToken();
-    this.errors.push({
-      line: token?.line || 0,
-      column: token?.column || 0,
-      message: `Expected ${type}${value ? ` '${value}'` : ''}, got ${token?.type || 'EOF'} '${token?.value || ''}'`,
-    });
+    
+    // Build suggestion for keywords
+    let suggestion: string | undefined;
+    if (type === 'keyword' && value && token?.type === 'identifier') {
+      const similar = this.findSimilarKeyword(token.value);
+      if (similar) {
+        suggestion = `Did you mean '${similar}'?`;
+      }
+    }
+    
+    this.addError(this.createError(
+      type === 'keyword' ? 'HS001' : type === 'identifier' ? 'HS002' : 'HS003',
+      `Expected ${type}${value ? ` '${value}'` : ''}, got ${token?.type || 'EOF'} '${token?.value || ''}'`,
+      token,
+      suggestion
+    ));
     return false;
   }
 
@@ -1337,11 +1608,13 @@ export class HoloScriptCodeParser {
       this.advance();
       return token.value;
     }
-    this.errors.push({
-      line: token?.line || 0,
-      column: token?.column || 0,
-      message: `Expected identifier, got ${token?.type || 'EOF'}`,
-    });
+    
+    this.addError(this.createError(
+      'HS002',
+      `Expected identifier, got ${token?.type || 'EOF'}`,
+      token,
+      token?.type === 'number' ? 'Identifiers cannot start with a number' : undefined
+    ));
     return null;
   }
 
