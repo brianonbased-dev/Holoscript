@@ -46,7 +46,7 @@ HoloScript is a declarative language that compiles to 9+ platforms from a single
 - [x] Generic types - `Collection<T>` ✅ (TypeAnnotationParser)
 - [x] Union types - `string | number` ✅ (TypeAnnotationParser)
 - [x] Optional chaining - `obj?.prop` ✅ (OptionalChainingParser)
-- [ ] Null coalescing - `value ?? default`
+- [x] Null coalescing - `value ?? default` ✅ (HoloScriptCodeParser)
 - [ ] Type guards - `is` keyword
 
 ### 1.3: Error Messages
@@ -106,22 +106,22 @@ HoloScript is a declarative language that compiles to 9+ platforms from a single
 - [x] `@networked` - automatic state sync ✅ (NetworkedTrait.ts)
 - [x] `@replicated` - owner-authoritative sync ✅ (NetworkedTrait syncMode: 'owner')
 - [x] `@rpc` - remote procedure calls ✅ (Parser support)
-- [ ] `@lobby` - room/session management
+- [x] `@lobby` - room/session management ✅ (LobbyTrait.ts)
 
 ### 3.2: AI Integration
-- [ ] `@ai_driver` - behavior tree AI
+- [x] `@ai_driver` - behavior tree AI ✅ (AIDriverTrait.ts)
 - [ ] `@dialog` - conversational NPCs
-- [ ] `@voice_input` - speech recognition
+- [x] `@voice_input` - speech recognition ✅ (VoiceInputTrait.ts)
 - [ ] `@voice_output` - text-to-speech
 
 ### 3.3: Physics Traits
-- [ ] `@rigidbody` - physics simulation
+- [x] `@rigidbody` - physics simulation ✅ (RigidbodyTrait.ts)
 - [x] `@joint` - connected bodies ✅ (JointTrait.ts - 7 joint types)
-- [ ] `@trigger` - collision events
+- [x] `@trigger` - collision events ✅ (TriggerTrait.ts)
 - [ ] `@character` - character controller
 
 ### 3.4: Animation Traits
-- [ ] `@skeleton` - bone-based animation
+- [x] `@skeleton` - bone-based animation ✅ (SkeletonTrait.ts)
 - [ ] `@morph` - blend shapes
 - [ ] `@animation` - animation clips
 - [x] `@ik` - inverse kinematics ✅ (IKTrait.ts - FABRIK solver)

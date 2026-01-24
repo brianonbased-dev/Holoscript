@@ -183,6 +183,56 @@ export {
   type IKConfig,
 } from './traits/IKTrait';
 
+// HoloScript+ Rigidbody Trait (NEW - Phase 4: Physics)
+export {
+  RigidbodyTrait,
+  createRigidbodyTrait,
+  type BodyType,
+  type ForceMode,
+  type CollisionDetectionMode,
+  type ColliderShape,
+  type ColliderConfig,
+  type PhysicsMaterialConfig,
+  type RigidbodyConfig,
+} from './traits/RigidbodyTrait';
+
+// HoloScript+ Trigger Trait (NEW - Phase 4: Collision)
+export {
+  TriggerTrait,
+  createTriggerTrait,
+  type TriggerShape,
+  type TriggerEvent,
+  type TriggerEventType,
+  type TriggerAction,
+  type TriggerConfig,
+} from './traits/TriggerTrait';
+
+// HoloScript+ Skeleton Trait (NEW - Phase 4: Animation)
+export {
+  SkeletonTrait as SkeletonAnimationTrait,
+  createSkeletonTrait,
+  type SkeletonRigType,
+  type BlendTreeType,
+  type AnimationEvent,
+  type BlendTreeNode,
+  type AnimationLayer,
+  type HumanoidBoneMap,
+  type SkeletonConfig,
+} from './traits/SkeletonTrait';
+
+// HoloScript+ Lobby Trait (NEW - Phase 4: Multiplayer)
+export {
+  LobbyTrait,
+  createLobbyTrait,
+  type LobbyState,
+  type LobbyVisibility,
+  type MatchmakingMode,
+  type PlayerInfo,
+  type TeamConfig,
+  type MatchmakingConfig,
+  type LobbyConfig,
+} from './traits/LobbyTrait';
+
 // Performance Telemetry (NEW - Phase 1)
 export {
   PerformanceTelemetry,

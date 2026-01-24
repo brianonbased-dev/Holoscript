@@ -253,7 +253,7 @@ export class HoloScriptCodeParser {
       }
 
       // Multi-character operators (must check before single-char)
-      const multiCharOps = ['===', '!==', '==', '!=', '>=', '<=', '&&', '||', '++', '--', '+=', '-=', '*=', '/=', '%=', '=>', '->'];
+      const multiCharOps = ['===', '!==', '==', '!=', '>=', '<=', '&&', '||', '??', '?.', '++', '--', '+=', '-=', '*=', '/=', '%=', '=>', '->'];
       let foundMultiOp = false;
       for (const op of multiCharOps) {
         if (code.substring(i, i + op.length) === op) {
