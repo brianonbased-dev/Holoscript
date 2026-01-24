@@ -243,8 +243,7 @@ Easy to add:
 This service can integrate with:
 - **@holoscript/core** - Execute generated code
 - **@holoscript/cli** - CLI interface
-- **@holoscript/uaa2-client** - AI agent integration
-- **uaa2-service** - Advanced AI features
+- **@holoscript/infinityassistant** - AI building integration
 - **Hololand** - Save to world/creator program
 
 ---

@@ -279,18 +279,18 @@ describe('AIDriverTrait', () => {
     });
   });
 
-  describe('uaa2 Agent Integration', () => {
-    it('should accept uaa2 agent ID', () => {
-      const uaa2Config: AIDriverConfig = {
+  describe('External Agent Integration', () => {
+    it('should accept external agent ID', () => {
+      const agentConfig: AIDriverConfig = {
         npcId: 'npc-integrated',
         decisionMode: 'hybrid',
         agentId: 'agent-001',
       };
-      const integratedNPC = new AIDriverTrait(uaa2Config);
+      const integratedNPC = new AIDriverTrait(agentConfig);
       expect(integratedNPC).toBeDefined();
     });
 
-    it('should work without uaa2 integration', () => {
+    it('should work without external agent integration', () => {
       const standaloneConfig: AIDriverConfig = {
         npcId: 'npc-standalone',
         decisionMode: 'reactive',

@@ -1,7 +1,7 @@
 /**
  * @holoscript/infinityassistant Basic Tests
  *
- * Placeholder test file for UAA2 client integration
+ * Placeholder test file for Infinity Builder client integration
  */
 
 import { describe, it, expect } from 'vitest';

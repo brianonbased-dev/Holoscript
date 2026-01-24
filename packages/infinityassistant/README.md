@@ -213,7 +213,7 @@ import type {
   AgentSession,
   SpawnAgentRequest,
   Pattern,
-  UAA2Error
+  InfinityBuilderError
 } from '@holoscript/infinityassistant';
 ```
 

@@ -103,9 +103,9 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
-      - name: Publish @holoscript/uaa2-client
+      - name: Publish @holoscript/infinityassistant
         run: |
-          cd packages/uaa2-client
+          cd packages/infinityassistant
           pnpm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

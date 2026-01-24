@@ -70,7 +70,7 @@ export class PackageManager {
     '@holoscript/lsp',
     '@holoscript/cli',
     '@holoscript/commerce',
-    '@holoscript/uaa2-client',
+    '@holoscript/infinityassistant',
   ];
 
   constructor(cwd: string = process.cwd()) {

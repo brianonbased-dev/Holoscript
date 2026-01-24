@@ -300,7 +300,7 @@ This service integrates with:
 - **HoloScript Core** - Execute generated code
 - **HoloScript CLI** - Command-line interface
 - **Hololand** - Save to world/creator program
-- **uaa2-service** - Advanced AI features
+- **Infinity Assistant** - AI building features
 - **Quantum MCP Mesh** - Cross-workspace knowledge
 
 ---

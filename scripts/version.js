@@ -14,7 +14,7 @@ const { execSync } = require('child_process');
 const PACKAGES = [
   'packages/core',
   'packages/cli',
-  'packages/uaa2-client',
+  'packages/infinityassistant',
 ];
 
 function readJson(filePath) {

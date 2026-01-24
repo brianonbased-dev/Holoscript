@@ -2,7 +2,7 @@
  * @holoscript/core AI-Driven NPC Trait
  *
  * Enables intelligent NPC behaviors using behavior trees and goal planning
- * Integrates with uaa2-service for agent-based decision making
+ * Integrates with external agent services for agent-based decision making
  */
 /**
  * Behavior tree runner
