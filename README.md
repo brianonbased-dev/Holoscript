@@ -61,6 +61,21 @@ One component. Runs on **Web, VR, AR, iOS, Android, Desktop**. No rewrites.
 
 **Real result:** We reduced our own service codebase by **90%** using HoloScript.
 
+## 🚀 What's New (January 2026)
+
+### 🔊 Spatial Audio
+`@holoscript/spatial-audio` — 3D positional audio with HRTF and room acoustics. Perfect for immersive VR experiences.
+
+### 🔄 State Sync
+`@holoscript/state-sync` — CRDTs for multiplayer. Conflict-free data structures that automatically merge across peers.
+
+### 📦 Asset Streaming
+`@holoscript/streaming` — Progressive loading, LOD streaming, and smart caching for large VR worlds.
+
+### 🤖 AI Integration
+- **Claude Desktop/Code** — `.claude/settings.json` pre-configured
+- **GitHub Copilot** — `.github/copilot-instructions.md` with MCP guidance
+
 ## Install
 
 ```bash
@@ -125,6 +140,9 @@ const result = parser.parse(`
 | `@holoscript/fs` | 1.0.0 | File system utilities | ✅ |
 | `@holoscript/network` | 1.0.0 | Multiplayer networking | ✅ |
 | `@holoscript/llm` | 1.0.0 | AI/LLM integration | ✅ |
+| `@holoscript/spatial-audio` | 1.0.0 | 3D audio with HRTF & room acoustics | ✅ |
+| `@holoscript/state-sync` | 1.0.0 | CRDTs for distributed state | ✅ |
+| `@holoscript/streaming` | 1.0.0 | Asset streaming & LOD | ✅ |
 
 ### Platform Adapters ([Hololand Repo](https://github.com/brianonbased-dev/Hololand))
 

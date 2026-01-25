@@ -1,3 +1,37 @@
+## [2.2.0] - 2026-01-25
+
+### 🚀 VR Runtime Packages
+
+Three major new packages for building production VR experiences:
+
+### Added
+- **@holoscript/spatial-audio** - 3D positional audio for VR/AR
+  - HRTF binaural processing with multiple datasets (CIPIC, KEMAR)
+  - Room acoustics simulation (reflections, reverb, occlusion)
+  - Spatial audio emitters with distance attenuation
+  - Audio zone management for different acoustic regions
+  - Full Web Audio API integration
+
+- **@holoscript/state-sync** - Distributed state with CRDTs
+  - Conflict-free replicated data types (GCounter, PNCounter, ORSet, etc.)
+  - Delta synchronization for bandwidth efficiency
+  - Merkle tree sync for state verification
+  - Undo/redo with state history
+  - Snapshot capture and restore
+  - Perfect for multiplayer VR state management
+
+- **@holoscript/streaming** - Asset and world streaming
+  - Progressive loading with priority queues
+  - LOD (Level of Detail) streaming
+  - Memory + IndexedDB caching with smart eviction
+  - Memory budget monitoring
+  - Bundle loading for related assets
+
+- **Debug Scripts** - Parser debugging utilities in `/scripts/`
+- **AI Assistant Configuration** - Claude Desktop and Copilot integration
+
+---
+
 ## [2.1.0] - 2026-01-22
 
 ### 🏗️ Repository Reorganization
