@@ -89,7 +89,7 @@ export type { RuntimeOptions, Renderer, NodeInstance } from './runtime/HoloScrip
 export { ReactiveState, createState, reactive, effect, computed, bind } from './state/ReactiveState';
 
 // HoloScript+ VR Traits (NEW)
-export { VRTraitRegistry } from './traits/VRTraitSystem';
+export { VRTraitRegistry, vrTraitRegistry } from './traits/VRTraitSystem';
 
 // HoloScript+ Voice Input Trait (NEW - Phase 1)
 export {

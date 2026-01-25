@@ -15,7 +15,6 @@ import type {
   HoloState,
   HoloStateProperty,
   HoloTemplate,
-  HoloTemplateProperty,
   HoloObjectDecl,
   HoloObjectProperty,
   HoloSpatialGroup,
@@ -728,11 +727,15 @@ export class HoloCompositionParser {
 
       if (this.check('OBJECT')) {
         children.push(this.parseObject());
-      } else {
+      } else if (this.check('IDENTIFIER')) {
         const key = this.expectIdentifier();
         this.expect('COLON');
         const value = this.parseValue();
         properties.push({ type: 'ObjectProperty', key, value });
+      } else {
+        // Skip unknown tokens to prevent infinite loop
+        this.error(`Unexpected token in object: ${this.current().type}`);
+        this.advance();
       }
       this.skipNewlines();
     }
@@ -1206,6 +1209,14 @@ export class HoloCompositionParser {
   // ===========================================================================
 
   private parseValue(): HoloValue {
+    // Handle negative numbers
+    if (this.match('MINUS')) {
+      if (this.match('NUMBER')) {
+        return -parseFloat(this.previous().value);
+      }
+      this.error('Expected number after minus sign');
+      return 0;
+    }
     if (this.match('NUMBER')) {
       return parseFloat(this.previous().value);
     }

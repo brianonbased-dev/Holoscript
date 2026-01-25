@@ -202,6 +202,14 @@ export const runtime = {
   initBrowserHistory,
 };
 
+// Browser Runtime (scene loading and rendering)
+export {
+  createRuntime,
+  BrowserRuntime,
+  type RuntimeConfig,
+  type HoloScriptRuntime,
+} from './browser/BrowserRuntime.js';
+
 /**
  * Initialize the runtime and register globals
  */

@@ -1,0 +1,55 @@
+{
+  "name": "@holoscript/portals",
+  "version": "1.0.0",
+  "description": "VR portal and scene transition system",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./portal": {
+      "import": {
+        "types": "./dist/portal.d.ts",
+        "default": "./dist/portal.js"
+      },
+      "require": {
+        "types": "./dist/portal.d.cts",
+        "default": "./dist/portal.cjs"
+      }
+    },
+    "./transitions": {
+      "import": {
+        "types": "./dist/transitions.d.ts",
+        "default": "./dist/transitions.js"
+      },
+      "require": {
+        "types": "./dist/transitions.d.cts",
+        "default": "./dist/transitions.cjs"
+      }
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["holoscript", "portals", "vr", "scene", "transitions", "teleport"],
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

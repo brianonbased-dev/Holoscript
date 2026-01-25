@@ -1,0 +1,67 @@
+{
+  "name": "@holoscript/pcg",
+  "version": "1.0.0",
+  "description": "Procedural Content Generation for HoloScript - noise, terrain, dungeons, L-systems, Wave Function Collapse",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./noise": {
+      "types": "./dist/noise.d.ts",
+      "import": "./dist/noise.js",
+      "require": "./dist/noise.cjs"
+    },
+    "./terrain": {
+      "types": "./dist/terrain.d.ts",
+      "import": "./dist/terrain.js",
+      "require": "./dist/terrain.cjs"
+    },
+    "./dungeon": {
+      "types": "./dist/dungeon.d.ts",
+      "import": "./dist/dungeon.js",
+      "require": "./dist/dungeon.cjs"
+    },
+    "./lsystem": {
+      "types": "./dist/lsystem.d.ts",
+      "import": "./dist/lsystem.js",
+      "require": "./dist/lsystem.cjs"
+    },
+    "./wfc": {
+      "types": "./dist/wfc.d.ts",
+      "import": "./dist/wfc.js",
+      "require": "./dist/wfc.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "lint": "eslint src",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "holoscript",
+    "pcg",
+    "procedural",
+    "generation",
+    "noise",
+    "terrain",
+    "dungeon",
+    "wfc"
+  ],
+  "author": "HoloScript Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "rimraf": "^5.0.5",
+    "tsup": "^8.5.1",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}
