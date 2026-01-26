@@ -40,7 +40,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest run",
+    "test": "vitest run --pool=forks --poolOptions.forks.singleFork",
     "test:watch": "vitest"
   },
   "keywords": [

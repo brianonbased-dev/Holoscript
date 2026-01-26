@@ -83,7 +83,7 @@ import {
   RoomAcoustics,
   HRTF_PRESETS,
   ROOM_PRESETS,
-} from '../src/index.js';
+} from '../index.js';
 
 describe('@holoscript/spatial-audio', () => {
   describe('createSpatialAudioEngine', () => {

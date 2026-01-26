@@ -12,8 +12,8 @@ import {
   GSet,
   ORSet,
   SYNC_STRATEGIES,
-} from '../src/index.js';
-import type { SyncConfig, ConflictStrategy } from '../src/types.js';
+} from '../index.js';
+import type { SyncConfig, ConflictStrategy } from '../types.js';
 
 describe('@holoscript/state-sync', () => {
   describe('createStateSyncEngine', () => {

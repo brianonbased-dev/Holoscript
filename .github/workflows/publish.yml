@@ -47,6 +47,8 @@ jobs:
       
       - name: Run tests
         run: pnpm test
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
       
       - name: Build packages
         run: pnpm build
