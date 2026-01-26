@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { FlowFieldGenerator } from '../src/FlowFieldGenerator';
+import { FlowFieldGenerator } from '../FlowFieldGenerator';
 
 describe('FlowFieldGenerator', () => {
   let flowField: FlowFieldGenerator;
