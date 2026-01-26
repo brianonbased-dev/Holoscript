@@ -862,15 +862,14 @@ export class HoloCompositionParser {
           const body = this.parseStatementBlock();
           this.expect('RBRACE');
           handlers.push({ type: 'EventHandler', event: name, parameters, body } as any);
-        } else if (this.check('COLON')) {
-          // Property style: on_grab: { ... }
-          this.advance();
-          this.expect('LBRACE');
+        } else if (this.check('LBRACE')) {
+          // No-parens style: on_enter { ... }
+          this.advance(); // consume {
           const body = this.parseStatementBlock();
           this.expect('RBRACE');
           handlers.push({ type: 'EventHandler', event: name, parameters: [], body } as any);
         } else {
-          this.error(`Unexpected token in logic: ${name}`);
+          this.error(`Unexpected token in logic: ${name}. Next token: ${this.current().type}`);
         }
       } else {
         this.error(`Unexpected token in logic block: ${this.current().type}`);

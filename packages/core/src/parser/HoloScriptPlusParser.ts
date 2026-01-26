@@ -105,10 +105,6 @@ class Lexer {
         this.skipLineComment();
         continue;
       }
-      if (char === '#') {
-        this.skipLineComment();
-        continue;
-      }
 
       // Newlines
       if (char === '\n') {
@@ -191,14 +187,26 @@ class Lexer {
       }
       if (char === '=') {
         if (this.peek(1) === '>') {
+          const startCol = this.column;
+          this.advance(); // =
+          this.advance(); // >
           this.tokens.push(this.createToken('ARROW', '=>'));
-          this.advance();
-          this.advance();
+          this.tokens[this.tokens.length - 1].column = startCol;
           continue;
         }
         this.tokens.push(this.createToken('EQUALS', '='));
         this.advance();
         continue;
+      }
+      if (char === '-') {
+        if (this.peek(1) === '>') {
+          const startCol = this.column;
+          this.advance(); // -
+          this.advance(); // >
+          this.tokens.push(this.createToken('ARROW', '->'));
+          this.tokens[this.tokens.length - 1].column = startCol;
+          continue;
+        }
       }
       if (char === '|') {
         this.tokens.push(this.createToken('PIPE', '|'));
@@ -257,12 +265,14 @@ class Lexer {
   }
 
   private createToken(type: TokenType, value: string): Token {
-    return {
+    const token = {
       type,
       value,
       line: this.line,
-      column: this.column - value.length,
+      column: this.column - (value.length || 0),
     };
+    // console.log(`[DEBUG_LEX] Token: ${type} "${value}" at ${token.line}:${token.column}`);
+    return token;
   }
 
   private handleIndentation(): void {
@@ -357,12 +367,13 @@ class Lexer {
     }
 
     this.advance(); // Closing quote
-    return {
-      type: 'STRING',
+    const token = {
+      type: 'STRING' as TokenType,
       value,
       line: startLine,
       column: startColumn,
     };
+    return token;
   }
 
   private readNumber(): Token {
@@ -400,12 +411,13 @@ class Lexer {
       value += this.advance();
     }
 
-    return {
-      type: 'NUMBER',
+    const token = {
+      type: 'NUMBER' as TokenType,
       value,
       line: this.line,
       column: startColumn,
     };
+    return token;
   }
 
   private readExpression(): Token {
@@ -468,12 +480,13 @@ class Lexer {
       };
     }
 
-    return {
-      type: 'IDENTIFIER',
+    const token = {
+      type: 'IDENTIFIER' as TokenType,
       value,
       line: this.line,
       column: startColumn,
     };
+    return token;
   }
 
   private isDigit(char: string): boolean {
@@ -540,12 +553,12 @@ export class HoloScriptPlusParser {
     const ast: ASTProgram = {
       type: 'Program',
       id: 'root',
-      properties: {},
-      directives: (root.directives || []),
-      children: [],
-      traits: new Map(),
+      properties: root.properties || {},
+      directives: root.directives || [],
+      children: root.children || [],
+      traits: root.traits || new Map(),
       loc: root.loc,
-      body: (root.directives || []) as any,
+      body: root.children || [],
       version: '1.0',
       root,
       imports: this.imports,
@@ -619,8 +632,18 @@ export class HoloScriptPlusParser {
     const properties: Record<string, unknown> = {};
     const directives: HSPlusDirective[] = [];
     const traits = new Map<VRTraitName, unknown>();
+    
+    while (!this.check('LBRACE') && !this.check('EOF')) {
+      if (this.check('NEWLINE')) {
+        this.skipNewlines();
+        // If we hit a brace after newlines, it's the start of the block
+        if (this.check('LBRACE')) break;
+        // If we hit an identifier, it might be the next node
+        // BUT wait, traits can be on newlines!
+        // So we only continue if the next token is AT
+        if (!this.check('AT')) break;
+      }
 
-    while (!this.check('LBRACE') && !this.check('NEWLINE') && !this.check('EOF')) {
       if (this.check('AT')) {
         const directive = this.parseDirective();
         if (directive) {
@@ -632,7 +655,6 @@ export class HoloScriptPlusParser {
           }
         }
       } else if (this.check('IDENTIFIER')) {
-
         const key = this.advance().value;
         if (this.check('COLON') || this.check('EQUALS')) {
           this.advance();
@@ -651,6 +673,9 @@ export class HoloScriptPlusParser {
       this.skipNewlines();
 
       while (!this.check('RBRACE') && !this.check('EOF')) {
+        this.skipNewlines();
+        if (this.check('RBRACE') || this.check('EOF')) break;
+
         if (this.check('AT')) {
           const directive = this.parseDirective();
           if (directive) {
@@ -673,8 +698,7 @@ export class HoloScriptPlusParser {
             children.push(this.parseNode());
           }
         } else {
-          this.skipNewlines();
-          if (this.check('RBRACE') || this.check('EOF')) break;
+          // Advance on unknown tokens to avoid infinite loops
           this.advance();
         }
         this.skipNewlines();
@@ -699,7 +723,8 @@ export class HoloScriptPlusParser {
 
   private parseDirective(): HSPlusDirective | null {
     this.expect('AT', 'Expected @');
-    const name = this.expect('IDENTIFIER', 'Expected directive name').value;
+    const nameToken = this.expect('IDENTIFIER', 'Expected directive name');
+    const name = nameToken.value;
 
     if ((VR_TRAITS as readonly string[]).includes(name)) {
       if (!this.options.enableVRTraits) {
@@ -971,20 +996,44 @@ export class HoloScriptPlusParser {
       this.skipNewlines();
 
       while (!this.check('RBRACE') && !this.check('EOF')) {
+        this.skipNewlines();
+        if (this.check('RBRACE') || this.check('EOF')) break;
+
         if (this.check('AT')) {
           const directive = this.parseDirective();
-          if (directive && directive.type === 'for') {
-            nodes.push({
-              type: 'fragment',
-              properties: {},
-              directives: [directive],
-              children: [],
-              traits: new Map(),
-            } as any);
+          if (directive) {
+            // Check if it's a structural directive (flow control) or an attached directive
+            if (directive.type === 'for' || directive.type === 'while' || directive.type === 'if' || directive.type === 'forEach') {
+               // Structural directives can stand alone in a block
+               // We wrap them in a fragment to satisfy the HSPlusNode requirements if needed,
+               // but the parser should ideally handle them as first-class citizens.
+               // For compatibility with return type HSPlusNode[], we wrap.
+               nodes.push({
+                 type: 'fragment' as any,
+                 directives: [directive],
+                 children: [],
+                 traits: new Map(),
+                 properties: {}
+               } as any);
+            } else if (directive.type === 'trait') {
+               // A lone trait in a block - attach to next node if possible, 
+               // or handle as standalone. For now, we skip or wrap.
+               this.warn(`Standalone trait @${directive.name} in block`);
+            } else {
+               // Other directives (npc, dialog, external_api)
+               nodes.push({
+                 type: 'fragment' as any,
+                 directives: [directive],
+                 children: [],
+                 traits: new Map(),
+                 properties: {}
+               } as any);
+            }
           }
+        } else if (this.check('IDENTIFIER')) {
           nodes.push(this.parseNode());
         } else {
-          // CRITICAL: Advance on unknown token to prevent infinite loop
+          // Skip unexpected tokens to prevent infinite loops
           this.advance();
         }
         this.skipNewlines();

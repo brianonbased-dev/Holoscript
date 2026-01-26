@@ -92,6 +92,9 @@ async function main(): Promise<void> {
 
         lines.forEach((line, i) => {
           for (const [typo, fix] of Object.entries(typos)) {
+            // Avoid false positives for skybox
+            if (typo === 'box' && line.includes('skybox')) continue;
+            
             if (line.includes(typo)) {
               errorList.push({
                 line: i + 1,
@@ -367,7 +370,10 @@ async function main(): Promise<void> {
               traits: obj.traits || [],
               state: obj.state,
             })) || [],
-            functions: result.ast?.logic?.actions?.map(a => ({ name: a.name })) || [],
+            functions: [
+              ...(result.ast?.logic?.actions?.map(a => ({ name: a.name })) || []),
+              ...(result.ast?.logic?.handlers?.map(h => ({ name: h.event })) || [])
+            ],
           };
         } else {
           if (options.verbose) console.log(`\x1b[2m[DEBUG] Using HoloScriptCodeParser...\x1b[0m`);
@@ -525,22 +531,64 @@ document.body.appendChild(renderer.domElement);
 
   for (const orb of orbs) {
     const name = orb.name || 'object';
-    const pos = orb.properties?.position || { x: 0, y: 0, z: 0 };
-    const color = orb.properties?.color || '#ffffff';
+    const props = orb.properties || {};
+    const traits = orb.traits || [];
     
-    code += `// ${name}
-const ${name}_geometry = new THREE.SphereGeometry(0.5, 32, 32);
-const ${name}_material = new THREE.MeshStandardMaterial({ color: '${color}' });
-const ${name} = new THREE.Mesh(${name}_geometry, ${name}_material);
-${name}.position.set(${pos.x || 0}, ${pos.y || 0}, ${pos.z || 0});
-scene.add(${name});
+    // Position handling (array or object)
+    const pos = props.position;
+    let px = 0, py = 0, pz = 0;
+    if (Array.isArray(pos)) { [px, py, pz] = pos; }
+    else if (pos) { px = pos.x || 0; py = pos.y || 0; pz = pos.z || 0; }
+    
+    // Scale handling
+    const scale = props.scale;
+    let sx = 1, sy = 1, sz = 1;
+    if (Array.isArray(scale)) { [sx, sy, sz] = scale; }
+    else if (scale) { sx = scale.x || 1; sy = scale.y || 1; sz = scale.z || 1; }
 
-`;
+    const color = props.color || '#ffffff';
+    const geometry = props.geometry || 'sphere';
+    
+    code += `// ${name}\n`;
+    if (geometry === 'cube' || geometry === 'box') {
+      code += `const ${name}_geometry = new THREE.BoxGeometry(${sx}, ${sy}, ${sz});\n`;
+    } else {
+      code += `const ${name}_geometry = new THREE.SphereGeometry(${sx/2}, 32, 32);\n`;
+    }
+    
+    // Material
+    const isGlowing = traits.some((t: any) => t.name === 'glowing' || t.name === 'emissive');
+    if (isGlowing) {
+      code += `const ${name}_material = new THREE.MeshStandardMaterial({ color: '${color}', emissive: '${color}', emissiveIntensity: 1.0 });\n`;
+    } else {
+      code += `const ${name}_material = new THREE.MeshStandardMaterial({ color: '${color}' });\n`;
+    }
+    
+    code += `const ${name} = new THREE.Mesh(${name}_geometry, ${name}_material);\n`;
+    code += `${name}.position.set(${px}, ${py}, ${pz});\n`;
+    
+    // Physics Placeholder
+    const hasPhysics = traits.some((t: any) => t.name === 'physics' || t.name === 'rigid' || t.name === 'collidable');
+    if (hasPhysics) {
+      code += `// Physics enabled for ${name} (@physics)\n`;
+    }
+    
+    code += `scene.add(${name});\n\n`;
   }
 
-  code += `camera.position.z = 5;
+  code += `camera.position.z = 5;\n\n`;
 
-function animate() {
+  // Logic Handlers
+  if (functions.length > 0) {
+    code += `// Logic Handlers\n`;
+    for (const func of functions) {
+      code += `function ${func.name}(...args) {\n`;
+      code += `  console.log('[HoloScript] Triggered logic: ${func.name}', args);\n`;
+      code += `}\n\n`;
+    }
+  }
+
+  code += `function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 }
