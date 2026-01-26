@@ -18954,10 +18954,10 @@ function activate(context) {
         if (fs2.existsSync(examplesPath)) {
           await import_vscode.commands.executeCommand("vscode.openFolder", uri, { forceNewWindow: false });
         } else {
-          vscode3.env.openExternal(vscode3.Uri.parse("https://github.com/brianonbased-dev/holoscript/tree/main/examples/quickstart"));
+          vscode3.env.openExternal(vscode3.Uri.parse("https://github.com/brianonbased-dev/holoscript/tree/master/examples/quickstart"));
         }
       } catch {
-        vscode3.env.openExternal(vscode3.Uri.parse("https://github.com/brianonbased-dev/holoscript/tree/main/examples/quickstart"));
+        vscode3.env.openExternal(vscode3.Uri.parse("https://github.com/brianonbased-dev/holoscript/tree/master/examples/quickstart"));
       }
     })
   );
@@ -18969,6 +18969,38 @@ function activate(context) {
   context.subscriptions.push(
     import_vscode.commands.registerCommand("holoscript.openDocumentation", () => {
       vscode3.env.openExternal(vscode3.Uri.parse("https://holoscript.net/guides/"));
+    })
+  );
+  context.subscriptions.push(
+    import_vscode.commands.registerCommand("holoscript.validate", async () => {
+      const editor = import_vscode.window.activeTextEditor;
+      if (!editor || !isHoloScriptFile(editor.document)) {
+        import_vscode.window.showWarningMessage("Open a HoloScript file (.holo or .hsplus) to validate.");
+        return;
+      }
+      const text = editor.document.getText();
+      const lines = text.split("\n");
+      const errors = [];
+      let braceCount = 0;
+      let inString = false;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        for (const char of line) {
+          if (char === '"' || char === "'") inString = !inString;
+          else if (!inString) {
+            if (char === "{") braceCount++;
+            if (char === "}") braceCount--;
+          }
+        }
+      }
+      if (braceCount !== 0) {
+        errors.push({ line: lines.length, message: "Unbalanced braces" });
+      }
+      if (errors.length === 0) {
+        import_vscode.window.showInformationMessage("\u2705 HoloScript syntax is valid!");
+      } else {
+        import_vscode.window.showErrorMessage(`\u274C Found ${errors.length} error(s): ${errors.map((e) => e.message).join(", ")}`);
+      }
     })
   );
   context.subscriptions.push(

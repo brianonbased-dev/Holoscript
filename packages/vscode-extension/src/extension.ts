@@ -74,10 +74,10 @@ export function activate(context: ExtensionContext) {
           await commands.executeCommand('vscode.openFolder', uri, { forceNewWindow: false });
         } else {
           // Fallback: open examples on GitHub
-          vscode.env.openExternal(vscode.Uri.parse('https://github.com/brianonbased-dev/holoscript/tree/main/examples/quickstart'));
+          vscode.env.openExternal(vscode.Uri.parse('https://github.com/brianonbased-dev/holoscript/tree/master/examples/quickstart'));
         }
       } catch {
-        vscode.env.openExternal(vscode.Uri.parse('https://github.com/brianonbased-dev/holoscript/tree/main/examples/quickstart'));
+        vscode.env.openExternal(vscode.Uri.parse('https://github.com/brianonbased-dev/holoscript/tree/master/examples/quickstart'));
       }
     })
   );

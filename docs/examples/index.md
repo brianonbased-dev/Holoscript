@@ -273,4 +273,4 @@ composition "Hand Menu" {
 
 ## Source Code
 
-All examples are available in the [examples directory](https://github.com/brianonbased-dev/holoscript/tree/main/examples) of the HoloScript repository.
+All examples are available in the [examples directory](https://github.com/brianonbased-dev/holoscript/tree/master/examples) of the HoloScript repository.
