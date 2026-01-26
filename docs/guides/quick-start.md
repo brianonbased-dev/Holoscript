@@ -8,42 +8,24 @@ Get up and running with HoloScript in 5 minutes.
 ext install holoscript.holoscript-vscode
 ```
 
-Or search "HoloScript Enhanced" in the VS Code extensions marketplace.
+Or search **"HoloScript Enhanced"** in the VS Code extensions marketplace.
 
-## 2. Create a New File
+After installing, VS Code will show the **Getting Started** walkthrough automatically!
 
-Create a file with one of these extensions:
-- `demo.holo` - For scene compositions
-- `demo.hsplus` - For objects with VR traits
-- `demo.hs` - For classic HoloScript
+## 2. Create Your First File
 
-## 3. Write Your First Scene
-
-Create `hello.holo`:
+Create a file called `hello.holo`:
 
 ```holo
 composition "My First Scene" {
   environment {
     skybox: "sunset"
     ambient_light: 0.4
-    gravity: -9.81
-  }
-
-  object "Player" {
-    @collidable
-    @physics
-    position: [0, 1.6, 0]
-    
-    state {
-      health: 100
-      speed: 5
-    }
   }
 
   object "FloatingOrb" {
     @grabbable
     @glowing
-    @physics
     
     position: [0, 1.5, -2]
     color: "#00ffff"
@@ -51,26 +33,25 @@ composition "My First Scene" {
     on_grab: {
       this.glow_intensity = 2.0
     }
-    
-    on_release: {
-      this.glow_intensity = 0.5
-    }
-  }
-
-  logic {
-    on_player_touch(orb) {
-      Player.health += 10
-      orb.destroy()
-    }
   }
 }
 ```
 
-## 4. Preview Your Scene
+## 3. Preview Your Scene
 
-Use the VS Code command palette (`Ctrl+Shift+P`) and run:
-- **HoloScript: Preview Scene** - Opens a 3D preview
-- **HoloScript: Validate** - Checks for errors
+Press `Ctrl+Shift+V` (or `Cmd+Shift+V` on Mac) to open the 3D preview.
+
+## 4. Explore the Examples
+
+Open the Command Palette (`Ctrl+Shift+P`) and type **"HoloScript: Open Examples"** to browse progressive tutorials:
+
+| # | Example | What You'll Learn |
+|---|---------|-------------------|
+| 1 | hello.holo | Basic scene structure |
+| 2 | 2-interactive.holo | VR traits, grabbing, physics |
+| 3 | 3-physics-playground.holo | Physics, spatial audio, templates |
+| 4 | 4-multiplayer-room.holo | Networking, player tracking |
+| 5 | 5-escape-room.holo | Full game with puzzles and UI |
 
 ## 5. Compile to Target Platform
 

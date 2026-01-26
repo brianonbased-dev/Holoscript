@@ -62,7 +62,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@holoscript/core": "workspace:*"
+    "@holoscript/core": "workspace:*",
+    "cannon-es": "^0.20.0"
   },
   "peerDependencies": {
     "react": "^18.0.0",

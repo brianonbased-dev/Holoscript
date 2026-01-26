@@ -365,7 +365,7 @@ export interface ASTProgram extends HSPlusNode {
 }
 
 export interface HSPlusDirective extends HSPlusNode {
-  type: 'directive' | 'trait' | 'lifecycle' | 'state' | 'for' | 'if' | 'import' | 'fragment' | 'external_api' | 'generate';
+  type: 'directive' | 'trait' | 'lifecycle' | 'state' | 'for' | 'forEach' | 'while' | 'if' | 'import' | 'fragment' | 'external_api' | 'generate';
   name: string;
   args: string[];
   enableTypeScriptImports?: boolean;

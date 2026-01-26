@@ -68,3 +68,10 @@ export {
   ThreePointTracker,
   createThreePointTracker,
 } from './body';
+
+// Emotion / Frustration Detection
+export {
+  FrustrationEstimator,
+  HeadShakeDetector,
+  HandTremorAnalyzer,
+} from './emotion';

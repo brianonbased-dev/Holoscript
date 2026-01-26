@@ -1,0 +1,9 @@
+orb#myOrb {
+  position: [0, 0, 0]
+}
+
+orb#myOrb {
+  position: [1, 1, 1]
+  @talkable
+  @collision
+}

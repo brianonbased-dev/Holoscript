@@ -14,6 +14,10 @@ import { eventBus, emit, on } from '../events.js';
 import { storage } from '../storage.js';
 import { device, isVRCapable } from '../device.js';
 import { createLoop, nextFrame } from '../timing.js';
+import { PhysicsWorld } from '../physics/PhysicsWorld';
+import { TraitSystem } from '../traits/TraitSystem';
+import { GrabbableTrait, ThrowableTrait } from '../traits/InteractionTraits';
+import { InputManager } from '../input/InputManager';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INLINED TYPES (from @hololand/world to avoid cross-repo dependency)
@@ -296,8 +300,8 @@ function extractScale(scale: unknown): { x: number; y: number; z: number } {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface RuntimeConfig {
-  container: HTMLElement;
-  mode: 'web' | 'vr' | 'ar';
+  container?: HTMLElement; // Optional if existing renderer provided
+  mode: 'web' | 'vr' | 'ar' | 'manual'; // manual = driven by external loop
   features?: {
     monaco?: boolean;
     brittney?: boolean;
@@ -305,6 +309,10 @@ export interface RuntimeConfig {
     xr?: boolean;
   };
   quality?: 'low' | 'medium' | 'high' | 'ultra';
+  // External context injection (for React Three Fiber etc)
+  scene?: THREE.Scene;
+  camera?: THREE.PerspectiveCamera;
+  renderer?: THREE.WebGLRenderer;
 }
 
 export interface HoloScriptRuntime {
@@ -341,7 +349,7 @@ export interface HoloScriptRuntime {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class BrowserRuntime implements HoloScriptRuntime {
-  private config: Required<RuntimeConfig>;
+  private config: RuntimeConfig;
   private composition: LoadedComposition | null = null;
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
@@ -358,10 +366,13 @@ class BrowserRuntime implements HoloScriptRuntime {
   private isPaused: boolean = false;
   private state: Record<string, unknown> = {};
   private actionContext: ActionContext;
+  private physicsWorld: PhysicsWorld;
+  private traitSystem: TraitSystem;
+  private inputManager: InputManager;
   
   constructor(config: RuntimeConfig) {
     this.config = {
-      container: config.container,
+      container: config.container as HTMLElement, // Force cast, validated later if needed
       mode: config.mode || 'web',
       features: {
         monaco: config.features?.monaco ?? true,
@@ -373,28 +384,37 @@ class BrowserRuntime implements HoloScriptRuntime {
     };
     
     // Initialize Three.js
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0f0f1a);
-    
-    // Camera
-    this.camera = new THREE.PerspectiveCamera(
-      75,
-      config.container.clientWidth / config.container.clientHeight,
-      0.1,
-      1000
-    );
-    this.camera.position.set(0, 2, 5);
-    
-    // Renderer
-    this.renderer = new THREE.WebGLRenderer({ 
-      antialias: this.config.quality !== 'low',
-      alpha: true 
-    });
-    this.renderer.setSize(config.container.clientWidth, config.container.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = this.config.quality !== 'low';
-    this.renderer.xr.enabled = this.config.features.xr ?? true;
-    config.container.appendChild(this.renderer.domElement);
+    if (config.scene && config.camera && config.renderer) {
+        // Use injected context
+        this.scene = config.scene;
+        this.camera = config.camera;
+        this.renderer = config.renderer;
+    } else {
+        // Create new context
+        const root = config.container;
+        if (!root) throw new Error("Container required for standalone mode");
+        
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x0f0f1a);
+        
+        this.camera = new THREE.PerspectiveCamera(
+          75,
+          root.clientWidth / root.clientHeight,
+          0.1,
+          1000
+        );
+        this.camera.position.set(0, 2, 5);
+        
+        this.renderer = new THREE.WebGLRenderer({ 
+          antialias: this.config.quality !== 'low',
+          alpha: true 
+        });
+        this.renderer.setSize(root.clientWidth, root.clientHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = this.config.quality !== 'low';
+        this.renderer.xr.enabled = this.config.features?.xr ?? true;
+        root.appendChild(this.renderer.domElement);
+    }
     
     // Controls
     if (this.config.mode === 'web') {
@@ -408,6 +428,17 @@ class BrowserRuntime implements HoloScriptRuntime {
     // Create action execution context
     this.actionContext = this.createActionContext();
     
+    // Physics
+    this.physicsWorld = new PhysicsWorld({ gravity: [0, -9.82, 0] });
+    
+    // Traits
+    this.traitSystem = new TraitSystem(this.physicsWorld);
+    this.traitSystem.register(GrabbableTrait);
+    this.traitSystem.register(ThrowableTrait);
+    
+    // Input
+    this.inputManager = new InputManager(this.scene, this.camera, this.renderer.domElement);
+
     // Handle resize
     window.addEventListener('resize', this.handleResize.bind(this));
     
@@ -432,8 +463,10 @@ class BrowserRuntime implements HoloScriptRuntime {
       // Initialize state
       this.state = { ...this.composition.state };
       
-      // Apply environment
-      this.applyEnvironment(this.composition.environment);
+      // Apply environment (only if managing scene environment fully)
+      if (this.config.mode !== 'manual') {
+          this.applyEnvironment(this.composition.environment);
+      }
       
       // Build scene from world
       this.buildScene();
@@ -496,11 +529,11 @@ class BrowserRuntime implements HoloScriptRuntime {
   }
   
   supportsVR(): boolean {
-    return isVRCapable() && (this.config.features.xr ?? true);
+    return isVRCapable() && (this.config.features?.xr ?? true);
   }
   
   supportsAR(): boolean {
-    return 'xr' in navigator && (this.config.features.xr ?? true);
+    return 'xr' in navigator && (this.config.features?.xr ?? true);
   }
   
   async enterVR(): Promise<void> {
@@ -510,6 +543,7 @@ class BrowserRuntime implements HoloScriptRuntime {
     
     const session = await (navigator as any).xr.requestSession('immersive-vr');
     this.renderer.xr.setSession(session);
+    this.inputManager.setupVR(this.renderer);
     emit('xr:entered', { type: 'vr' });
   }
   
@@ -713,6 +747,25 @@ class BrowserRuntime implements HoloScriptRuntime {
     
     this.scene.add(mesh);
     this.objectMap.set(obj.id, mesh);
+
+    // Physics integration
+    if (obj.traits?.includes('physics') || obj.traits?.includes('gravity')) {
+       // Determine shape based on type
+       const shapeType = (type === 'sphere' || type === 'orb') ? 'sphere' :
+                         (type === 'plane' || type === 'floor') ? 'plane' : 'box';
+       
+       const mass = (obj.traits?.includes('static') || type === 'plane' || type === 'floor') ? 0 : 1;
+       
+       this.physicsWorld.addBody(obj.id, mesh, shapeType, mass);
+    }
+    
+    // Apply traits via system
+    if (obj.traits && Array.isArray(obj.traits)) {
+      for (const trait of obj.traits) {
+        // config is usually in metadata or directives, for now pass empty or slice
+        this.traitSystem.apply(mesh, trait, {});
+      }
+    }
   }
   
   /**
@@ -1034,7 +1087,7 @@ class BrowserRuntime implements HoloScriptRuntime {
   }
   
   private createMonacoEditor(obj: any): void {
-    if (!this.config.features.monaco) {
+    if (!this.config.features?.monaco) {
       console.warn('Monaco editor feature not enabled');
       return;
     }
@@ -1053,7 +1106,7 @@ class BrowserRuntime implements HoloScriptRuntime {
       z-index: 10;
     `;
     
-    this.config.container.appendChild(container);
+    (this.config.container || document.body).appendChild(container);
     
     // Load Monaco asynchronously
     this.loadMonaco(container, obj);
@@ -1116,7 +1169,7 @@ class BrowserRuntime implements HoloScriptRuntime {
       z-index: 5;
     `;
     
-    this.config.container.appendChild(container);
+    (this.config.container || document.body).appendChild(container);
     
     // Mini renderer for preview
     const previewRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -1178,7 +1231,7 @@ class BrowserRuntime implements HoloScriptRuntime {
       button.onclick = () => this.executeHandler(obj.properties.on_click, {});
     }
     
-    this.config.container.appendChild(button);
+    (this.config.container || document.body).appendChild(button);
     this.uiComponents.set(obj.id, {
       element: button,
       type: 'button',
@@ -1199,7 +1252,7 @@ class BrowserRuntime implements HoloScriptRuntime {
       z-index: 15;
     `;
     
-    this.config.container.appendChild(text);
+    (this.config.container || document.body).appendChild(text);
     this.uiComponents.set(obj.id, {
       element: text,
       type: 'text',
@@ -1234,7 +1287,7 @@ class BrowserRuntime implements HoloScriptRuntime {
       };
     }
     
-    this.config.container.appendChild(input);
+    (this.config.container || document.body).appendChild(input);
     this.uiComponents.set(obj.id, {
       element: input,
       type: 'input',
@@ -1258,7 +1311,7 @@ class BrowserRuntime implements HoloScriptRuntime {
       z-index: 15;
     `;
     
-    this.config.container.appendChild(container);
+    (this.config.container || document.body).appendChild(container);
     this.uiComponents.set(obj.id, {
       element: container,
       type: 'chat',
@@ -1296,7 +1349,7 @@ class BrowserRuntime implements HoloScriptRuntime {
       z-index: 15;
     `;
     
-    this.config.container.appendChild(list);
+    (this.config.container || document.body).appendChild(list);
     this.uiComponents.set(obj.id, {
       element: list,
       type: 'list',
@@ -1319,7 +1372,7 @@ class BrowserRuntime implements HoloScriptRuntime {
     `;
     panel.innerHTML = '<div style="color:#00d4ff;font-size:12px;margin-bottom:8px;">Properties</div>';
     
-    this.config.container.appendChild(panel);
+    (this.config.container || document.body).appendChild(panel);
     this.uiComponents.set(obj.id, {
       element: panel,
       type: 'properties',
@@ -1343,7 +1396,7 @@ class BrowserRuntime implements HoloScriptRuntime {
       z-index: 20;
     `;
     
-    this.config.container.appendChild(container);
+    (this.config.container || document.body).appendChild(container);
     this.uiComponents.set(obj.id, {
       element: container,
       type: 'error-list',
@@ -1353,11 +1406,11 @@ class BrowserRuntime implements HoloScriptRuntime {
   
   private worldToScreenX(worldX: number): number {
     // Simple mapping - would need proper projection for 3D UI
-    return this.config.container.clientWidth / 2 + worldX * 100;
+    return (this.config.container?.clientWidth || window.innerWidth) / 2 + worldX * 100;
   }
   
   private worldToScreenY(worldY: number): number {
-    return this.config.container.clientHeight / 2 - worldY * 100;
+    return (this.config.container?.clientHeight || window.innerHeight) / 2 - worldY * 100;
   }
   
   private resolveStateRef(value: unknown): string {
@@ -1450,8 +1503,8 @@ class BrowserRuntime implements HoloScriptRuntime {
   }
   
   private handleResize(): void {
-    const width = this.config.container.clientWidth;
-    const height = this.config.container.clientHeight;
+    const width = this.config.container?.clientWidth || window.innerWidth;
+    const height = this.config.container?.clientHeight || window.innerHeight;
     
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
@@ -1681,19 +1734,40 @@ class BrowserRuntime implements HoloScriptRuntime {
     }
   }
 
+  public update(delta: number): void {
+      if (this.isPaused) return;
+
+      // Update physics
+      this.physicsWorld.step(delta);
+      
+      // Update traits
+      this.traitSystem.update(delta);
+      
+      // Update input
+      this.inputManager.update();
+      
+      // Update animation mixers
+      for (const mixer of this.animationMixers) {
+        mixer.update(delta);
+      }
+      
+      // ... procedural animations (refactored from renderLoop)
+  }
+
   private renderLoop = (): void => {
     if (!this.isRunning) return;
     
+    // If manual mode, do nothing (external loop calls update)
+    if (this.config.mode === 'manual') return; 
+
     this.animationId = requestAnimationFrame(this.renderLoop);
     
-    if (this.isPaused) return;
-    
     const delta = this.clock.getDelta();
+    this.update(delta);
     
-    // Update animation mixers (for GLB models)
-    for (const mixer of this.animationMixers) {
-      mixer.update(delta);
-    }
+    // ... procedural animations in update() now
+
+    // Render logic (existing)
     
     // Update procedural animations
     const time = this.clock.getElapsedTime();

@@ -1,0 +1,146 @@
+// 3-physics-playground.holo - Physics and Spatial Audio
+// This example demonstrates physics interactions and 3D sound
+
+composition "Physics Playground" {
+  environment {
+    skybox: "daytime"
+    ambient_light: 0.6
+    gravity: -9.81
+  }
+
+  // Ground plane
+  object "Ground" {
+    @collidable
+    
+    geometry: "plane"
+    position: [0, 0, 0]
+    scale: [10, 1, 10]
+    color: "#2d3436"
+    
+    physics: {
+      type: "static"
+      friction: 0.5
+    }
+  }
+
+  // Ball ramp
+  object "Ramp" {
+    @collidable
+    
+    geometry: "cube"
+    position: [-2, 0.5, -3]
+    rotation: [0, 0, 15]  // Tilted
+    scale: [3, 0.1, 1]
+    color: "#636e72"
+    
+    physics: {
+      type: "static"
+    }
+  }
+
+  // Template for bouncy balls
+  template "BouncyBall" {
+    @grabbable
+    @physics
+    @collidable
+    @spatial_audio
+    
+    geometry: "sphere"
+    scale: [0.2, 0.2, 0.2]
+    
+    physics: {
+      mass: 0.5
+      restitution: 0.9  // Very bouncy!
+    }
+    
+    on_collision: {
+      // Play bounce sound at collision point
+      audio.play_3d("bounce", collision.point)
+      
+      // Haptic feedback based on impact force
+      let intensity = Math.min(collision.force / 10, 1.0)
+      haptic.feedback(intensity)
+    }
+  }
+
+  // Spawn some balls
+  spatial_group "Balls" {
+    object "Ball1" using "BouncyBall" {
+      position: [-2, 2, -3]
+      color: "#e74c3c"
+    }
+    
+    object "Ball2" using "BouncyBall" {
+      position: [-2.3, 2.2, -3]
+      color: "#3498db"
+    }
+    
+    object "Ball3" using "BouncyBall" {
+      position: [-1.7, 2.4, -3]
+      color: "#2ecc71"
+    }
+  }
+
+  // Musical wind chimes
+  spatial_group "WindChimes" {
+    object "Chime1" {
+      @collidable
+      @spatial_audio
+      
+      geometry: "cylinder"
+      position: [2, 2.5, -2]
+      scale: [0.05, 0.4, 0.05]
+      color: "#f1c40f"
+      
+      on_collision: {
+        audio.play_3d("chime_c", this.position)
+      }
+    }
+    
+    object "Chime2" {
+      @collidable
+      @spatial_audio
+      
+      geometry: "cylinder"
+      position: [2.2, 2.4, -2]
+      scale: [0.05, 0.35, 0.05]
+      color: "#e67e22"
+      
+      on_collision: {
+        audio.play_3d("chime_e", this.position)
+      }
+    }
+    
+    object "Chime3" {
+      @collidable
+      @spatial_audio
+      
+      geometry: "cylinder"
+      position: [2.4, 2.3, -2]
+      scale: [0.05, 0.3, 0.05]
+      color: "#9b59b6"
+      
+      on_collision: {
+        audio.play_3d("chime_g", this.position)
+      }
+    }
+  }
+
+  // Ball spawner
+  object "Spawner" {
+    @pointable
+    @clickable
+    
+    geometry: "cube"
+    position: [0, 1, -1]
+    scale: [0.3, 0.3, 0.3]
+    color: "#1abc9c"
+    
+    on_click: {
+      spawn("BouncyBall", {
+        position: [-2, 3, -3],
+        color: random_color()
+      })
+    }
+  }
+}

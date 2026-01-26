@@ -1,0 +1,85 @@
+// 2-interactive.holo - Add VR Interactivity
+// This example shows how to make objects interactive
+
+composition "Interactive Objects" {
+  environment {
+    skybox: "stars"
+    ambient_light: 0.5
+  }
+
+  // A cube that can be grabbed and thrown
+  object "ThrowableCube" {
+    @grabbable
+    @throwable
+    @physics
+    @collidable
+    
+    geometry: "cube"
+    position: [0, 1, -2]
+    scale: [0.3, 0.3, 0.3]
+    color: "#ff6b6b"
+    
+    physics: {
+      mass: 1.0
+      restitution: 0.6  // Bounciness
+    }
+    
+    on_grab: {
+      haptic.feedback("medium")
+    }
+    
+    on_release: {
+      audio.play("whoosh")
+    }
+  }
+
+  // A button that lights up when pointed at
+  object "Button" {
+    @pointable
+    @hoverable
+    @clickable
+    
+    geometry: "cylinder"
+    position: [1.5, 1, -2]
+    scale: [0.2, 0.05, 0.2]
+    color: "#4ecdc4"
+    
+    on_hover_enter: {
+      this.color = "#ff6b6b"
+      this.scale = [0.22, 0.06, 0.22]
+    }
+    
+    on_hover_exit: {
+      this.color = "#4ecdc4"
+      this.scale = [0.2, 0.05, 0.2]
+    }
+    
+    on_click: {
+      audio.play("click")
+      haptic.feedback("light")
+      ThrowableCube.reset_position()
+    }
+  }
+
+  // A glowing orb that follows gaze
+  object "GazeOrb" {
+    @glowing
+    @billboard  // Always faces the camera
+    
+    geometry: "sphere"
+    position: [-1.5, 1.5, -2]
+    scale: [0.15, 0.15, 0.15]
+    color: "#a29bfe"
+    glow_intensity: 0.8
+    
+    state {
+      pulse_speed: 1.0
+    }
+    
+    on_tick: {
+      // Pulse effect
+      let t = time.now() * this.pulse_speed
+      this.glow_intensity = 0.5 + 0.5 * Math.sin(t)
+    }
+  }
+}

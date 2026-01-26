@@ -210,6 +210,11 @@ export {
   type HoloScriptRuntime,
 } from './browser/BrowserRuntime.js';
 
+// Physics and Traits
+export { PhysicsWorld } from './physics/PhysicsWorld.js';
+export { TraitSystem, type TraitHandler, type TraitContext } from './traits/TraitSystem.js';
+export { GrabbableTrait, ThrowableTrait } from './traits/InteractionTraits.js';
+
 /**
  * Initialize the runtime and register globals
  */

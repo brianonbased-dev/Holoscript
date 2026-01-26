@@ -520,3 +520,5 @@ export class RoomBrowser {
 export function generatePlayerId(): string {
   return 'player_' + Math.random().toString(36).substring(2, 11);
 }
+
+export { StateSyncNetworkManager } from './StateSyncNetworkManager';

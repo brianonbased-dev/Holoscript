@@ -1,0 +1,274 @@
+// 5-escape-room.holo - Complete Mini-Game
+// This example shows a full game with puzzles, UI, and progression
+
+composition "Escape Room" {
+  environment {
+    skybox: "dark"
+    ambient_light: 0.2
+    fog: {
+      color: "#1a1a2e"
+      density: 0.05
+    }
+  }
+
+  // Game state
+  state {
+    puzzles_solved: 0
+    total_puzzles: 3
+    game_time: 0
+    is_complete: false
+  }
+
+  // Timer UI
+  object "TimerDisplay" {
+    position: [0, 2.5, -3]
+    
+    ui {
+      background: "transparent"
+      
+      text "{format_time(game_time)}" {
+        size: 48
+        color: "#e74c3c"
+        font: "digital"
+      }
+    }
+    
+    on_tick: {
+      if (!is_complete) {
+        game_time += delta_time
+      }
+    }
+  }
+
+  // PUZZLE 1: Color Sequence
+  spatial_group "ColorPuzzle" {
+    position: [-2, 0, -3]
+
+    state {
+      sequence: ["red", "blue", "green", "yellow"]
+      player_input: []
+      is_solved: false
+    }
+
+    template "ColorButton" {
+      @pointable
+      @clickable
+      @glowing
+      
+      geometry: "cube"
+      scale: [0.3, 0.3, 0.1]
+      glow_intensity: 0.2
+      
+      on_click: {
+        if (ColorPuzzle.is_solved) return
+        
+        audio.play("beep_" + this.color)
+        haptic.feedback("light")
+        this.glow_intensity = 1.0
+        
+        after(200) { this.glow_intensity = 0.2 }
+        
+        ColorPuzzle.player_input.push(this.color)
+        ColorPuzzle.check_sequence()
+      }
+    }
+
+    object "RedBtn" using "ColorButton" {
+      position: [-0.4, 1, 0]
+      color: "red"
+    }
+    object "BlueBtn" using "ColorButton" {
+      position: [0.4, 1, 0]
+      color: "blue"
+    }
+    object "GreenBtn" using "ColorButton" {
+      position: [-0.4, 1.5, 0]
+      color: "green"
+    }
+    object "YellowBtn" using "ColorButton" {
+      position: [0.4, 1.5, 0]
+      color: "yellow"
+    }
+
+    action check_sequence() {
+      let input = this.player_input
+      let seq = this.sequence
+      
+      // Check if input matches so far
+      for (i, color) in input {
+        if (seq[i] != color) {
+          // Wrong! Reset
+          audio.play("error")
+          this.player_input = []
+          return
+        }
+      }
+      
+      // Check if complete
+      if (input.length == seq.length) {
+        this.is_solved = true
+        puzzles_solved += 1
+        audio.play("success")
+        particles.emit("sparkle", this.position)
+      }
+    }
+  }
+
+  // PUZZLE 2: Lock Combination
+  spatial_group "LockPuzzle" {
+    position: [0, 0, -3]
+
+    state {
+      combination: [3, 7, 1]
+      current: [0, 0, 0]
+      is_solved: false
+    }
+
+    template "Dial" {
+      @pointable
+      @scrollable  // VR thumbstick scrolls value
+      
+      geometry: "cylinder"
+      scale: [0.15, 0.08, 0.15]
+      color: "#636e72"
+      
+      state {
+        value: 0
+        index: 0
+      }
+      
+      on_scroll(delta) {
+        this.value = (this.value + delta) % 10
+        if (this.value < 0) this.value = 9
+        
+        LockPuzzle.current[this.index] = this.value
+        audio.play("click")
+        
+        LockPuzzle.check_combination()
+      }
+      
+      // Display digit
+      object "Digit" {
+        @billboard
+        position: [0, 0.1, 0]
+        text: "{this.value}"
+        font_size: 0.15
+        color: "#ffffff"
+      }
+    }
+
+    object "Dial1" using "Dial" { position: [-0.25, 1, 0]; index: 0 }
+    object "Dial2" using "Dial" { position: [0, 1, 0]; index: 1 }
+    object "Dial3" using "Dial" { position: [0.25, 1, 0]; index: 2 }
+
+    action check_combination() {
+      if (this.is_solved) return
+      
+      if (this.current[0] == this.combination[0] &&
+          this.current[1] == this.combination[1] &&
+          this.current[2] == this.combination[2]) {
+        this.is_solved = true
+        puzzles_solved += 1
+        audio.play("unlock")
+      }
+    }
+  }
+
+  // PUZZLE 3: Find the Key
+  spatial_group "KeyPuzzle" {
+    position: [2, 0, -3]
+
+    state {
+      is_solved: false
+    }
+
+    // Hidden key - spawns at random position
+    object "Key" {
+      @grabbable
+      @glowing
+      
+      geometry: "model/key.glb"
+      position: random_position([-1, 0.5, -2], [1, 2, 0])
+      scale: [0.1, 0.1, 0.1]
+      color: "#f1c40f"
+      glow_intensity: 0.5
+    }
+
+    // Keyhole
+    object "Keyhole" {
+      @snappable  // Objects snap to it
+      
+      geometry: "cube"
+      position: [0, 1, 0]
+      scale: [0.2, 0.3, 0.05]
+      color: "#2d3436"
+      
+      on_snap(object) {
+        if (object.name == "Key") {
+          KeyPuzzle.is_solved = true
+          puzzles_solved += 1
+          audio.play("key_turn")
+        }
+      }
+    }
+  }
+
+  // Exit door
+  object "Door" {
+    @animated
+    
+    geometry: "model/door.glb"
+    position: [0, 0, -5]
+    
+    state {
+      is_open: false
+    }
+    
+    animation open {
+      rotation.y: from 0 to 90
+      duration: 1000
+      easing: "easeOutQuad"
+    }
+  }
+
+  // Victory screen
+  object "VictoryUI" {
+    visible: false
+    position: [0, 1.5, -4]
+    
+    ui {
+      background: "#2d3436"
+      padding: 40
+      border_radius: 20
+      
+      text "🎉 ESCAPED!" {
+        size: 48
+        color: "#2ecc71"
+      }
+      
+      text "Time: {format_time(game_time)}" {
+        size: 24
+        color: "#ffffff"
+      }
+      
+      button "Play Again" {
+        on_click: { scene.reload() }
+      }
+    }
+  }
+
+  logic {
+    // Check for win condition
+    on_tick {
+      if (puzzles_solved >= total_puzzles && !is_complete) {
+        is_complete = true
+        Door.open()
+        after(1500) {
+          VictoryUI.visible = true
+          audio.play("victory")
+          particles.emit("fireworks", [0, 3, -4])
+        }
+      }
+    }
+  }
+}

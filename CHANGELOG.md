@@ -1,3 +1,27 @@
+## [1.3.0] - 2026-01-26 (VS Code Extension)
+
+### 🎓 Onboarding & Walkthrough
+
+- **Getting Started Walkthrough** - 6-step interactive walkthrough for new users
+  - Welcome to HoloScript introduction
+  - Create Your First Scene guide
+  - VR Traits tutorial (@grabbable, @physics, etc.)
+  - Preview & Shortcuts documentation
+  - AI Integration with MCP servers
+  - Next Steps & Resources
+
+- **Progressive Quickstart Examples** - 5 examples from basics to full games
+  - `hello.holo` - Simple compositor, one interactive object
+  - `2-interactive.holo` - VR traits, physics, interactions
+  - `3-physics-playground.holo` - Templates, spatial audio
+  - `4-multiplayer-room.holo` - Networking, player tracking
+  - `5-escape-room.holo` - Complete puzzle game with UI
+
+- **Welcome Message** - First-activation greeting with quick actions
+- **New Commands** - Open Examples, Show Walkthrough, Open Documentation
+
+---
+
 ## [2.2.0] - 2026-01-25
 
 ### 🚀 VR Runtime Packages

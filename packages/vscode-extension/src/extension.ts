@@ -62,6 +62,57 @@ export function activate(context: ExtensionContext) {
   agentAPI.initialize(context);
   console.log('HoloScript: AI Agent API initialized. Agents can use holoscript.agent.* commands.');
 
+  // Register Open Examples command
+  context.subscriptions.push(
+    commands.registerCommand('holoscript.openExamples', async () => {
+      const examplesPath = path.join(context.extensionPath, '..', '..', 'examples', 'quickstart');
+      const uri = vscode.Uri.file(examplesPath);
+      
+      // Try to open the quickstart folder
+      try {
+        if (fs.existsSync(examplesPath)) {
+          await commands.executeCommand('vscode.openFolder', uri, { forceNewWindow: false });
+        } else {
+          // Fallback: open examples on GitHub
+          vscode.env.openExternal(vscode.Uri.parse('https://github.com/holoscript/holoscript/tree/main/examples/quickstart'));
+        }
+      } catch {
+        vscode.env.openExternal(vscode.Uri.parse('https://github.com/holoscript/holoscript/tree/main/examples/quickstart'));
+      }
+    })
+  );
+
+  // Register Show Walkthrough command
+  context.subscriptions.push(
+    commands.registerCommand('holoscript.showWalkthrough', () => {
+      commands.executeCommand('workbench.action.openWalkthrough', 'holoscript.holoscript-vscode#holoscript-getting-started');
+    })
+  );
+
+  // Register Open Documentation command
+  context.subscriptions.push(
+    commands.registerCommand('holoscript.openDocumentation', () => {
+      vscode.env.openExternal(vscode.Uri.parse('https://holoscript.net/docs'));
+    })
+  );
+
+  // Show welcome message on first activation
+  const hasShownWelcome = context.globalState.get('holoscript.hasShownWelcome');
+  if (!hasShownWelcome) {
+    context.globalState.update('holoscript.hasShownWelcome', true);
+    window.showInformationMessage(
+      'Welcome to HoloScript! 🎉 Ready to build VR/AR experiences?',
+      'Get Started',
+      'Open Examples'
+    ).then(selection => {
+      if (selection === 'Get Started') {
+        commands.executeCommand('holoscript.showWalkthrough');
+      } else if (selection === 'Open Examples') {
+        commands.executeCommand('holoscript.openExamples');
+      }
+    });
+  }
+
   // Try multiple possible server locations
   const possiblePaths = [
     // Bundled with extension

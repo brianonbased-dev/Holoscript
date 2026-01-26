@@ -19,6 +19,15 @@ import type {
   VRTraitName,
 } from '../types/AdvancedTypeSystem';
 
+export type {
+  ASTProgram,
+  HSPlusNode,
+  HSPlusDirective,
+  HSPlusCompileResult,
+  HSPlusParserOptions,
+  VRTraitName,
+};
+
 // =============================================================================
 // TOKEN TYPES
 // =============================================================================
@@ -44,6 +53,7 @@ type TokenType =
   | 'ARROW'
   | 'PIPE'
   | 'EXPRESSION'
+  | 'TEMPLATE_STRING'
   | 'COMMENT'
   | 'NEWLINE'
   | 'INDENT'
@@ -587,35 +597,65 @@ export class HoloScriptPlusParser {
   private parseDocument(): HSPlusNode {
     this.skipNewlines();
 
-    const directives: HSPlusDirective[] = [];
-    while (this.check('AT')) {
-      const directive = this.parseDirective();
-      if (directive) {
-        directives.push(directive);
+    const topLevelNodes: HSPlusNode[] = [];
+    const globalDirectives: HSPlusDirective[] = [];
+
+    while (!this.check('EOF')) {
+      const currentDirectives: HSPlusDirective[] = [];
+      
+      // 1. Collect directives
+      while (this.check('AT')) {
+        const directive = this.parseDirective();
+        if (directive) {
+          currentDirectives.push(directive);
+        }
+        this.skipNewlines();
+      }
+
+      // 2. Parse node if present
+      if (this.check('IDENTIFIER')) {
+        const node = this.parseNode();
+        // Attach preceding directives to this node
+        node.directives = [...currentDirectives, ...(node.directives || [])] as any;
+        topLevelNodes.push(node);
+      } else {
+        // If directives with no node, handle as global or fragment
+        if (currentDirectives.length > 0) {
+          if (this.check('EOF')) {
+            globalDirectives.push(...currentDirectives);
+          } else {
+            // Unexpected token after directives, report and sync
+            this.error(`Expected node after directives, got ${this.current().type}`);
+            globalDirectives.push(...currentDirectives);
+            this.synchronize();
+          }
+        } else if (!this.check('EOF')) {
+          // No directives, no node, but not EOF
+          this.error(`Unexpected token ${this.current().type} at top level`);
+          this.synchronize();
+        }
       }
       this.skipNewlines();
     }
 
-    // Support for Fragment (Directive-only) files
-    if (this.check('EOF') && directives.length > 0) {
-      return {
-        type: 'fragment' as any,
-        id: 'root',
-        properties: {},
-        directives,
-        children: [],
-        traits: new Map(),
-        loc: {
-          start: { line: 1, column: 1 },
-          end: { line: this.current().line, column: this.current().column },
-        },
-      } as unknown as HSPlusNode;
+    // If we have multiple nodes or global directives, return a fragment
+    if (topLevelNodes.length === 1 && globalDirectives.length === 0) {
+      return topLevelNodes[0];
     }
 
-    const root = this.parseNode();
-    root.directives = [...directives, ...root.directives] as any;
-
-    return root;
+    return {
+      type: 'fragment' as any,
+      id: 'root',
+      properties: {},
+      directives: globalDirectives,
+      children: topLevelNodes,
+      traits: new Map(),
+      loc: {
+        start: { line: 1, column: 1 },
+        end: { line: this.current().line, column: this.current().column },
+      },
+      body: topLevelNodes,
+    } as unknown as HSPlusNode;
   }
 
   private parseNode(): HSPlusNode {
@@ -650,6 +690,7 @@ export class HoloScriptPlusParser {
           if (directive.type === 'trait') {
             traits.set(directive.name as VRTraitName, (directive as any).config);
             this.hasVRTraits = true;
+            directives.push(directive);
           } else {
             directives.push(directive);
           }
@@ -682,6 +723,7 @@ export class HoloScriptPlusParser {
             if (directive.type === 'trait') {
               traits.set(directive.name as VRTraitName, (directive as any).config);
               this.hasVRTraits = true;
+              directives.push(directive);
             } else {
               directives.push(directive);
             }
@@ -693,13 +735,23 @@ export class HoloScriptPlusParser {
           if (this.check('COLON') || this.check('EQUALS')) {
             this.advance();
             properties[name] = this.parseValue();
+          } else if (this.isLikelyValue(this.current())) {
+            // Error: Missing colon but looks like a property
+            this.error(`Expected ':' or '=' after property name '${name}'`);
+            properties[name] = this.parseValue();
           } else {
+            // Likely a child node
             this.pos = saved;
             children.push(this.parseNode());
           }
         } else {
-          // Advance on unknown tokens to avoid infinite loops
-          this.advance();
+          // Unexpected token - report error and potentially synchronize
+          if (!this.check('RBRACE') && !this.check('EOF') && !this.check('NEWLINE')) {
+            this.error(`Unexpected token ${this.current().type} "${this.current().value}" in node body`);
+            this.synchronize();
+          } else {
+            this.advance();
+          }
         }
         this.skipNewlines();
       }
@@ -869,7 +921,15 @@ export class HoloScriptPlusParser {
     } else {
       this.warn(`Unknown directive @${name}`);
     }
-    return null;
+    
+    // Parse config if present to avoid syntax errors
+    let config = {};
+    if (this.check('LPAREN')) {
+      config = this.parseTraitConfig();
+    }
+    
+    // Return as a generic trait so it appears in AST
+    return { type: 'trait' as const, name: name as any, config } as any;
   }
 
   private parsePropsBlock(): Record<string, unknown> {
@@ -1226,8 +1286,13 @@ export class HoloScriptPlusParser {
   private expect(type: TokenType, message: string): Token {
     if (!this.check(type)) {
       this.error(`${message}. Got ${this.current().type} "${this.current().value}"`);
-      // CRITICAL: Advance anyway to prevent infinite loops
-      return this.advance();
+      
+      // If it's a major structure failure, synchronize
+      if (type === 'RBRACE' || type === 'LBRACE' || type === 'IDENTIFIER') {
+        this.synchronize();
+      }
+      
+      return this.current();
     }
     return this.advance();
   }
@@ -1254,6 +1319,41 @@ export class HoloScriptPlusParser {
       line: token.line,
       column: token.column,
     });
+  }
+
+  /**
+   * Synchronize parser state after an error
+   * Skips tokens until a potential recovery point (newline followed by keyword/directive)
+   */
+  private synchronize(): void {
+    this.advance();
+
+    while (!this.check('EOF')) {
+      if (this.check('IDENTIFIER') || this.check('AT')) {
+        return;
+      }
+
+      if (this.check('RBRACE')) {
+        return;
+      }
+
+      this.advance();
+    }
+  }
+
+  /**
+   * Helper to check if a token is likely the start of a value
+   */
+  private isLikelyValue(token: Token): boolean {
+    return (
+      token.type === 'STRING' ||
+      token.type === 'NUMBER' ||
+      token.type === 'LBRACKET' ||
+      token.type === 'LBRACE' ||
+      token.type === 'BOOLEAN' ||
+      token.type === 'NULL' ||
+      token.type === 'TEMPLATE_STRING'
+    );
   }
 }
 

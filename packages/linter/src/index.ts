@@ -7,6 +7,8 @@
  * @package @hololand/holoscript-linter
  * @version 2.0.0
  */
+ 
+import { HoloScriptPlusParser, type HSPlusASTNode as HSPlusNode } from '@holoscript/core';
 
 // =============================================================================
 // TYPES
@@ -76,6 +78,7 @@ export interface RuleContext {
   lines: string[];
   fileType: 'holo' | 'hsplus';
   config: Record<string, unknown>;
+  ast?: HSPlusNode;
 }
 
 // =============================================================================
@@ -143,30 +146,34 @@ const BUILT_IN_RULES: Rule[] = [
     defaultSeverity: 'error',
     check(context: RuleContext): LintDiagnostic[] {
       const diagnostics: LintDiagnostic[] = [];
-      const ids = new Map<string, number>();
+      if (!context.ast) return diagnostics;
 
-      // Simple regex to find IDs (object#id or id: "value")
-      const idRegex = /#([a-zA-Z_][a-zA-Z0-9_]*)\b/g;
+      const ids = new Map<string, { line: number; column: number }>();
 
-      for (let i = 0; i < context.lines.length; i++) {
-        const line = context.lines[i];
-        let match;
-        while ((match = idRegex.exec(line)) !== null) {
-          const id = match[1];
-          if (ids.has(id)) {
-            diagnostics.push({
-              ruleId: 'no-duplicate-ids',
-              message: `Duplicate ID "${id}" (first defined on line ${ids.get(id)! + 1})`,
-              severity: 'error',
-              line: i + 1,
-              column: match.index + 1,
-            });
-          } else {
-            ids.set(id, i);
+      const checkNodes = (nodes: HSPlusNode[]) => {
+        for (const node of nodes) {
+          if (node.id) {
+            if (ids.has(node.id)) {
+              const first = ids.get(node.id)!;
+              diagnostics.push({
+                ruleId: 'no-duplicate-ids',
+                message: `Duplicate ID "${node.id}" (first defined on line ${first.line})`,
+                severity: 'error',
+                line: node.loc?.start.line || 1,
+                column: node.loc?.start.column || 1,
+              });
+            } else {
+              ids.set(node.id, {
+                line: node.loc?.start.line || 1,
+                column: node.loc?.start.column || 1,
+              });
+            }
           }
+          if (node.children) checkNodes(node.children);
         }
-      }
+      };
 
+      checkNodes(context.ast.children || []);
       return diagnostics;
     },
   },
@@ -180,25 +187,34 @@ const BUILT_IN_RULES: Rule[] = [
     defaultSeverity: 'warning',
     check(context: RuleContext): LintDiagnostic[] {
       const diagnostics: LintDiagnostic[] = [];
-      const compositionRegex = /composition\s+["']([^"']+)["']/g;
+      if (!context.ast) return diagnostics;
 
-      for (let i = 0; i < context.lines.length; i++) {
-        const line = context.lines[i];
-        let match;
-        while ((match = compositionRegex.exec(line)) !== null) {
-          const name = match[1];
-          if (!/^[A-Z][a-zA-Z0-9]*$/.test(name.replace(/\s/g, ''))) {
-            diagnostics.push({
-              ruleId: 'composition-naming',
-              message: `Composition name "${name}" should use PascalCase`,
-              severity: 'warning',
-              line: i + 1,
-              column: match.index + 1,
-            });
+      const checkNodes = (nodes: HSPlusNode[]) => {
+        for (const node of nodes) {
+          if (node.type === 'composition' && node.id) {
+            if (!/^[A-Z][a-zA-Z0-9]*$/.test(node.id)) {
+              const pascal = node.id[0].toUpperCase() + node.id.slice(1);
+              diagnostics.push({
+                ruleId: 'composition-naming',
+                message: `Composition name "${node.id}" should use PascalCase`,
+                severity: 'warning',
+                line: node.loc?.start.line || 1,
+                column: node.loc?.start.column || 1,
+                fix: {
+                  range: { 
+                    start: 0, // This needs to be absolute offset, which we don't have easily in current HSPlusNode
+                    end: 0 
+                  },
+                  replacement: pascal,
+                },
+              });
+            }
           }
+          if (node.children) checkNodes(node.children);
         }
-      }
+      };
 
+      checkNodes(context.ast.children || []);
       return diagnostics;
     },
   },
@@ -252,46 +268,78 @@ const BUILT_IN_RULES: Rule[] = [
     defaultSeverity: 'error',
     check(context: RuleContext): LintDiagnostic[] {
       const diagnostics: LintDiagnostic[] = [];
+      if (!context.ast) return diagnostics;
+
       const validTraits = [
-        'grabbable',
-        'throwable',
-        'pointable',
-        'hoverable',
-        'scalable',
-        'rotatable',
-        'stackable',
-        'snappable',
-        'breakable',
-        'talkable',
-        'patrol',
-        'merchant',
-        'physics',
-        'collision',
+        'grabbable', 'throwable', 'pointable', 'hoverable',
+        'scalable', 'rotatable', 'stackable', 'snappable',
+        'breakable', 'talkable', 'patrol', 'merchant',
+        'physics', 'collision', 'skeleton', 'body',
+        'networked', 'spatial_audio', 'voice'
       ];
 
-      const traitRegex = /@([a-zA-Z_][a-zA-Z0-9_]*)/g;
-
-      for (let i = 0; i < context.lines.length; i++) {
-        const line = context.lines[i];
-        let match;
-        while ((match = traitRegex.exec(line)) !== null) {
-          const trait = match[1].toLowerCase();
-          // Skip control flow keywords
-          if (['if', 'for', 'while', 'import', 'export'].includes(trait)) {
-            continue;
+      const checkTraits = (nodes: HSPlusNode[]) => {
+        for (const node of nodes) {
+          if (node.directives) {
+             for (const dir of node.directives) {
+               if (dir.type === 'trait') {
+                 if (!validTraits.includes(dir.name)) {
+                   diagnostics.push({
+                     ruleId: 'valid-trait-syntax',
+                     message: `Unknown or unsupported trait "@${dir.name}"`,
+                     severity: 'warning',
+                     line: (dir as any).loc?.start.line || 1,
+                     column: (dir as any).loc?.start.column || 1,
+                   });
+                 }
+               }
+             }
           }
-          if (!validTraits.includes(trait)) {
-            diagnostics.push({
-              ruleId: 'valid-trait-syntax',
-              message: `Unknown trait "@${match[1]}"`,
-              severity: 'warning',
-              line: i + 1,
-              column: match.index + 1,
-            });
-          }
+          if (node.children) checkTraits(node.children);
         }
-      }
+      };
 
+      if (context.ast.children) checkTraits(context.ast.children);
+      return diagnostics;
+    },
+  },
+
+  // Deprecated traits
+  {
+    id: 'deprecated-trait',
+    name: 'Deprecated Trait',
+    description: 'Avoid using deprecated traits',
+    category: 'best-practice',
+    defaultSeverity: 'warning',
+    check(context: RuleContext): LintDiagnostic[] {
+      const diagnostics: LintDiagnostic[] = [];
+      if (!context.ast) return diagnostics;
+
+      const deprecated = {
+        'talkable': 'Use @voice instead',
+        'collision': 'Use @trigger or @physics instead',
+      };
+
+      const checkNodes = (nodes: HSPlusNode[]) => {
+        for (const node of nodes) {
+          if (node.directives) {
+            for (const dir of node.directives) {
+              if (dir.type === 'trait' && dir.name in deprecated) {
+                diagnostics.push({
+                  ruleId: 'deprecated-trait',
+                  message: `Trait "@${dir.name}" is deprecated. ${deprecated[dir.name as keyof typeof deprecated]}`,
+                  severity: 'warning',
+                  line: (dir as any).loc?.start.line || 1,
+                  column: (dir as any).loc?.start.column || 1,
+                });
+              }
+            }
+          }
+          if (node.children) checkNodes(node.children);
+        }
+      };
+
+      if (context.ast.children) checkNodes(context.ast.children);
       return diagnostics;
     },
   },
@@ -664,26 +712,26 @@ const BUILT_IN_RULES: Rule[] = [
     defaultSeverity: 'warning',
     check(context: RuleContext): LintDiagnostic[] {
       const diagnostics: LintDiagnostic[] = [];
-      const objectRegex = /object\s+["']([^"']+)["']/g;
+      if (!context.ast) return diagnostics;
 
-      for (let i = 0; i < context.lines.length; i++) {
-        const line = context.lines[i];
-        let match;
-        while ((match = objectRegex.exec(line)) !== null) {
-          const name = match[1];
-          // Allow PascalCase, camelCase, snake_case, or kebab-case
-          if (!/^[A-Za-z][a-zA-Z0-9_-]*$/.test(name)) {
-            diagnostics.push({
-              ruleId: 'object-naming',
-              message: `Object name "${name}" should use valid naming convention`,
-              severity: 'warning',
-              line: i + 1,
-              column: match.index + 1,
-            });
+      const checkNodes = (nodes: HSPlusNode[]) => {
+        for (const node of nodes) {
+          if (node.type === 'orb' && node.id) {
+            if (!/^[A-Za-z][a-zA-Z0-9_-]*$/.test(node.id)) {
+              diagnostics.push({
+                ruleId: 'object-naming',
+                message: `Object name "${node.id}" should use valid naming convention (camelCase, snake_case, PascalCase)`,
+                severity: 'warning',
+                line: node.loc?.start.line || 1,
+                column: node.loc?.start.column || 1,
+              });
+            }
           }
+          if (node.children) checkNodes(node.children);
         }
-      }
+      };
 
+      checkNodes(context.ast.children || []);
       return diagnostics;
     },
   },
@@ -697,25 +745,26 @@ const BUILT_IN_RULES: Rule[] = [
     defaultSeverity: 'warning',
     check(context: RuleContext): LintDiagnostic[] {
       const diagnostics: LintDiagnostic[] = [];
-      const templateRegex = /template\s+["']([^"']+)["']/g;
+      if (!context.ast) return diagnostics;
 
-      for (let i = 0; i < context.lines.length; i++) {
-        const line = context.lines[i];
-        let match;
-        while ((match = templateRegex.exec(line)) !== null) {
-          const name = match[1];
-          if (!/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
-            diagnostics.push({
-              ruleId: 'template-naming',
-              message: `Template "${name}" should use PascalCase`,
-              severity: 'warning',
-              line: i + 1,
-              column: match.index + 1,
-            });
+      const checkNodes = (nodes: HSPlusNode[]) => {
+        for (const node of nodes) {
+          if (node.type === 'template' && node.id) {
+            if (!/^[A-Z][a-zA-Z0-9]*$/.test(node.id)) {
+              diagnostics.push({
+                ruleId: 'template-naming',
+                message: `Template "${node.id}" should use PascalCase`,
+                severity: 'warning',
+                line: node.loc?.start.line || 1,
+                column: node.loc?.start.column || 1,
+              });
+            }
           }
+          if (node.children) checkNodes(node.children);
         }
-      }
+      };
 
+      checkNodes(context.ast.children || []);
       return diagnostics;
     },
   },
@@ -831,6 +880,12 @@ export class HoloScriptLinter {
     const lines = source.split('\n');
     const diagnostics: LintDiagnostic[] = [];
 
+    // Parse the source to get AST for rules
+    const parser = new HoloScriptPlusParser();
+    const parseResult = parser.parse(source);
+    const ast = parseResult.ast;
+    (this as any).lastAST = ast;
+
     for (const [ruleId, rule] of this.rules) {
       const ruleConfig = this.config.rules[ruleId];
 
@@ -847,6 +902,7 @@ export class HoloScriptLinter {
         lines,
         fileType,
         config,
+        ast,
       };
 
       try {

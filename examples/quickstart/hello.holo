@@ -1,42 +1,36 @@
-composition "My First Scene" {
+// 1-hello.holo - Your First HoloScript Scene
+// Start here! This is the simplest possible VR scene.
+
+composition "My First VR World" {
+  // Environment settings
   environment {
-    skybox: "sunset"
-    ambient_light: 0.4
-    gravity: -9.81
+    skybox: "sunset"      // Beautiful sky backdrop
+    ambient_light: 0.4    // How bright the scene is
   }
 
-  object "Player" {
-    @collidable
-    @physics
-    position: [0, 1.6, 0]
-    
-    state {
-      health: 100
-      speed: 5
-    }
-  }
-
+  // A glowing orb you can grab in VR
   object "FloatingOrb" {
-    @grabbable
-    @glowing
-    @physics
+    @grabbable  // Makes it grabbable with VR controllers
+    @glowing    // Emits a soft glow
     
-    position: [0, 1.5, -2]
-    color: "#00ffff"
+    position: [0, 1.5, -2]   // In front of you at eye level
+    color: "#00ffff"         // Cyan color
     
+    // When grabbed, glow brighter!
     on_grab: {
       this.glow_intensity = 2.0
     }
     
+    // When released, dim down
     on_release: {
       this.glow_intensity = 0.5
     }
   }
-
-  logic {
-    on_player_touch(orb) {
-      Player.health += 10
-      orb.destroy()
-    }
-  }
 }
+
+// 🎉 That's it! You've created a VR scene.
+// 
+// NEXT STEPS:
+// 1. Press Ctrl+Shift+V to preview
+// 2. Try changing the color to "red" or "#ff00ff"
+// 3. Open 2-interactive.holo to learn more!

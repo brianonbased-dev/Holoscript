@@ -78,6 +78,15 @@ export {
   type GraphicsConfiguration,
 } from './HoloScriptPlusParser';
 
+// Advanced AST Types (from the new structural parser)
+export type {
+  ASTProgram,
+  HSPlusDirective,
+  HSPlusCompileResult,
+  HSPlusParserOptions,
+  HSPlusNode as HSPlusASTNode,
+} from './parser/HoloScriptPlusParser';
+
 // Runtime
 export { HoloScriptRuntime } from './HoloScriptRuntime';
 
