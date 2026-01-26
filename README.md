@@ -77,6 +77,12 @@ One component. Runs on **Web, VR, AR, iOS, Android, Desktop**. No rewrites.
 - **Claude Desktop/Code** — `.claude/settings.json` pre-configured
 - **GitHub Copilot** — `.github/copilot-instructions.md` with MCP guidance
 
+### 🧠 Run Locally (GGUF)
+To run Brittney locally for free inference:
+1.  Download the **[.GGUF Model](https://huggingface.co/brianonbased-dev/brittney-v4-expert)**.
+2.  Load into Ollama: `ollama run brittney-v4-expert`
+3.  Configure `HoloScript MCP` to use local endpoint.
+
 ### ⚡ Unified Event System
 `@holoscript/events` — Global Event Bubbling and Physics-Haptics bridging.
 
