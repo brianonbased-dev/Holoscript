@@ -3,8 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseHolo, parseHoloStrict, HoloCompositionParser } from './HoloCompositionParser';
-import type { HoloComposition } from './HoloCompositionTypes';
+import { parseHolo, parseHoloStrict } from './HoloCompositionParser';
 
 describe('HoloCompositionParser', () => {
   describe('Basic Composition', () => {

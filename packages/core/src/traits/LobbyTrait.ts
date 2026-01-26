@@ -47,10 +47,10 @@ export interface PlayerInfo {
   name: string;
 
   /** Is host */
-  isHost: boolean;
+  isHost?: boolean;
 
   /** Is ready */
-  isReady: boolean;
+  isReady?: boolean;
 
   /** Team (if applicable) */
   team?: string | number;
@@ -62,7 +62,7 @@ export interface PlayerInfo {
   properties?: Record<string, unknown>;
 
   /** Join time */
-  joinedAt: number;
+  joinedAt?: number;
 
   /** Latency in ms */
   latency?: number;
@@ -473,7 +473,7 @@ export class LobbyTrait {
     }
 
     // Pick player who joined earliest
-    players.sort((a, b) => a.joinedAt - b.joinedAt);
+    players.sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
     const newHost = players[0];
     newHost.isHost = true;
     this.hostId = newHost.id;

@@ -82,7 +82,7 @@ describe('SkeletonTrait', () => {
         name: 'Walk',
         duration: 1.0,
         loop: true,
-        curves: [],
+        curves: new Map(),
       });
       const clip = trait.getClip('Walk');
       expect(clip).toBeDefined();
@@ -90,7 +90,7 @@ describe('SkeletonTrait', () => {
     });
 
     it('should get animation clip by name', () => {
-      trait.addClip({ name: 'Run', duration: 0.8, curves: [] });
+      trait.addClip({ name: 'Run', duration: 0.8, curves: new Map() });
       const clip = trait.getClip('Run');
       expect(clip).toBeDefined();
       expect(clip?.name).toBe('Run');
@@ -99,20 +99,20 @@ describe('SkeletonTrait', () => {
 
   describe('animation playback', () => {
     it('should play animation', () => {
-      trait.addClip({ name: 'Idle', duration: 2.0, curves: [] });
+      trait.addClip({ name: 'Idle', duration: 2.0, curves: new Map() });
       trait.play('Idle');
       expect(trait.getCurrentClip()).toBe('Idle');
     });
 
     it('should stop animation', () => {
-      trait.addClip({ name: 'Dance', duration: 3.0, curves: [] });
+      trait.addClip({ name: 'Dance', duration: 3.0, curves: new Map() });
       trait.play('Dance');
       trait.stop();
       expect(trait.isPlaying()).toBe(false);
     });
 
     it('should pause animation', () => {
-      trait.addClip({ name: 'Walk', duration: 1.0, curves: [] });
+      trait.addClip({ name: 'Walk', duration: 1.0, curves: new Map() });
       trait.play('Walk');
       trait.pause();
       // After pause, isPlaying is false
@@ -120,7 +120,7 @@ describe('SkeletonTrait', () => {
     });
 
     it('should resume animation', () => {
-      trait.addClip({ name: 'Test', duration: 1.0, curves: [] });
+      trait.addClip({ name: 'Test', duration: 1.0, curves: new Map() });
       trait.play('Test');
       trait.pause();
       trait.resume();
@@ -147,7 +147,7 @@ describe('SkeletonTrait', () => {
     });
 
     it('should get normalized time', () => {
-      trait.addClip({ name: 'Test', duration: 5.0, curves: [] });
+      trait.addClip({ name: 'Test', duration: 5.0, curves: new Map() });
       trait.play('Test');
       const state = trait.getState();
       expect(typeof state.normalizedTime).toBe('number');
@@ -184,8 +184,8 @@ describe('SkeletonTrait', () => {
 
   describe('crossfade', () => {
     it('should crossfade to animation using play options', () => {
-      trait.addClip({ name: 'Walk', duration: 1.0, curves: [] });
-      trait.addClip({ name: 'Run', duration: 0.8, curves: [] });
+      trait.addClip({ name: 'Walk', duration: 1.0, curves: new Map() });
+      trait.addClip({ name: 'Run', duration: 0.8, curves: new Map() });
       trait.play('Walk');
       trait.play('Run', { crossfade: 0.3 });
       // During crossfade, crossfadeTarget is set to target clip

@@ -10,8 +10,8 @@
  * @version 1.0.0
  */
 
-import type { HSPlusNode, Vector3 } from '../types/HoloScriptPlus';
-import type { TraitHandler, TraitContext, TraitEvent } from './VRTraitSystem';
+import type { Vector3 } from '../types';
+import type { TraitHandler, TraitContext } from './VRTraitSystem';
 
 // =============================================================================
 // TYPES

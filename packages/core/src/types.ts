@@ -117,7 +117,9 @@ export type VRTraitName =
   | 'rotatable'
   | 'stackable'
   | 'snappable'
-  | 'breakable';
+  | 'breakable'
+  | 'haptic'
+  | 'networked';
 
 export type LifecycleHook =
   | 'on_mount'
@@ -486,7 +488,7 @@ export interface RuntimeSecurityLimits {
 // VR Types
 // ============================================================================
 
-export interface Vector3 {
+export interface SpatialVector3 {
   x: number;
   y: number;
   z: number;
@@ -508,25 +510,25 @@ export interface Duration {
   milliseconds: number;
 }
 
-export interface Transform {
-  position: Vector3;
-  rotation: Vector3;
-  scale: Vector3;
+export interface ASTTransform {
+  position: SpatialVector3;
+  rotation: SpatialVector3;
+  scale: SpatialVector3;
 }
 
 export type VRHand = 'left' | 'right' | 'both';
 
 export interface ThrowVelocity {
   magnitude: number;
-  direction: Vector3;
-  spin?: Vector3;
+  direction: SpatialVector3;
+  spin?: SpatialVector3;
 }
 
 export interface CollisionEvent {
   object1: string;
   object2: string;
-  position: Vector3;
-  normal: Vector3;
+  position: SpatialVector3;
+  normal: SpatialVector3;
   force: number;
   timestamp: number;
 }
@@ -653,4 +655,7 @@ export type {
   ShareContent,
   ShareResult,
   ParticleConfig,
+  Vector3,
+  Transform,
+  Vector3Tuple,
 } from './types/HoloScriptPlus.js';

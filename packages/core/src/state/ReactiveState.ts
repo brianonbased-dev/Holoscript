@@ -11,6 +11,7 @@
  */
 
 import type { StateDeclaration, ReactiveState as IReactiveState } from '../types/HoloScriptPlus';
+import { eventBus } from '../runtime/EventBus';
 
 // =============================================================================
 // TYPES
@@ -162,9 +163,44 @@ export class ReactiveState<T extends StateDeclaration> implements IReactiveState
   private computedCache: Map<string, { value: unknown; dirty: boolean }> = new Map();
   private watchCleanups: Map<string, () => void> = new Map();
 
-  constructor(initialState: T) {
+  private syncId?: string;
+  private isApplyingSync: boolean = false;
+
+  constructor(initialState: T, syncId?: string) {
     this.state = { ...initialState };
     this.proxy = createReactiveProxy(this.state);
+    this.syncId = syncId;
+
+    if (this.syncId) {
+      this.setupSync();
+    }
+  }
+
+  private setupSync(): void {
+    // Listen for remote updates
+    eventBus.on(`state_sync:${this.syncId}`, (data: any) => {
+      if (data.source === 'local') return; // Ignore own events (if loopback)
+      
+      this.isApplyingSync = true;
+      try {
+        this.update(data.updates);
+      } finally {
+        this.isApplyingSync = false;
+      }
+    });
+
+    // Determine if we need to broadcast initial state
+    // (In a real networked app, we'd fetch authority state here)
+  }
+
+  private broadcastUpdate(key: string, value: any): void {
+    if (this.syncId && !this.isApplyingSync) {
+      eventBus.emit(`state_sync:${this.syncId}`, {
+        source: 'local',
+        timestamp: Date.now(),
+        updates: { [key]: value }
+      });
+    }
   }
 
   get<K extends keyof T>(key: K): T[K] {
@@ -177,6 +213,7 @@ export class ReactiveState<T extends StateDeclaration> implements IReactiveState
 
     if (oldValue !== value) {
       this.notifySubscribers(key);
+      this.broadcastUpdate(key as string, value);
     }
   }
 
@@ -348,8 +385,8 @@ export class ReactiveState<T extends StateDeclaration> implements IReactiveState
 // FACTORY FUNCTIONS
 // =============================================================================
 
-export function createState<T extends StateDeclaration>(initialState: T): ReactiveState<T> {
-  return new ReactiveState(initialState);
+export function createState<T extends StateDeclaration>(initialState: T, syncId?: string): ReactiveState<T> {
+  return new ReactiveState(initialState, syncId);
 }
 
 export function ref<T>(value: T): { value: T } {

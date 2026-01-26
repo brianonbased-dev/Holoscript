@@ -110,10 +110,10 @@ export interface AnimationClip {
   duration: number;
 
   /** Frames per second */
-  fps: number;
+  fps?: number;
 
   /** Is looping */
-  loop: boolean;
+  loop?: boolean;
 
   /** Animation curves per bone */
   curves?: Map<string, BoneAnimationCurve>;

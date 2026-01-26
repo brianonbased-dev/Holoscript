@@ -1,0 +1,42 @@
+composition "My First Scene" {
+  environment {
+    skybox: "sunset"
+    ambient_light: 0.4
+    gravity: -9.81
+  }
+
+  object "Player" {
+    @collidable
+    @physics
+    position: [0, 1.6, 0]
+    
+    state {
+      health: 100
+      speed: 5
+    }
+  }
+
+  object "FloatingOrb" {
+    @grabbable
+    @glowing
+    @physics
+    
+    position: [0, 1.5, -2]
+    color: "#00ffff"
+    
+    on_grab: {
+      this.glow_intensity = 2.0
+    }
+    
+    on_release: {
+      this.glow_intensity = 0.5
+    }
+  }
+
+  logic {
+    on_player_touch(orb) {
+      Player.health += 10
+      orb.destroy()
+    }
+  }
+}

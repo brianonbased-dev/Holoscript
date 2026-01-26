@@ -18,8 +18,8 @@ describe('HoloScript+ NPC & Dialog System', () => {
     expect(result.success).toBe(true);
     
     // Assert structure
-    const directives = result.ast.root.directives || result.ast.body;
-    const npc = directives.find(d => d.type === 'npc');
+    const directives = (result.ast.root.directives || result.ast.body) as any[];
+    const npc = directives.find((d: any) => d.type === 'npc');
     expect(npc).toBeDefined();
     expect(npc.name).toBe('TownGuide');
     expect(npc.props.model).toBe('robot_v2');
@@ -37,8 +37,8 @@ describe('HoloScript+ NPC & Dialog System', () => {
     const result = parser.parse(source);
     expect(result.success).toBe(true);
 
-    const directives = result.ast.root.directives || result.ast.body;
-    const dialog = directives.find(d => d.type === 'dialog');
+    const directives = (result.ast.root.directives || result.ast.body) as any[];
+    const dialog = directives.find((d: any) => d.type === 'dialog');
     expect(dialog).toBeDefined();
     expect(dialog.props.text).toBe('Hello traveler!');
     expect(dialog.options.length).toBe(2);

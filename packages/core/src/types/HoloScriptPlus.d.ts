@@ -8,7 +8,8 @@
 // Re-export all researcher/viralist traits
 export * from './ResearcherViralistTraits.js';
 
-export type Vector3 = [number, number, number];
+export type Vector3Tuple = [number, number, number];
+export type Vector3 = Vector3Tuple;
 export type Vector2 = [number, number];
 export type Color = string;
 export type Duration = `${number}${'ms' | 's' | 'm'}`;
@@ -749,6 +750,7 @@ export type VRTraitName =
   | 'stackable'
   | 'snappable'
   | 'breakable'
+  | 'haptic'
   | 'stretchable'
   | 'moldable'
   // Humanoid/Avatar Traits
@@ -876,7 +878,8 @@ export interface HSPlusBuiltins {
   // Timers
   setTimeout: (callback: () => void, delay: number) => number;
   clearTimeout: (id: number) => void;
-
+  animate: (node: HSPlusNode, properties: Record<string, unknown>, options?: { duration?: number; sync?: boolean }) => void;
+  transition: (targetScene: string, options?: { audio?: string; effect?: string }) => void;
   // === Media Production Builtins (Optional - Researcher/Viralist features) ===
   start_recording?: (options?: { format?: string; quality?: string }) => void;
   stop_recording?: () => RecordingClip;
