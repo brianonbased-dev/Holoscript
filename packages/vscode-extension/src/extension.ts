@@ -9,6 +9,7 @@ import {
   TransportKind
 } from 'vscode-languageclient/node';
 import { HoloScriptPreviewPanel } from './previewPanel';
+import { agentAPI } from './agentApi';
 
 let client: LanguageClient | undefined;
 
@@ -56,6 +57,10 @@ export function activate(context: ExtensionContext) {
       })
     );
   }
+
+  // Initialize AI Agent API - enables Brittney, Claude, Copilot to control extension
+  agentAPI.initialize(context);
+  console.log('HoloScript: AI Agent API initialized. Agents can use holoscript.agent.* commands.');
 
   // Try multiple possible server locations
   const possiblePaths = [

@@ -2,7 +2,7 @@
   "name": "holoscript-vscode",
   "displayName": "HoloScript Enhanced",
   "description": "Language support for HoloScript+ with AI integration, Spatial Profiling, and Live Preview",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "holoscript",
   "icon": "icons/holoscript-logo.png",
   "repository": {
@@ -101,6 +101,51 @@
         "title": "Open Preview to the Side",
         "category": "HoloScript",
         "icon": "$(open-preview)"
+      },
+      {
+        "command": "holoscript.agent.createFile",
+        "title": "Agent: Create HoloScript File",
+        "category": "HoloScript"
+      },
+      {
+        "command": "holoscript.agent.generateObject",
+        "title": "Agent: Generate Object from Description",
+        "category": "HoloScript"
+      },
+      {
+        "command": "holoscript.agent.analyzeScene",
+        "title": "Agent: Analyze Current Scene",
+        "category": "HoloScript"
+      },
+      {
+        "command": "holoscript.agent.insertCode",
+        "title": "Agent: Insert Code at Cursor",
+        "category": "HoloScript"
+      },
+      {
+        "command": "holoscript.agent.openPreview",
+        "title": "Agent: Open Preview",
+        "category": "HoloScript"
+      },
+      {
+        "command": "holoscript.agent.addTrait",
+        "title": "Agent: Add Trait to Object",
+        "category": "HoloScript"
+      },
+      {
+        "command": "holoscript.agent.listTraits",
+        "title": "Agent: List Available Traits",
+        "category": "HoloScript"
+      },
+      {
+        "command": "holoscript.agent.validate",
+        "title": "Agent: Validate Syntax",
+        "category": "HoloScript"
+      },
+      {
+        "command": "holoscript.agent.status",
+        "title": "Agent: Get Extension Status",
+        "category": "HoloScript"
       }
     ],
     "menus": {
