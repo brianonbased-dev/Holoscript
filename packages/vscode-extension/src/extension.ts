@@ -260,7 +260,7 @@ export function activate(context: ExtensionContext) {
 
 function isHoloScriptFile(document: TextDocument): boolean {
   const fileName = document.fileName.toLowerCase();
-  return fileName.endsWith('.holo') || fileName.endsWith('.hsplus');
+  return fileName.endsWith('.holo') || fileName.endsWith('.hsplus') || fileName.endsWith('.hs');
 }
 
 export function deactivate(): Thenable<void> | undefined {
