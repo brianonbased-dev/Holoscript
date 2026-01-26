@@ -11,7 +11,7 @@
  */
 
 import type {
-  HSPlusAST,
+  ASTProgram,
   HSPlusNode,
   HSPlusDirective,
   HSPlusCompileResult,
@@ -105,15 +105,9 @@ class Lexer {
         this.skipLineComment();
         continue;
       }
-      if (char === '/' && this.peek(1) === '*') {
-        this.skipBlockComment();
+      if (char === '#') {
+        this.skipLineComment();
         continue;
-      }
-      if (char === '#' && this.peek(1) !== '#') {
-        if (this.peek(1) === '#') {
-          this.skipLineComment();
-          continue;
-        }
       }
 
       // Newlines
@@ -189,6 +183,10 @@ class Lexer {
       if (char === '.') {
         this.tokens.push(this.createToken('DOT', '.'));
         this.advance();
+        continue;
+      }
+      if (char === '/' && this.peek(1) === '*') {
+        this.skipBlockComment();
         continue;
       }
       if (char === '=') {
@@ -539,9 +537,15 @@ export class HoloScriptPlusParser {
     const root = this.parseDocument();
 
     // Build AST
-    const ast: HSPlusAST = {
+    const ast: ASTProgram = {
       type: 'Program',
-      body: root.directives || [],
+      id: 'root',
+      properties: {},
+      directives: (root.directives || []),
+      children: [],
+      traits: new Map(),
+      loc: root.loc,
+      body: (root.directives || []) as any,
       version: '1.0',
       root,
       imports: this.imports,
@@ -592,11 +596,11 @@ export class HoloScriptPlusParser {
           start: { line: 1, column: 1 },
           end: { line: this.current().line, column: this.current().column },
         },
-      };
+      } as unknown as HSPlusNode;
     }
 
     const root = this.parseNode();
-    root.directives = [...directives, ...root.directives];
+    root.directives = [...directives, ...root.directives] as any;
 
     return root;
   }
@@ -628,6 +632,7 @@ export class HoloScriptPlusParser {
           }
         }
       } else if (this.check('IDENTIFIER')) {
+
         const key = this.advance().value;
         if (this.check('COLON') || this.check('EQUALS')) {
           this.advance();
@@ -689,7 +694,7 @@ export class HoloScriptPlusParser {
         start: { line: startToken.line, column: startToken.column },
         end: { line: this.current().line, column: this.current().column },
       },
-    };
+    } as any;
   }
 
   private parseDirective(): HSPlusDirective | null {
@@ -823,7 +828,6 @@ export class HoloScriptPlusParser {
     }
 
     if (name === 'npc') {
-      try { require('fs').appendFileSync('debug_parser.log', `ENTERED NPC BLOCK. Name length: ${name.length}\n`); } catch(e){}
       const npcName = this.expect('STRING', 'Expected NPC name').value;
       const props = this.parsePropsBlock();
       return { type: 'npc' as const, name: npcName, props } as any;
@@ -976,10 +980,12 @@ export class HoloScriptPlusParser {
               directives: [directive],
               children: [],
               traits: new Map(),
-            });
+            } as any);
           }
-        } else if (this.check('IDENTIFIER')) {
           nodes.push(this.parseNode());
+        } else {
+          // CRITICAL: Advance on unknown token to prevent infinite loop
+          this.advance();
         }
         this.skipNewlines();
       }
@@ -1018,7 +1024,6 @@ export class HoloScriptPlusParser {
         }
       }
     }
-
     return code.trim();
   }
 
@@ -1089,6 +1094,8 @@ export class HoloScriptPlusParser {
       return { __ref: token.value };
     }
 
+    // CRITICAL: Advance to prevent infinite loop
+    this.advance();
     return null;
   }
 
@@ -1170,7 +1177,8 @@ export class HoloScriptPlusParser {
   private expect(type: TokenType, message: string): Token {
     if (!this.check(type)) {
       this.error(`${message}. Got ${this.current().type} "${this.current().value}"`);
-      return { type, value: '', line: this.current().line, column: this.current().column };
+      // CRITICAL: Advance anyway to prevent infinite loops
+      return this.advance();
     }
     return this.advance();
   }

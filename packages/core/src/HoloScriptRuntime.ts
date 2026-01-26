@@ -16,6 +16,7 @@
 
 import { logger } from './logger';
 import { ExpressionEvaluator, createState } from './ReactiveState';
+import { eventBus } from './runtime/EventBus'; // Added
 import type {
   ASTNode,
   OrbNode,
@@ -1429,6 +1430,7 @@ export class HoloScriptRuntime {
    * Emit event
    */
   async emit(event: string, data?: unknown): Promise<void> {
+    // Local handlers
     const handlers = this.eventHandlers.get(event) || [];
     for (const handler of handlers) {
       try {
@@ -1437,6 +1439,9 @@ export class HoloScriptRuntime {
         logger.error('Event handler error', { event, error });
       }
     }
+
+    // Global bus broadcast
+    await eventBus.emit(event, data as any);
   }
 
   /**

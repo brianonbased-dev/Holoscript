@@ -3,6 +3,8 @@
  *
  * Union types, generics, type inference, exhaustiveness checking
  */
+import type { HSPlusNode } from './HoloScriptPlus.js';
+export type { HSPlusNode };
 
 export type HoloScriptType =
   | PrimitiveType
@@ -267,7 +269,7 @@ export class AdvancedTypeChecker {
   private registerBuiltins(): void {
     this.types.set('Vector3', {
       kind: 'custom',
-      name: 'Vector3',
+      name: 'ASTVector3',
       properties: new Map([
         ['x', { kind: 'primitive', name: 'number' }],
         ['y', { kind: 'primitive', name: 'number' }],
@@ -349,12 +351,9 @@ export class AdvancedTypeChecker {
 /**
  * HoloScript+ AST Types
  */
-export interface HSPlusNode {
-  type: 'directive' | 'trait' | 'lifecycle' | 'state' | 'for' | 'if' | 'import' | 'component' | 'element' | 'fragment' | 'Program' | 'external_api' | 'generate';
-  [key: string]: any;
-}
+// HSPlusNode is imported from HoloScriptPlus.js
 
-export interface HSPlusAST extends HSPlusNode {
+export interface ASTProgram extends HSPlusNode {
   type: 'Program';
   body: HSPlusNode[];
   version: string;
@@ -432,18 +431,18 @@ export interface ControllerHook {
 }
 
 /**
- * Vector3 type for 3D coordinates
+ * Vector3 type for AST representation
  */
-export interface Vector3 {
+export interface ASTVector3 {
   x: number;
   y: number;
   z: number;
 }
 
 /**
- * Color type for RGBA colors
+ * Color type for AST representation
  */
-export interface Color {
+export interface ASTColor {
   r: number;
   g: number;
   b: number;
@@ -454,8 +453,8 @@ export interface Color {
  * VR Hand representation
  */
 export interface VRHand {
-  position: Vector3;
-  rotation: Vector3;
+  position: ASTVector3;
+  rotation: ASTVector3;
   pinch: number;
   grip: number;
   pointing: boolean;
@@ -489,9 +488,7 @@ export interface HSPlusRuntime {
   state: Record<string, any>;
   props: Record<string, any>;
   refs: Record<string, any>;
-  builtins: HSPlusBuiltins;
-  execute: (ast: HSPlusAST) => any;
-  evaluate: (expression: string) => any;
+  execute: (ast: ASTProgram) => any;
   callMethod: (name: string, args: any[]) => any;
   setState: (key: string, value: any) => void;
   getState: (key: string) => any;

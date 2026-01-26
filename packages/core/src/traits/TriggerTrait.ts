@@ -79,6 +79,9 @@ export interface TriggerAction {
   /** Function to call */
   function?: string;
 
+  /** Alias for event/function for backward compatibility/tests */
+  handler?: string;
+
   /** Property to set */
   property?: string;
 

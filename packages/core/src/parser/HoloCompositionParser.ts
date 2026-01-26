@@ -17,6 +17,7 @@ import type {
   HoloTemplate,
   HoloObjectDecl,
   HoloObjectProperty,
+  HoloObjectTrait,
   HoloSpatialGroup,
   HoloGroupProperty,
   HoloLogic,
@@ -73,6 +74,8 @@ type TokenType =
   | 'AND'
   | 'OR'
   | 'ARROW'
+  | 'AT'
+  | 'HASH'
   | 'NEWLINE'
   | 'EOF'
   // Keywords
@@ -310,6 +313,8 @@ class HoloLexer {
       '<': 'LESS',
       '>': 'GREATER',
       '!': 'BANG',
+      '@': 'AT',
+      '#': 'HASH',
     };
 
     if (singleChar[char]) {
@@ -720,18 +725,55 @@ export class HoloCompositionParser {
 
     const properties: HoloObjectProperty[] = [];
     const children: HoloObjectDecl[] = [];
+    const traits: HoloObjectTrait[] = []; // Collect traits here
+    let state: HoloState | undefined;
 
-    while (!this.check('RBRACE') && !this.isAtEnd()) {
+    while (!this.check('RBRACE') && !this.check('EOF')) {
       this.skipNewlines();
       if (this.check('RBRACE')) break;
 
       if (this.check('OBJECT')) {
         children.push(this.parseObject());
+      } else if (this.check('AT' as any)) {
+        this.advance(); // consume @
+        const name = this.expectIdentifier();
+        let config: Record<string, HoloValue> = {};
+        if (this.check('LPAREN')) {
+          config = this.parseTraitConfig();
+        }
+        traits.push({ type: 'ObjectTrait', name, config } as any);
+      } else if (this.check('STATE')) {
+        // Handle state block in object
+        state = this.parseState();
       } else if (this.check('IDENTIFIER')) {
         const key = this.expectIdentifier();
-        this.expect('COLON');
-        const value = this.parseValue();
-        properties.push({ type: 'ObjectProperty', key, value });
+        if (this.check('COLON')) {
+          this.advance();
+          if (this.check('LBRACE')) {
+            // Check if it's a statement block or object value
+            // For now, if it starts with 'on_', treat as statement block
+            if (key.startsWith('on_')) {
+              this.advance();
+              const body = this.parseStatementBlock();
+              this.expect('RBRACE');
+              properties.push({ type: 'ObjectProperty', key, value: body as any });
+            } else {
+              properties.push({ type: 'ObjectProperty', key, value: this.parseValue() });
+            }
+          } else {
+            properties.push({ type: 'ObjectProperty', key, value: this.parseValue() });
+          }
+        } else if (this.check('LPAREN')) {
+          // Event handler style: on_event(params) { ... }
+          const parameters = this.parseParameterList();
+          this.expect('LBRACE');
+          const body = this.parseStatementBlock();
+          this.expect('RBRACE');
+          properties.push({ type: 'ObjectProperty', key, value: { type: 'EventHandler', parameters, body } as any });
+        } else {
+          // Bare identifier (like a trait without @)
+          properties.push({ type: 'ObjectProperty', key, value: true });
+        }
       } else {
         // Skip unknown tokens to prevent infinite loop
         this.error(`Unexpected token in object: ${this.current().type}`);
@@ -746,6 +788,8 @@ export class HoloCompositionParser {
       name,
       template,
       properties,
+      state,
+      traits, // Added traits property
       children: children.length > 0 ? children : undefined,
     };
   }
@@ -809,8 +853,25 @@ export class HoloCompositionParser {
 
       if (this.check('ACTION') || this.check('ASYNC')) {
         actions.push(this.parseAction());
-      } else if (this.check('IDENTIFIER') && this.current().value.startsWith('on_')) {
-        handlers.push(this.parseEventHandler());
+      } else if (this.check('IDENTIFIER')) {
+        const name = this.advance().value;
+        if (this.check('LPAREN')) {
+          // Normal event handler: on_player_touch(orb) { ... }
+          const parameters = this.parseParameterList();
+          this.expect('LBRACE');
+          const body = this.parseStatementBlock();
+          this.expect('RBRACE');
+          handlers.push({ type: 'EventHandler', event: name, parameters, body } as any);
+        } else if (this.check('COLON')) {
+          // Property style: on_grab: { ... }
+          this.advance();
+          this.expect('LBRACE');
+          const body = this.parseStatementBlock();
+          this.expect('RBRACE');
+          handlers.push({ type: 'EventHandler', event: name, parameters: [], body } as any);
+        } else {
+          this.error(`Unexpected token in logic: ${name}`);
+        }
       } else {
         this.error(`Unexpected token in logic block: ${this.current().type}`);
         this.advance();
@@ -820,18 +881,6 @@ export class HoloCompositionParser {
 
     this.expect('RBRACE');
     return { type: 'Logic', handlers, actions };
-  }
-
-  private parseEventHandler(): HoloEventHandler {
-    const event = this.expectIdentifier(); // on_enter, on_player_attack, etc.
-    const parameters = this.parseParameterList();
-    this.expect('LBRACE');
-    this.skipNewlines();
-
-    const body = this.parseStatementBlock();
-
-    this.expect('RBRACE');
-    return { type: 'EventHandler', event, parameters, body };
   }
 
   private parseAction(): HoloAction {
@@ -1240,6 +1289,7 @@ export class HoloCompositionParser {
     }
 
     this.error(`Expected value, got ${this.current().type}`);
+    this.advance(); // CRITICAL: Advance to prevent infinite loop
     return null;
   }
 
@@ -1313,7 +1363,8 @@ export class HoloCompositionParser {
       return this.advance();
     }
     this.error(`Expected ${type}, got ${this.current().type}`);
-    return this.current();
+    // Advance anyway to prevent infinite loops in the parser
+    return this.advance(); 
   }
 
   private expectString(): string {
@@ -1351,6 +1402,28 @@ export class HoloCompositionParser {
     if (!this.options.tolerant) {
       throw new Error(`Parse error at line ${this.currentLocation().line}: ${message}`);
     }
+  }
+
+  private parseTraitConfig(): Record<string, HoloValue> {
+    this.expect('LPAREN');
+    const config: Record<string, HoloValue> = {};
+    
+    while (!this.check('RPAREN') && !this.check('EOF')) {
+      this.skipNewlines();
+      if (this.check('RPAREN')) break;
+      
+      const key = this.expectIdentifier();
+      this.expect('COLON');
+      config[key] = this.parseValue();
+      
+      if (this.check('COMMA')) {
+        this.advance();
+      }
+      this.skipNewlines();
+    }
+    
+    this.expect('RPAREN');
+    return config;
   }
 }
 

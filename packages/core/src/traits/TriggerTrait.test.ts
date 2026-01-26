@@ -136,6 +136,7 @@ describe('TriggerTrait', () => {
   describe('actions', () => {
     it('should add enter action', () => {
       trait.addEnterAction({
+        type: 'call',
         handler: 'onPlayerEnter',
       });
       expect(trait.getConfig().onEnter?.length).toBe(1);
@@ -143,6 +144,7 @@ describe('TriggerTrait', () => {
 
     it('should add stay action', () => {
       trait.addStayAction({
+        type: 'call',
         handler: 'onPlayerStay',
       });
       expect(trait.getConfig().onStay?.length).toBe(1);
@@ -150,14 +152,15 @@ describe('TriggerTrait', () => {
 
     it('should add exit action', () => {
       trait.addExitAction({
+        type: 'call',
         handler: 'onPlayerExit',
       });
       expect(trait.getConfig().onExit?.length).toBe(1);
     });
 
     it('should clear actions for event type', () => {
-      trait.addEnterAction({ handler: 'test1' });
-      trait.addEnterAction({ handler: 'test2' });
+      trait.addEnterAction({ type: 'call', handler: 'test1' });
+      trait.addEnterAction({ type: 'call', handler: 'test2' });
       trait.clearActions('enter');
       expect(trait.getConfig().onEnter?.length ?? 0).toBe(0);
     });

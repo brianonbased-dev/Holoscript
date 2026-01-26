@@ -165,7 +165,7 @@ export interface ShaderConfig {
   name?: string;
 
   /** Source code */
-  source: ShaderSource;
+  source?: ShaderSource;
 
   /** Uniform definitions */
   uniforms?: Record<string, Omit<ShaderUniform, 'name'>>;
@@ -412,13 +412,13 @@ export class ShaderTrait {
    * Assemble shader source with includes and uniforms
    */
   private assembleShaderSource(stage: 'vertex' | 'fragment' | 'geometry' | 'compute'): string {
-    const source = this.config.source[stage];
+    const source = this.config.source ? this.config.source[stage as keyof ShaderSource] : undefined;
     if (!source) return '';
 
     let assembled = '';
 
     // Add precision for GLSL
-    if (this.config.source.language === 'glsl') {
+    if (this.config.source?.language === 'glsl') {
       assembled += 'precision highp float;\n\n';
     }
 
@@ -495,18 +495,18 @@ export class ShaderTrait {
     const warnings: ShaderCompilationWarning[] = [];
 
     // Basic syntax validation
-    if (this.config.source.vertex) {
+    if (this.config.source?.vertex) {
       const vertexErrors = this.validateShaderSyntax(this.config.source.vertex, 'vertex');
       errors.push(...vertexErrors);
     }
 
-    if (this.config.source.fragment) {
+    if (this.config.source?.fragment) {
       const fragmentErrors = this.validateShaderSyntax(this.config.source.fragment, 'fragment');
       errors.push(...fragmentErrors);
     }
 
     // Check for required main function
-    if (this.config.source.vertex && !this.config.source.vertex.includes('void main')) {
+    if (this.config.source?.vertex && !this.config.source.vertex.includes('void main')) {
       errors.push({
         stage: 'vertex',
         line: 1,
@@ -515,7 +515,7 @@ export class ShaderTrait {
       });
     }
 
-    if (this.config.source.fragment && !this.config.source.fragment.includes('void main')) {
+    if (this.config.source?.fragment && !this.config.source.fragment.includes('void main')) {
       errors.push({
         stage: 'fragment',
         line: 1,

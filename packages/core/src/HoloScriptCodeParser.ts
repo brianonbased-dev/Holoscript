@@ -1697,9 +1697,11 @@ export class HoloScriptCodeParser {
           arr.push(token.value);
         }
         this.advance();
-      }
-
-      if (this.check('punctuation', ',')) {
+      } else if (this.check('punctuation', ',')) {
+        this.advance();
+      } else {
+        // Fix: Advance and report error to prevent infinite loop
+        this.addError(this.createError('HS004', `Unexpected token in array: ${token?.type || 'unknown'}`, token));
         this.advance();
       }
     }
@@ -1722,6 +1724,11 @@ export class HoloScriptCodeParser {
       const prop = this.parseProperty();
       if (prop) {
         obj[prop.key] = prop.value;
+      } else {
+        // Fix: Advance if parseProperty failed to consume anything
+        const token = this.currentToken();
+        this.addError(this.createError('HS004', `Unexpected token in object: ${token?.type || 'unknown'}`, token));
+        this.advance();
       }
 
       this.skipNewlines();

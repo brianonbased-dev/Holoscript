@@ -80,7 +80,7 @@ describe('ShaderTrait', () => {
         name: 'test',
         source: { language: 'glsl', vertex: '', fragment: '' },
         uniforms: {
-          uTime: { name: 'uTime', type: 'float', value: 0.0 },
+          uTime: { type: 'float', value: 0.0 } as any,
         },
       });
 
@@ -93,8 +93,8 @@ describe('ShaderTrait', () => {
         name: 'test',
         source: { language: 'glsl', vertex: '', fragment: '' },
         uniforms: {
-          uTime: { name: 'uTime', type: 'float', value: 0.0 },
-          uColor: { name: 'uColor', type: 'vec3', value: [1, 0, 0] },
+          uTime: { type: 'float', value: 0.0 } as any,
+          uColor: { type: 'vec3', value: [1, 0, 0] } as any,
         },
       });
 
@@ -121,7 +121,7 @@ describe('ShaderTrait', () => {
     });
 
     it('should create ShaderTrait from preset', () => {
-      const hologramShader = new ShaderTrait(SHADER_PRESETS.hologram);
+      const hologramShader = new ShaderTrait(SHADER_PRESETS.hologram as any);
       expect(hologramShader.getConfig().name).toBe('hologram');
     });
   });
@@ -199,7 +199,7 @@ describe('ShaderTrait', () => {
           fragment: 'void main() { gl_FragColor = vec4(1.0); }',
         },
         uniforms: {
-          uTime: { name: 'uTime', type: 'float', value: 0.0 },
+          uTime: { type: 'float', value: 0.0 },
         },
       });
 

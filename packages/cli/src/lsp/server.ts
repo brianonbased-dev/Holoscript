@@ -11,6 +11,7 @@
 
 import {
   HoloScriptCodeParser,
+  HoloCompositionParser, // Added
   HoloScriptTypeChecker,
   VR_TRAITS,
   type ASTNode,
@@ -95,11 +96,13 @@ const ORB_PROPERTIES: CompletionItem[] = [
  */
 export class HoloScriptLanguageServer {
   private parser: HoloScriptCodeParser;
+  private holoParser: HoloCompositionParser; // Added
   private typeChecker: HoloScriptTypeChecker;
-  private documentCache: Map<string, { content: string; ast: ASTNode[]; version: number }> = new Map();
+  private documentCache: Map<string, { content: string; ast: any; version: number }> = new Map();
 
   constructor() {
     this.parser = new HoloScriptCodeParser();
+    this.holoParser = new HoloCompositionParser(); // Added
     this.typeChecker = new HoloScriptTypeChecker();
   }
 
@@ -107,7 +110,9 @@ export class HoloScriptLanguageServer {
    * Update document content
    */
   updateDocument(uri: string, content: string, version: number): void {
-    const parseResult = this.parser.parse(content);
+    const isHolo = uri.endsWith('.holo');
+    const parseResult = isHolo ? this.holoParser.parse(content) : this.parser.parse(content);
+    
     this.documentCache.set(uri, {
       content,
       ast: parseResult.ast,
@@ -122,7 +127,8 @@ export class HoloScriptLanguageServer {
     const doc = this.documentCache.get(uri);
     if (!doc) return [];
 
-    const parseResult = this.parser.parse(doc.content);
+    const isHolo = uri.endsWith('.holo');
+    const parseResult = isHolo ? this.holoParser.parse(doc.content) : this.parser.parse(doc.content);
     const diagnostics: Diagnostic[] = [];
 
     // Parse errors
@@ -139,15 +145,86 @@ export class HoloScriptLanguageServer {
       });
     }
 
-    // Type errors
-    this.typeChecker.reset();
-    const typeResult = this.typeChecker.check(parseResult.ast);
-    for (const diagnostic of typeResult.diagnostics) {
-      diagnostics.push(this.convertTypeDiagnostic(diagnostic));
+    // Type errors (only for .hsplus files for now as .holo logic is declarative)
+    if (!isHolo) {
+      this.typeChecker.reset();
+      const typeResult = this.typeChecker.check(parseResult.ast);
+      for (const diagnostic of typeResult.diagnostics) {
+        diagnostics.push(this.convertTypeDiagnostic(diagnostic));
+      }
+    }
+
+    // Custom VR Pattern Validations (P2 Pattern)
+    const customDiagnostics = this.runCustomValidations(doc.content, parseResult.ast);
+    diagnostics.push(...customDiagnostics);
+
+    return diagnostics;
+  }
+
+  private runCustomValidations(content: string, ast: any): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    const lines = content.split('\n');
+
+    // 1. Common Typos & "Did you mean"
+    const typos: Record<string, string> = {
+      'sper': 'sphere',
+      'box': 'cube',
+      'rotate.y': 'rotation.y',
+      'rotate.x': 'rotation.x',
+      'rotate.z': 'rotation.z',
+    };
+
+    lines.forEach((line, i) => {
+      for (const [typo, fix] of Object.entries(typos)) {
+        if (line.includes(typo)) {
+          const char = line.indexOf(typo);
+          diagnostics.push({
+            range: {
+              start: { line: i, character: char },
+              end: { line: i, character: char + typo.length },
+            },
+            severity: DiagnosticSeverity.Warning,
+            message: `Common typo detected: Did you mean '${fix}'?`,
+            source: 'holoscript-vr-audit',
+          });
+        }
+      }
+    });
+
+    // 2. Missing Trait Validations
+    // Check if on_grab is used but @grabbable trait is missing
+    const findNodes = (nodes: any[]): any[] => {
+      let results: any[] = [];
+      for (const node of nodes) {
+        results.push(node);
+        if (node.children) results.push(...findNodes(node.children));
+      }
+      return results;
+    };
+
+    const allNodes = Array.isArray(ast) ? findNodes(ast) : [ast];
+    for (const node of allNodes) {
+      if (node.directives) {
+        const hasGrabHook = node.directives.some((d: any) => d.hook === 'on_grab');
+        const hasGrabbableTrait = node.directives.some((d: any) => d.type === 'trait' && d.name === 'grabbable');
+        
+        if (hasGrabHook && !hasGrabbableTrait) {
+          diagnostics.push({
+            range: {
+              start: { line: node.line || 0, character: node.column || 0 },
+              end: { line: node.line || 0, character: (node.column || 0) + 10 },
+            },
+            severity: DiagnosticSeverity.Warning,
+            message: `Node has 'on_grab' hook but is missing '@grabbable' trait. Interaction will not work.`,
+            source: 'holoscript-vr-audit',
+          });
+        }
+      }
     }
 
     return diagnostics;
   }
+
 
   /**
    * Get completions at position

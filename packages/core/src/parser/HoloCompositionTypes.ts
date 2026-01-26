@@ -138,7 +138,15 @@ export interface HoloObjectDecl extends HoloNode {
   name: string;
   template?: string; // "using" clause
   properties: HoloObjectProperty[];
+  state?: HoloState;
+  traits: HoloObjectTrait[];
   children?: HoloObjectDecl[];
+}
+
+export interface HoloObjectTrait extends HoloNode {
+  type: 'ObjectTrait';
+  name: string;
+  config: Record<string, HoloValue>;
 }
 
 export interface HoloObjectProperty extends HoloNode {

@@ -422,6 +422,7 @@ export type {
 
   // VR Types
   Vector3,
+  SpatialVector3,
   Vector2,
   Color,
   Duration,

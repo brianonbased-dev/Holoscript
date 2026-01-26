@@ -1100,6 +1100,18 @@ export class VRTraitRegistry {
   }
 
   handleEventForAllTraits(node: HSPlusNode, context: TraitContext, event: TraitEvent): void {
+    // Physics ↔ Haptics Bridge (P0 Pattern)
+    // Automatically trigger light haptic feedback on physical interactions if no haptic trait override exists
+    if (event.type === 'collision' || event.type === 'trigger_enter') {
+      if (!node.traits.has('haptic')) {
+        const intensity = event.type === 'collision' ? 0.35 : 0.15;
+        const dominant = context.vr.getDominantHand();
+        if (dominant) {
+          context.haptics.pulse(dominant.id as 'left' | 'right', intensity, 40);
+        }
+      }
+    }
+
     for (const traitName of node.traits.keys()) {
       this.handleEvent(node, traitName, context, event);
     }

@@ -184,7 +184,7 @@ describe('LobbyTrait', () => {
       const regional = createLobbyTrait({
         matchmaking: {
           mode: 'region',
-          preferredRegion: 'us-west',
+          region: 'us-west',
         },
       });
       expect(regional.getConfig().matchmaking?.mode).toBe('region');

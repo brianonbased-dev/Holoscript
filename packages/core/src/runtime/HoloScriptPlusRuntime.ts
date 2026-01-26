@@ -24,6 +24,7 @@ import type {
 } from '../types/HoloScriptPlus';
 import { ReactiveState, createState, ExpressionEvaluator } from '../state/ReactiveState';
 import { VRTraitRegistry, vrTraitRegistry, TraitContext, TraitEvent } from '../traits/VRTraitSystem';
+import { eventBus } from './EventBus'; // Added
 
 // MOCK: StateSync (to resolve cross-repo dependency for visualization)
 class StateSync {
@@ -106,7 +107,12 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
   constructor(ast: HSPlusAST, options: RuntimeOptions = {}) {
     this.ast = ast;
     this.options = options;
-    this.state = createState({});
+    
+    // Check for sync intent (P3 Pattern)
+    const isNetworked = ast.root.traits?.has('networked') || ast.root.directives?.some((d: any) => d.type === 'sync' || d.type === 'networked');
+    const syncId = isNetworked ? (ast.root.id || 'global_session') : undefined;
+    
+    this.state = createState({}, syncId);
     this.traitRegistry = vrTraitRegistry;
     this.companions = options.companions || {};
     this.builtins = createBuiltins(this);
@@ -848,6 +854,7 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
   }
 
   emit(event: string, payload?: unknown): void {
+    // Local handlers
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       handlers.forEach((handler) => {
@@ -858,6 +865,9 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
         }
       });
     }
+
+    // Global bus broadcast
+    eventBus.emit(event, payload as any);
   }
 
   updateEntity(id: string, properties: Partial<Record<string, unknown>>): boolean {
@@ -1150,6 +1160,32 @@ function createBuiltins(runtime: HoloScriptPlusRuntimeImpl): HSPlusBuiltins {
 
     clearTimeout: (id: number): void => {
       window.clearTimeout(id);
+    },
+
+    animate: (node: HSPlusNode, properties: Record<string, unknown>, options: { duration?: number; sync?: boolean } = {}): void => {
+      // Implement basic animation logic here or bridge to renderer
+      // If sync is true, broadcast the animation intent via the event bus
+      if (options.sync) {
+        runtime.emit('network_animation', {
+          objectId: node.id,
+          properties,
+          options,
+          timestamp: Date.now()
+        });
+      }
+      
+      // Local animation (mock/bridge)
+      Object.assign(node.properties, properties);
+      runtime.emit('animate', { node, properties, options });
+    },
+
+    transition: (targetScene: string, options: { audio?: string; effect?: string } = {}): void => {
+      // Portal + Audio pattern (P1 Pattern)
+      if (options.audio) {
+        runtime.emit('play_sound', { source: options.audio });
+      }
+      runtime.emit('scene_transition', { target: targetScene, options });
+      console.log(`[Runtime] Transitioning to scene: ${targetScene}`);
     },
   };
 }

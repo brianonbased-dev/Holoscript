@@ -22,6 +22,142 @@ async function main(): Promise<void> {
       process.exit(0);
       break;
 
+    case 'validate':
+    case 'parse': {
+      if (!options.input) {
+        console.error('\x1b[31mError: No input file specified.\x1b[0m');
+        console.log(`Usage: holoscript ${options.command} <file>`);
+        process.exit(1);
+      }
+
+      const fs = await import('fs');
+      const path = await import('path');
+      const { HoloScriptCodeParser } = await import('@holoscript/core');
+
+      const filePath = path.resolve(options.input);
+      if (!fs.existsSync(filePath)) {
+        console.error(`\x1b[31mError: File not found: ${filePath}\x1b[0m`);
+        process.exit(1);
+      }
+
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const parser = new HoloScriptCodeParser();
+      
+      console.log(`\n\x1b[36mValidating ${options.input}...\x1b[0m\n`);
+      
+      try {
+        const isHolo = options.input.endsWith('.holo');
+        let success = false;
+        let errorList: any[] = [];
+
+        if (options.verbose) console.log(`\x1b[2m[TRACE] Starting validation (isHolo: ${isHolo})...\x1b[0m`);
+
+        let parseResult: any;
+
+        if (isHolo) {
+          if (options.verbose) console.log(`\x1b[2m[TRACE] Importing HoloCompositionParser...\x1b[0m`);
+          const { HoloCompositionParser } = await import('@holoscript/core');
+          if (options.verbose) console.log(`\x1b[2m[TRACE] Parser imported. Initializing...\x1b[0m`);
+          const compositionParser = new HoloCompositionParser();
+          if (options.verbose) console.log(`\x1b[2m[TRACE] Starting parse...\x1b[0m`);
+          const result = compositionParser.parse(content);
+          parseResult = result;
+          if (options.verbose) console.log(`\x1b[2m[TRACE] Parse complete. Success: ${result.success}\x1b[0m`);
+          success = result.success;
+          errorList = result.errors.map((e: any) => ({ line: e.loc?.line, column: e.loc?.column, message: e.message }));
+        } else {
+          if (options.verbose) console.log(`\x1b[2m[TRACE] Importing HoloScriptCodeParser...\x1b[0m`);
+          const { HoloScriptCodeParser } = await import('@holoscript/core');
+          if (options.verbose) console.log(`\x1b[2m[TRACE] Parser imported. Initializing...\x1b[0m`);
+          const parser = new HoloScriptCodeParser();
+          if (options.verbose) console.log(`\x1b[2m[TRACE] Starting parse...\x1b[0m`);
+          const result = parser.parse(content);
+          parseResult = result;
+          if (options.verbose) console.log(`\x1b[2m[TRACE] Parse complete. Success: ${result.success}\x1b[0m`);
+          success = result.success;
+          errorList = result.errors;
+        }
+
+        // Custom Validations (Shared with LSP)
+        const lines = content.split('\n');
+        
+        // 1. Common Typos
+        const typos: Record<string, string> = {
+          'sper': 'sphere',
+          'box': 'cube',
+          'rotate.y': 'rotation.y',
+          'rotate.x': 'rotation.x',
+          'rotate.z': 'rotation.z',
+        };
+
+        lines.forEach((line, i) => {
+          for (const [typo, fix] of Object.entries(typos)) {
+            if (line.includes(typo)) {
+              errorList.push({
+                line: i + 1,
+                column: line.indexOf(typo),
+                message: `[Warning] Common typo detected: Did you mean '${fix}'?`,
+                severity: 'warning'
+              });
+            }
+          }
+        });
+
+        // 2. Missing Trait Validations
+        // Simple recursive finder
+        const findNodes = (nodes: any[]): any[] => {
+          if (!nodes) return [];
+          let results: any[] = [];
+          for (const node of nodes) {
+            results.push(node);
+            if (node.children) results.push(...findNodes(node.children));
+          }
+          return results;
+        };
+
+        const astRoot = isHolo ? parseResult.ast?.objects : parseResult.ast;
+        const allNodes = Array.isArray(astRoot) ? findNodes(astRoot) : (astRoot ? findNodes([astRoot]) : []);
+        
+        for (const node of allNodes) {
+          if (node.directives) {
+            const hasGrabHook = node.directives.some((d: any) => d.hook === 'on_grab');
+            const hasGrabbableTrait = node.directives.some((d: any) => d.type === 'trait' && d.name === 'grabbable');
+            
+            if (hasGrabHook && !hasGrabbableTrait) {
+              errorList.push({
+                line: node.line || (node.loc?.line) || 0,
+                column: node.column || (node.loc?.column) || 0,
+                message: `[Warning] Node has 'on_grab' hook but is missing '@grabbable' trait. Interaction will not work.`,
+                severity: 'warning'
+              });
+            }
+          }
+        }
+        
+        if (success && errorList.filter(e => e.severity !== 'warning').length === 0) {
+          if (errorList.length > 0) {
+             console.log(`\x1b[33m✓ Validation passed with ${errorList.length} warnings:\x1b[0m`);
+             errorList.forEach(err => {
+               console.log(`  Line ${err.line}:${err.column}: ${err.message}`);
+             });
+          } else {
+             console.log(`\x1b[32m✓ Validation successful!\x1b[0m\n`);
+          }
+          process.exit(0);
+        } else {
+          console.error(`\x1b[31mValidation failed with ${errorList.length} errors:\x1b[0m`);
+          errorList.forEach(err => {
+            console.error(`  Line ${err.line}:${err.column}: ${err.message}`);
+          });
+          process.exit(1);
+        }
+      } catch (err: any) {
+        console.error(`\x1b[31mUnexpected error during validation: ${err.message}\x1b[0m`);
+        process.exit(1);
+      }
+      break;
+    }
+
     case 'version':
       console.log(`HoloScript CLI v${VERSION}`);
       process.exit(0);
@@ -208,14 +344,57 @@ async function main(): Promise<void> {
       console.log(`\n\x1b[36mCompiling ${options.input} → ${target}\x1b[0m\n`);
       
       try {
-        const ast = parser.parse(content);
-        
+        const isHolo = options.input.endsWith('.holo');
+        let ast: any;
+
+        if (isHolo) {
+          if (options.verbose) console.log(`\x1b[2m[DEBUG] Using HoloCompositionParser for .holo file...\x1b[0m`);
+          const { HoloCompositionParser } = await import('@holoscript/core');
+          const compositionParser = new HoloCompositionParser();
+          const result = compositionParser.parse(content);
+          
+          if (!result.success) {
+            console.error(`\x1b[31mError parsing composition:\x1b[0m`);
+            result.errors.forEach(e => console.error(`  ${e.loc?.line}:${e.loc?.column}: ${e.message}`));
+            process.exit(1);
+          }
+          
+          // Map HoloComposition AST to Generator AST
+          ast = {
+            orbs: result.ast?.objects?.map(obj => ({
+              name: obj.name,
+              properties: Object.fromEntries(obj.properties.map(p => [p.key, p.value])),
+              traits: obj.traits || [],
+              state: obj.state,
+            })) || [],
+            functions: result.ast?.logic?.actions?.map(a => ({ name: a.name })) || [],
+          };
+        } else {
+          if (options.verbose) console.log(`\x1b[2m[DEBUG] Using HoloScriptCodeParser...\x1b[0m`);
+          const { HoloScriptCodeParser } = await import('@holoscript/core');
+          const parser = new HoloScriptCodeParser();
+          const result = parser.parse(content);
+          
+          if (!result.success) {
+            console.error(`\x1b[31mError parsing script:\x1b[0m`);
+            result.errors.forEach(e => console.error(`  ${e.line}:${e.column}: ${e.message}`));
+            process.exit(1);
+          }
+          
+          ast = {
+             orbs: result.ast.filter((n: any) => n.type === 'orb'),
+             functions: result.ast.filter((n: any) => n.type === 'method'),
+          };
+        }
+
         if (options.verbose) {
           console.log(`\x1b[2mParsed ${ast.orbs?.length || 0} orbs, ${ast.functions?.length || 0} functions\x1b[0m`);
         }
 
+        console.log(`\x1b[2m[DEBUG] Starting code generation for target: ${target}...\x1b[0m`);
         // Generate output based on target
         const outputCode = generateTargetCode(ast, target, options.verbose);
+        console.log(`\x1b[2m[DEBUG] Code generation complete. Length: ${outputCode.length}\x1b[0m`);
         
         if (options.output) {
           const outputPath = path.resolve(options.output);
@@ -385,6 +564,7 @@ public class HoloScriptScene : MonoBehaviour
   for (const orb of orbs) {
     const name = orb.name || 'object';
     const pos = orb.properties?.position || { x: 0, y: 0, z: 0 };
+    const traits = orb.traits || [];
     
     code += `        // Create ${name}
         GameObject ${name} = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -392,6 +572,22 @@ public class HoloScriptScene : MonoBehaviour
         ${name}.transform.position = new Vector3(${pos.x || 0}f, ${pos.y || 0}f, ${pos.z || 0}f);
 
 `;
+
+    const hasPhysics = traits.some((t: any) => t.name === 'physics' || t.name === 'throwable' || t.name === 'grabbable');
+    if (hasPhysics) {
+      code += `        // Add Physics
+        Rigidbody ${name}_rb = ${name}.AddComponent<Rigidbody>();
+`;
+    }
+
+    for (const trait of traits) {
+      code += `        // Trait: @${trait.name}\n`;
+      if (trait.name === 'grabbable') {
+        code += `        // TODO: Map to XR Grab Interactable or similar\n`;
+      }
+    }
+    
+    code += `\n`;
   }
 
   code += `    }
@@ -416,8 +612,35 @@ public class HoloScriptWorld : UdonSharpBehaviour
 
   for (const orb of orbs) {
     const name = orb.name || 'object';
-    code += `        Debug.Log("[HoloScript] Initialized ${name}");
+    const pos = orb.properties?.position || { x: 0, y: 0, z: 0 }; // VRChat also uses position
+    const traits = orb.traits || [];
+
+    code += `        // Create ${name}
+        GameObject ${name} = VRC.SDKBase.VRCInstantiate.Instantiate(VRC.SDKBase.VRC_SceneDescriptor.GetDefaultSpawnPoint()); // Placeholder for actual object creation
+        ${name}.name = "${name}";
+        ${name}.transform.position = new Vector3(${pos.x || 0}f, ${pos.y || 0}f, ${pos.z || 0}f);
+        Debug.Log("[HoloScript] Initialized ${name}");
+
 `;
+
+    const hasPhysics = traits.some((t: any) => t.name === 'physics' || t.name === 'throwable' || t.name === 'grabbable');
+    if (hasPhysics) {
+      code += `        // Add Physics (Rigidbody)
+        Rigidbody ${name}_rb = ${name}.AddComponent<Rigidbody>();
+`;
+    }
+
+    for (const trait of traits) {
+      code += `        // Trait: @${trait.name}\n`;
+      if (trait.name === 'grabbable') {
+        code += `        // TODO: Add VRC_Grabbable or similar UdonSharp component\n`;
+      }
+      if (trait.name === 'throwable') {
+        code += `        // TODO: Configure VRC_Grabbable for throwable behavior\n`;
+      }
+    }
+    
+    code += `\n`;
   }
 
   code += `    }
