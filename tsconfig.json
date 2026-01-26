@@ -9,8 +9,5 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
-  },
-  "references": [
-    { "path": "./packages/infinityassistant" }
-  ]
+  }
 }

@@ -2,7 +2,7 @@
   "name": "holoscript-vscode",
   "displayName": "HoloScript Enhanced",
   "description": "Language support for HoloScript+ with AI integration, Spatial Profiling, and Live Preview",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "publisher": "holoscript",
   "icon": "icons/holoscript-logo.png",
   "repository": {
@@ -146,6 +146,24 @@
         "command": "holoscript.agent.status",
         "title": "Agent: Get Extension Status",
         "category": "HoloScript"
+      },
+      {
+        "command": "holoscript.openExamples",
+        "title": "Open Examples",
+        "category": "HoloScript",
+        "icon": "$(folder-library)"
+      },
+      {
+        "command": "holoscript.showWalkthrough",
+        "title": "Show Getting Started",
+        "category": "HoloScript",
+        "icon": "$(book)"
+      },
+      {
+        "command": "holoscript.openDocumentation",
+        "title": "Open Documentation",
+        "category": "HoloScript",
+        "icon": "$(question)"
       }
     ],
     "menus": {
@@ -186,6 +204,70 @@
         "key": "ctrl+k v",
         "mac": "cmd+k v",
         "when": "editorLangId == holoscript || editorLangId == holoscriptplus"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "holoscript-getting-started",
+        "title": "Getting Started with HoloScript",
+        "description": "Learn to build VR/AR experiences with HoloScript in 5 minutes",
+        "steps": [
+          {
+            "id": "welcome",
+            "title": "Welcome to HoloScript",
+            "description": "The first spatial programming language for VR/AR development.\n\n[Open Welcome Guide](command:markdown.showPreview?%5B%22walkthroughs/getting-started/01-welcome.md%22%5D)",
+            "media": {
+              "markdown": "walkthroughs/getting-started/01-welcome.md"
+            }
+          },
+          {
+            "id": "createFile",
+            "title": "Create Your First Scene",
+            "description": "Create a `.holo` file and write your first VR scene.\n\n[Create hello.holo](command:holoscript.agent.createFile)",
+            "media": {
+              "markdown": "walkthroughs/getting-started/02-first-scene.md"
+            },
+            "completionEvents": [
+              "onFileCreated:*.holo"
+            ]
+          },
+          {
+            "id": "learnTraits",
+            "title": "Add VR Traits",
+            "description": "Use `@grabbable`, `@physics`, `@glowing` to add VR interactivity.",
+            "media": {
+              "markdown": "walkthroughs/getting-started/03-traits.md"
+            }
+          },
+          {
+            "id": "preview",
+            "title": "Preview Your Scene",
+            "description": "See your scene in 3D with live preview.\n\n[Open Preview](command:holoscript.openPreviewToSide)",
+            "media": {
+              "markdown": "walkthroughs/getting-started/04-preview.md"
+            },
+            "completionEvents": [
+              "onCommand:holoscript.openPreviewToSide",
+              "onCommand:holoscript.openPreview"
+            ]
+          },
+          {
+            "id": "aiIntegration",
+            "title": "AI Integration",
+            "description": "Use Claude, GPT, or Copilot to generate HoloScript code.",
+            "media": {
+              "markdown": "walkthroughs/getting-started/05-ai-integration.md"
+            }
+          },
+          {
+            "id": "nextSteps",
+            "title": "Next Steps",
+            "description": "Explore examples, documentation, and the community.",
+            "media": {
+              "markdown": "walkthroughs/getting-started/06-next-steps.md"
+            }
+          }
+        ]
       }
     ]
   },

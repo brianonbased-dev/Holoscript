@@ -23,6 +23,7 @@
   "license": "ELv2",
   "dependencies": {
     "@holoscript/core": "workspace:*",
+    "@holoscript/linter": "workspace:*",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.11",
     "vscode-uri": "^3.0.8"

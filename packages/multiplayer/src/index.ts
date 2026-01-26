@@ -12,6 +12,7 @@ export {
   RoomManager,
   RoomBrowser,
   generatePlayerId,
+  StateSyncNetworkManager,
 } from './room';
 
 // Player
@@ -22,3 +23,11 @@ export {
   RPCManager,
   ObjectSyncManager,
 } from './player';
+
+// CRDT Bridge (connects @holoscript/state-sync to networking)
+export {
+  CRDTNetworkBridge,
+  createCRDTBridge,
+  type CRDTBridgeConfig,
+  type CRDTBridgeEvent,
+} from './crdt-bridge';

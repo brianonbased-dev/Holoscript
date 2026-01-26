@@ -1,0 +1,25 @@
+{
+  "name": "@holoscript/navigation",
+  "version": "1.0.0",
+  "description": "HoloScript navigation system with flow fields and pathfinding",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": ["holoscript", "navigation", "pathfinding", "flow-fields", "ai"],
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@holoscript/core": "workspace:*"
+  }
+}

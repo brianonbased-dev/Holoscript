@@ -3,7 +3,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
-    parser: 'src/HoloScriptCodeParser.ts',
+    parser: 'src/parser/HoloScriptPlusParser.ts',
     runtime: 'src/HoloScriptRuntime.ts',
     'type-checker': 'src/HoloScriptTypeChecker.ts',
     debugger: 'src/HoloScriptDebugger.ts',

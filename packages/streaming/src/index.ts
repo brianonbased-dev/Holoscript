@@ -21,3 +21,15 @@ export {
   CacheManager,
   MemoryBudgetMonitor,
 } from './cache';
+
+// Prediction (movement prediction for preemptive loading)
+export {
+  MovementPredictor,
+  PredictiveChunkLoader,
+  createMovementPredictor,
+  createPredictiveChunkLoader,
+  type PredictionConfig,
+  type PredictionResult,
+  type ChunkInfo,
+  type ChunkLoaderConfig,
+} from './prediction';

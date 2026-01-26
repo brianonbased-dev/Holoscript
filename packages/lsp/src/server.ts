@@ -39,34 +39,41 @@ import {
   SemanticTokens,
   SemanticTokensBuilder,
   SemanticTokensLegend,
+  RenameParams,
+  WorkspaceEdit,
+  CodeActionParams,
+  CodeAction,
+  CodeActionKind,
+  TextEdit,
 } from 'vscode-languageserver/node.js';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 import {
-  HoloScriptCodeParser,
+  HoloScriptPlusParser,
   HoloScriptValidator,
-  type ASTNode,
-  type OrbNode,
-  type ParseResult,
-  type ValidationError,
+  type ASTProgram,
+  type HSPlusASTNode as HSPlusNode,
+  type HSPlusCompileResult,
 } from '@holoscript/core';
 
 import { getTraitDoc, formatTraitDocCompact, getAllTraitNames, TRAIT_DOCS } from './traitDocs';
+import { HoloScriptLinter, type LintDiagnostic, type Severity as LintSeverity } from '@holoscript/linter';
 
 // Create connection and document manager
 const connection = createConnection(ProposedFeatures.all);
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 // Parser and validator instances
-const parser = new HoloScriptCodeParser();
+const parser = new HoloScriptPlusParser();
 const validator = new HoloScriptValidator();
+const linter = new HoloScriptLinter();
 
 // Cache for parsed documents
 const documentCache = new Map<string, {
-  ast: ASTNode[];
+  ast: ASTProgram;
   version: number;
-  symbols: Map<string, { node: ASTNode; line: number; column: number }>;
+  symbols: Map<string, { node: HSPlusNode; line: number; column: number }>;
 }>();
 
 // Semantic token types and modifiers
@@ -94,6 +101,8 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
         legend,
         full: true,
       },
+      renameProvider: true,
+      codeActionProvider: true,
     },
   };
 });
@@ -109,20 +118,20 @@ documents.onDidChangeContent((change) => {
 async function validateDocument(document: TextDocument): Promise<void> {
   const text = document.getText();
   const diagnostics: Diagnostic[] = [];
-  const symbols = new Map<string, { node: ASTNode; line: number; column: number }>();
+  const symbols = new Map<string, { node: HSPlusNode; line: number; column: number }>();
 
   try {
-    // Parse the document
-    const parseResult = parser.parse(text);
+    // Parse the document using the new HSPlus parser
+    const parseResult: HSPlusCompileResult = parser.parse(text);
 
-    if (!parseResult.success && parseResult.errors) {
-      // Add parse errors as diagnostics
+    // 1. Handle Parse Errors (Integrated Multi-Error Reporting)
+    if (parseResult.errors && parseResult.errors.length > 0) {
       for (const error of parseResult.errors) {
         diagnostics.push({
           severity: DiagnosticSeverity.Error,
           range: {
             start: { line: (error.line || 1) - 1, character: (error.column || 1) - 1 },
-            end: { line: (error.line || 1) - 1, character: (error.column || 1) + 10 },
+            end: { line: (error.line || 1) - 1, character: (error.column || 1) + 20 },
           },
           message: error.message,
           source: 'holoscript',
@@ -130,34 +139,41 @@ async function validateDocument(document: TextDocument): Promise<void> {
       }
     }
 
-    if (parseResult.success && parseResult.ast) {
-      // Build symbol table
-      for (const node of parseResult.ast) {
-        if (node.type === 'orb') {
-          const orbNode = node as OrbNode;
-          symbols.set(orbNode.name, {
-            node,
-            line: node.line || 1,
-            column: node.column || 1,
-          });
-        }
-      }
-
-      // Validate the AST
-      const validationResult = (validator as any).validateSource(text);
-      const validationErrors = [...validationResult.errors, ...validationResult.warnings];
-
-      for (const error of validationErrors) {
+    // 2. Handle Warnings
+    if (parseResult.warnings && parseResult.warnings.length > 0) {
+      for (const warning of parseResult.warnings) {
         diagnostics.push({
-          severity: error.severity === 'warning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
+          severity: DiagnosticSeverity.Warning,
           range: {
-            start: { line: (error.line || 1) - 1, character: (error.column || 1) - 1 },
-            end: { line: (error.line || 1) - 1, character: (error.column || 1) + 10 },
+            start: { line: (warning.line || 1) - 1, character: (warning.column || 1) - 1 },
+            end: { line: (warning.line || 1) - 1, character: (warning.column || 1) + 20 },
           },
-          message: error.message,
+          message: warning.message,
           source: 'holoscript',
         });
       }
+    }
+
+    if (parseResult.ast) {
+      const ast = parseResult.ast;
+      
+      // Build symbol table from all nodes in the program
+      const allNodes = [ast, ...(ast.children || [])];
+      
+      const findSymbols = (nodes: HSPlusNode[]) => {
+        for (const node of nodes) {
+          if (node.id) {
+            symbols.set(node.id, {
+              node,
+              line: node.loc?.start.line || 1,
+              column: node.loc?.start.column || 1,
+            });
+          }
+          if (node.children) findSymbols(node.children);
+        }
+      };
+
+      findSymbols(ast.children || []);
 
       // Cache the parsed result
       documentCache.set(document.uri, {
@@ -166,6 +182,22 @@ async function validateDocument(document: TextDocument): Promise<void> {
         symbols,
       });
     }
+
+    // 3. Linter Logic
+    const lintResult = linter.lint(text, document.uri);
+    for (const diag of lintResult.diagnostics) {
+      diagnostics.push({
+        severity: mapLintSeverity(diag.severity),
+        range: {
+          start: { line: diag.line - 1, character: diag.column - 1 },
+          end: { line: (diag.endLine || diag.line) - 1, character: (diag.endColumn || diag.column + 20) - 1 },
+        },
+        message: diag.message,
+        source: 'holoscript-linter',
+        data: diag, // Store for code actions
+      });
+    }
+
   } catch (error) {
     diagnostics.push({
       severity: DiagnosticSeverity.Error,
@@ -322,13 +354,13 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
   const cached = documentCache.get(params.textDocument.uri);
   if (cached && cached.symbols.has(word)) {
     const symbol = cached.symbols.get(word)!;
-    const orbNode = symbol.node as OrbNode;
+    const orbNode = symbol.node;
     const props = orbNode.properties ? Object.keys(orbNode.properties).join(', ') : 'none';
 
     return {
       contents: {
         kind: MarkupKind.Markdown,
-        value: `**${word}** (orb)\n\nProperties: ${props}\n\nDefined at line ${symbol.line}`,
+        value: `**${word}** (${orbNode.type})\n\nProperties: ${props}\n\nDefined at line ${symbol.line}`,
       },
     };
   }
@@ -400,6 +432,80 @@ connection.onReferences((params: ReferenceParams): Location[] => {
 });
 
 /**
+ * Handle rename request
+ */
+connection.onRenameRequest((params: RenameParams): WorkspaceEdit | null => {
+  const cached = documentCache.get(params.textDocument.uri);
+  if (!cached) return null;
+
+  const document = documents.get(params.textDocument.uri);
+  if (!document) return null;
+
+  const text = document.getText();
+  const offset = document.offsetAt(params.position);
+  const wordRange = getWordRangeAtPosition(text, offset);
+  if (!wordRange) return null;
+
+  const oldName = text.substring(wordRange.start, wordRange.end);
+  const newName = params.newName;
+
+  // Verify it's a renameable symbol (must exist in our symbol table)
+  if (!cached.symbols.has(oldName)) return null;
+
+  const edits: TextEdit[] = [];
+  const regex = new RegExp(`\\b${oldName}\\b`, 'g');
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    const startPos = document.positionAt(match.index);
+    const endPos = document.positionAt(match.index + oldName.length);
+    edits.push({
+      range: { start: startPos, end: endPos },
+      newText: newName,
+    });
+  }
+
+  return {
+    changes: {
+      [params.textDocument.uri]: edits,
+    },
+  };
+});
+
+/**
+ * Provide code actions (quick fixes)
+ */
+connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
+  const actions: CodeAction[] = [];
+  
+  for (const diagnostic of params.context.diagnostics) {
+    if (diagnostic.source === 'holoscript-linter' && diagnostic.data) {
+      const lintDiag = diagnostic.data as LintDiagnostic;
+      
+      if (lintDiag.fix) {
+        actions.push({
+          title: `Fix ${lintDiag.ruleId}: ${lintDiag.message}`,
+          kind: CodeActionKind.QuickFix,
+          diagnostics: [diagnostic],
+          edit: {
+            changes: {
+              [params.textDocument.uri]: [
+                {
+                  range: diagnostic.range,
+                  newText: lintDiag.fix.replacement,
+                }
+              ]
+            }
+          }
+        });
+      }
+    }
+  }
+
+  return actions;
+});
+
+/**
  * Document symbols (outline)
  */
 connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => {
@@ -408,28 +514,28 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => 
 
   const symbols: DocumentSymbol[] = [];
 
-  for (const node of cached.ast) {
+  for (const node of cached.ast.children) {
     if (node.type === 'orb') {
-      const orbNode = node as OrbNode;
-      const line = (node.line || 1) - 1;
+      const line = (node.loc?.start.line || 1) - 1;
+      const name = node.id || 'orb';
 
       const symbol: DocumentSymbol = {
-        name: orbNode.name,
+        name: name,
         kind: SymbolKind.Class,
         range: {
           start: { line, character: 0 },
-          end: { line: line + 10, character: 0 }, // Approximate
+          end: { line: (node.loc?.end.line || line + 1) - 1, character: 0 },
         },
         selectionRange: {
           start: { line, character: 0 },
-          end: { line, character: orbNode.name.length + 4 },
+          end: { line, character: name.length + 4 },
         },
         children: [],
       };
 
       // Add properties as children
-      if (orbNode.properties) {
-        for (const [key] of Object.entries(orbNode.properties)) {
+      if (node.properties) {
+        for (const [key] of Object.entries(node.properties)) {
           symbol.children!.push({
             name: key,
             kind: SymbolKind.Property,
@@ -441,13 +547,13 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => 
 
       symbols.push(symbol);
     } else if (node.type === 'world') {
-      const worldNode = node as any;
-      const line = (node.line || 1) - 1;
+      const line = (node.loc?.start.line || 1) - 1;
+      const name = node.id || 'world';
 
       symbols.push({
-        name: worldNode.name || 'world',
+        name: name,
         kind: SymbolKind.Module,
-        range: { start: { line, character: 0 }, end: { line: line + 5, character: 0 } },
+        range: { start: { line, character: 0 }, end: { line: (node.loc?.end.line || line + 5) - 1, character: 0 } },
         selectionRange: { start: { line, character: 0 }, end: { line, character: 10 } },
       });
     }
@@ -525,6 +631,19 @@ function getWordRangeAtPosition(text: string, offset: number): { start: number; 
   }
 
   return null;
+}
+
+/**
+ * Helper: Map linter severity to LSP diagnostic severity
+ */
+function mapLintSeverity(severity: LintSeverity): DiagnosticSeverity {
+  switch (severity) {
+    case 'error': return DiagnosticSeverity.Error;
+    case 'warning': return DiagnosticSeverity.Warning;
+    case 'info': return DiagnosticSeverity.Information;
+    case 'hint': return DiagnosticSeverity.Hint;
+    default: return DiagnosticSeverity.Warning;
+  }
 }
 
 // Start listening
