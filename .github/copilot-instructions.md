@@ -169,10 +169,99 @@ composition "Scene Name" {
 
 ---
 
+## Quick Syntax Reference
+
+### Geometry Types
+`cube` `sphere` `cylinder` `cone` `torus` `capsule` `plane` `model/path.glb`
+
+### Animation Properties
+`position.x/y/z` `rotation.x/y/z` `scale` `opacity` `color` `material.emission.intensity`
+
+### Easing Functions
+`linear` `easeIn` `easeOut` `easeInOut` `easeInQuad` `easeOutQuad` `easeInOutQuad`
+
+### Event Handlers
+| Event | Trigger |
+|-------|---------|
+| `onPoint` | User points at object |
+| `onGrab` | User grabs object |
+| `onRelease` | User releases object |
+| `onHoverEnter` | Pointer enters object |
+| `onHoverExit` | Pointer exits object |
+| `onTriggerEnter` | Physics trigger entry |
+| `onTriggerExit` | Physics trigger exit |
+| `onSwing` | Object swung by user |
+| `onGesture('name')` | Custom gesture detected |
+
+### Physics Properties
+```hsplus
+physics: {
+  type: 'dynamic' | 'kinematic' | 'static'
+  mass: 1.0
+  restitution: 0.5  // bounciness
+  friction: 0.3
+}
+```
+
+### Network Sync Syntax
+```hsplus
+object Ball @grabbable @networked {
+  @networked position
+  @networked rotation
+  
+  onGrab: {
+    network.sync(this.position, this.rotation)
+  }
+}
+```
+
+### Animation Syntax
+```hsplus
+animation bounce {
+  property: 'position.y'
+  from: 1
+  to: 2
+  duration: 1000
+  loop: infinite
+  easing: 'easeInOut'
+}
+```
+
+### Event Bus Pattern
+```hsplus
+eventBus GlobalEvents
+
+object Button @pointable {
+  onPoint: { GlobalEvents.emit('buttonPressed') }
+}
+
+object Light {
+  GlobalEvents.on('buttonPressed', {
+    this.color = 'green'
+  })
+}
+```
+
+### Haptic Feedback
+```hsplus
+onGrab: {
+  haptic.feedback('light' | 'medium' | 'strong')
+}
+
+onTriggerEnter: {
+  hapticFeedback.play({
+    intensity: 0.8,
+    duration: 200
+  })
+}
+```
+
+---
+
 ## 49 VR Traits (Always Consider These)
 
 ### Interaction
-`@grabbable` `@throwable` `@holdable` `@clickable` `@hoverable` `@draggable`
+`@grabbable` `@throwable` `@holdable` `@clickable` `@hoverable` `@draggable` `@pointable` `@scalable`
 
 ### Physics
 `@collidable` `@physics` `@rigid` `@kinematic` `@trigger` `@gravity`
@@ -194,6 +283,79 @@ composition "Scene Name" {
 
 ### State
 `@state` `@reactive` `@observable` `@computed`
+
+---
+
+## Common Patterns
+
+### Interactive Object with Haptics
+```hsplus
+object InteractiveCube @grabbable @collidable {
+  geometry: 'cube'
+  physics: { mass: 1.0, restitution: 0.5 }
+  
+  onGrab: { haptic.feedback('medium') }
+  onTriggerEnter: { hapticFeedback.play({ intensity: 0.8, duration: 200 }) }
+}
+```
+
+### Multiplayer Synced Object
+```hsplus
+object SharedBall @grabbable @networked {
+  geometry: 'sphere'
+  @networked position
+  @networked rotation
+  
+  physics: { mass: 0.5 }
+  
+  onGrab: {
+    network.claim(this)
+    network.sync(this.position)
+  }
+}
+```
+
+### Teleportation System
+```hsplus
+object TeleportPad @pointable {
+  geometry: 'cylinder'
+  scale: [0.5, 0.1, 0.5]
+  color: 'blue'
+  
+  onPoint: {
+    player.teleportTo([5, 0, 5])
+    audio.play('teleport-sound')
+  }
+}
+```
+
+### Portal with Audio Transition
+```hsplus
+object Portal @collidable {
+  geometry: 'torus'
+  color: 'purple'
+  
+  onTriggerEnter: {
+    audio.play('portal_sound.mp3')
+    scene.transition({
+      target: 'NewScene',
+      duration: 1000
+    })
+  }
+}
+```
+
+---
+
+## Common Debugging Issues
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `geometry: 'sper'` | Typo | Use `'sphere'` |
+| `onGrab` without trait | Missing `@grabbable` | Add `@grabbable` trait |
+| `property: 'rotate.y'` | Wrong property name | Use `'rotation.y'` |
+| Object not interactive | Missing trait | Add `@pointable` or `@grabbable` |
+| Animation not looping | Missing loop | Add `loop: infinite` |
 
 ---
 
