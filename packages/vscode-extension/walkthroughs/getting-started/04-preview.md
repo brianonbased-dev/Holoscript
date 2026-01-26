@@ -32,3 +32,7 @@ Before previewing, validate syntax:
 3. Check Problems panel for any errors
 
 Click **Next** to learn about AI integration!
+
+---
+
+📹 *Video Tutorial: [Coming Soon - Preview & Debugging]*

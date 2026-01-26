@@ -40,3 +40,7 @@ Use the command palette to access:
 - **HoloScript: Join Discord**
 
 Happy building! 🎉
+
+---
+
+📹 *Full Video Course: [Coming Soon - HoloScript Masterclass]*

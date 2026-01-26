@@ -18,3 +18,7 @@ HoloScript is the **first spatial programming language** designed for VR/AR deve
 | `.hs` | Classic HoloScript |
 
 Click **Next** to create your first scene!
+
+---
+
+📹 *Video Tutorial: [Coming Soon - Introduction to HoloScript]*

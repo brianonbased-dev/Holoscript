@@ -49,4 +49,8 @@ object "BigRedButton" {
 }
 ```
 
+---
+
+📹 *Video Tutorial: [Coming Soon - VR Traits Deep Dive]*
+
 Click **Next** to preview your scene!

@@ -40,3 +40,7 @@ Claude and other agents can use these tools:
 - `list_traits` - Show all 49 available traits
 
 Click **Next** to see next steps!
+
+---
+
+📹 *Video Tutorial: [Coming Soon - AI-Powered VR Development]*

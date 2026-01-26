@@ -29,6 +29,10 @@ composition "My First VR World" {
 }
 ```
 
+---
+
+📹 *Video Tutorial: [Coming Soon - Your First HoloScript Scene]*
+
 ## What This Does
 
 - Creates a scene with a sunset skybox
