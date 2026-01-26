@@ -96,6 +96,46 @@ export function activate(context: ExtensionContext) {
     })
   );
 
+  // Register Validate command for users
+  context.subscriptions.push(
+    commands.registerCommand('holoscript.validate', async () => {
+      const editor = window.activeTextEditor;
+      if (!editor || !isHoloScriptFile(editor.document)) {
+        window.showWarningMessage('Open a HoloScript file (.holo or .hsplus) to validate.');
+        return;
+      }
+      
+      const text = editor.document.getText();
+      const lines = text.split('\n');
+      const errors: { line: number; message: string }[] = [];
+      
+      // Basic syntax validation
+      let braceCount = 0;
+      let inString = false;
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        for (const char of line) {
+          if (char === '"' || char === "'") inString = !inString;
+          else if (!inString) {
+            if (char === '{') braceCount++;
+            if (char === '}') braceCount--;
+          }
+        }
+      }
+      
+      if (braceCount !== 0) {
+        errors.push({ line: lines.length, message: 'Unbalanced braces' });
+      }
+      
+      if (errors.length === 0) {
+        window.showInformationMessage('✅ HoloScript syntax is valid!');
+      } else {
+        window.showErrorMessage(`❌ Found ${errors.length} error(s): ${errors.map(e => e.message).join(', ')}`);
+      }
+    })
+  );
+
   // Register interactive Create First Scene command (for walkthrough)
   context.subscriptions.push(
     commands.registerCommand('holoscript.createFirstScene', async () => {
