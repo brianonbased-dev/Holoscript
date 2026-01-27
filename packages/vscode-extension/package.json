@@ -27,6 +27,23 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "holohub",
+          "title": "HoloHub",
+          "icon": "icons/holoscript.svg"
+        }
+      ]
+    },
+    "views": {
+      "holohub": [
+        {
+          "id": "holohub.assets",
+          "name": "Marketplace"
+        }
+      ]
+    },
     "languages": [
       {
         "id": "holoscript",
@@ -178,6 +195,18 @@
         "icon": "$(check)"
       }
     ],
+    "customEditors": [
+      {
+        "viewType": "holoscript.smartAssetViewer",
+        "displayName": "Smart Asset Viewer",
+        "selector": [
+          {
+            "filenamePattern": "*.hsa"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
     "menus": {
       "editor/title": [
         {
@@ -302,6 +331,9 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@holoscript/sdk": "workspace:^",
+    "@types/adm-zip": "^0.5.7",
+    "adm-zip": "^0.5.16",
     "vscode-languageclient": "^9.0.1"
   }
 }

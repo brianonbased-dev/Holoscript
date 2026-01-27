@@ -9,6 +9,7 @@ import { startREPL } from './repl';
 import { add, remove, list } from './packageManager';
 import { TRAITS, formatTrait, formatAllTraits, suggestTraits } from './traits';
 import { generateObject, generateScene, listTemplates, getTemplate } from './generator';
+import { packAsset, unpackAsset, inspectAsset } from './smartAssets';
 
 const VERSION = '1.0.0-alpha.1';
 
@@ -205,6 +206,54 @@ async function main(): Promise<void> {
     // =========================================
     // NEW: Traits & Generation Commands
     // =========================================
+
+    case 'pack': {
+      if (!options.input) {
+        console.error('\x1b[31mError: No input directory specified.\x1b[0m');
+        console.log('Usage: holoscript pack <directory> [output]');
+        process.exit(1);
+      }
+      try {
+        await packAsset(options.input, options.output, options.verbose);
+      } catch (e: any) {
+        console.error(`\x1b[31mError packing asset: ${e.message}\x1b[0m`);
+        process.exit(1);
+      }
+      process.exit(0);
+      break;
+    }
+
+    case 'unpack': {
+      if (!options.input) {
+        console.error('\x1b[31mError: No input file specified.\x1b[0m');
+        console.log('Usage: holoscript unpack <file.hsa> [output_dir]');
+        process.exit(1);
+      }
+      try {
+        await unpackAsset(options.input, options.output, options.verbose);
+      } catch (e: any) {
+         console.error(`\x1b[31mError unpacking asset: ${e.message}\x1b[0m`);
+         process.exit(1);
+      }
+       process.exit(0);
+       break;
+    }
+
+    case 'inspect': {
+       if (!options.input) {
+        console.error('\x1b[31mError: No input file specified.\x1b[0m');
+        console.log('Usage: holoscript inspect <file.hsa>');
+        process.exit(1);
+      }
+      try {
+        await inspectAsset(options.input, options.verbose);
+      } catch (e: any) {
+         console.error(`\x1b[31mError inspecting asset: ${e.message}\x1b[0m`);
+         process.exit(1);
+      }
+       process.exit(0);
+       break;
+    }
 
     case 'traits': {
       if (options.input) {
