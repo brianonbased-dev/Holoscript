@@ -97,6 +97,12 @@ export type { RuntimeOptions, Renderer, NodeInstance } from './runtime/HoloScrip
 // HoloScript+ State Management (NEW)
 export { ReactiveState, createState, reactive, effect, computed, bind } from './state/ReactiveState';
 
+// Core types
+export type { HSPlusAST, VRTraitName } from './types';
+
+// HoloScript R3F Compiler (NEW)
+export { R3FCompiler, type R3FNode, ENVIRONMENT_PRESETS } from './compiler/R3FCompiler';
+
 // HoloScript+ VR Traits (NEW)
 export { VRTraitRegistry, vrTraitRegistry } from './traits/VRTraitSystem';
 

@@ -69,6 +69,7 @@ class HoloScriptPreviewPanel {
                     return;
                 case 'transform':
                 case 'voice_command':
+                case 'inject_asset':
                     if (this._currentDocument) {
                         RelayService_1.RelayService.getInstance().handleMessage(message, this._currentDocument);
                     }
@@ -236,13 +237,78 @@ class HoloScriptPreviewPanel {
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    #asset-browser {
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      width: 200px;
+      max-height: 400px;
+      background: rgba(30, 30, 46, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 10px;
+      display: none;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+    }
+    #asset-browser.visible {
+      display: block;
+    }
+    .asset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .asset-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .asset-item:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .asset-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    .asset-name {
+      font-size: 10px;
+      color: #ccc;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: bold;
+      color: #888;
+      margin: 8px 0 4px;
+      text-transform: uppercase;
+    }
   </style>
+  <script nonce="${nonce}">
+    // Mock Assets Database
+    const MOCK_ASSETS = [
+      { id: 'cube', name: 'Cube', icon: '📦', type: 'primitive' },
+      { id: 'sphere', name: 'Sphere', icon: '⚪', type: 'primitive' },
+      { id: 'light', name: 'Point Light', icon: '💡', type: 'light' },
+      { id: 'chair', name: 'Modern Chair', icon: '🪑', type: 'model' },
+      { id: 'tree', name: 'Pine Tree', icon: '🌲', type: 'model' },
+      { id: 'robot', name: 'Bot', icon: '🤖', type: 'npc' }
+    ];
+  </script>
 </head>
 <body>
   <div id="container">
     <canvas id="canvas"></canvas>
     <div id="overlay">
       <span id="file-name">No file loaded</span>
+    </div>
+    <div id="asset-browser">
+      <div class="section-title">Result</div>
+      <div class="asset-grid" id="asset-grid">
+        <!-- Injected via JS -->
+      </div>
     </div>
     <div id="toolbar">
       <button class="toolbar-btn" id="btn-reset" title="Reset Camera">🎥 Reset</button>
@@ -251,6 +317,7 @@ class HoloScriptPreviewPanel {
       <button class="toolbar-btn" id="btn-axes" title="Toggle Axes">📊 Axes</button>
       <button class="toolbar-btn" id="btn-edit" title="Toggle Director Mode">🎬 Edit Mode</button>
       <button class="toolbar-btn" id="btn-voice" title="Voice Command">🎤 Voice</button>
+      <button class="toolbar-btn" id="btn-assets" title="Asset Browser">📦 Assets</button>
     </div>
     <div id="stats">
       <div>Objects: <span id="stat-objects">0</span></div>
@@ -406,12 +473,7 @@ class HoloScriptPreviewPanel {
           
           if (objects.includes(target)) {
             transformControl.attach(target);
-            document.getElementById('file-name').textContent = `;
-        Selected: $;
-        {
-            target.name;
-        }
-        `;
+            document.getElementById('file-name').textContent = \`Selected: \${target.name}\`;
           }
         } else {
           transformControl.detach();
@@ -501,8 +563,41 @@ class HoloScriptPreviewPanel {
       document.getElementById('btn-grid').addEventListener('click', toggleGrid);
       document.getElementById('btn-axes').addEventListener('click', toggleAxes);
       document.getElementById('btn-edit').addEventListener('click', toggleEditMode);
+      document.getElementById('btn-assets').addEventListener('click', toggleAssetBrowser);
       document.getElementById('btn-voice').addEventListener('click', () => {
         vscode.postMessage({ command: 'voice_start' });
+      });
+      
+      // Initialize Asset Browser
+      const assetGrid = document.getElementById('asset-grid');
+      MOCK_ASSETS.forEach(asset => {
+        const item = document.createElement('div');
+        item.className = 'asset-item';
+        item.innerHTML = `
+            < div;
+        class {
+        }
+        "asset-icon" > $;
+        {
+            asset.icon;
+        }
+        /div>
+            < div;
+        class {
+        }
+        "asset-name" > $;
+        {
+            asset.name;
+        }
+        /div> `;
+        item.onclick = () => {
+          vscode.postMessage({ 
+            command: 'inject_asset', 
+            assetId: asset.id,
+            assetType: asset.type 
+          });
+        };
+        assetGrid.appendChild(item);
       });
 
       // Handle resize
@@ -639,6 +734,12 @@ class HoloScriptPreviewPanel {
       } else {
         document.getElementById('file-name').textContent = 'Director Mode: Click objects to move';
       }
+    }
+
+    function toggleAssetBrowser() {
+      const browser = document.getElementById('asset-browser');
+      browser.classList.toggle('visible');
+      document.getElementById('btn-assets').classList.toggle('active', browser.classList.contains('visible'));
     }
 
     function clearScene() {

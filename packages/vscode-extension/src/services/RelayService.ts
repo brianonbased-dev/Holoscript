@@ -31,6 +31,10 @@ export class RelayService {
       case 'voice_command':
         await this.handleVoiceCommand(document, message.text);
         break;
+
+      case 'inject_asset':
+        await this.handleInjectAsset(document, message.assetId, message.assetType);
+        break;
     }
   }
 
@@ -148,16 +152,46 @@ export class RelayService {
     vscode.window.showInformationMessage(`Director Voice: "${commandText}"`);
     
     // Quick demo handling
-    /*
-    if (commandText.includes("red cube")) {
-        // Inject red cube
-        const editor = await vscode.window.showTextDocument(document);
-        editor.edit(editBuilder => {
-            const pos = document.positionAt(document.getText().length);
-            editBuilder.insert(pos, `\n\n@object RedCube_${Date.now().toString().slice(-4)} {\n  model: "cube"\n  color: "red"\n  position: [0, 1, 0]\n}`);
-        });
+  }
+
+  /*
+   * Handle asset injection from Asset Browser.
+   */
+  private async handleInjectAsset(document: vscode.TextDocument, assetId: string, assetType: string) {
+    const editor = await vscode.window.showTextDocument(document);
+    const uniqueName = `${assetId}_${Date.now().toString().slice(-4)}`;
+    
+    let snippet = '';
+    
+    switch (assetId) {
+      case 'cube':
+        snippet = `\n@object "${uniqueName}" {\n  model: "cube"\n  color: "cyan"\n  position: [0, 1, 0]\n  @physics\n  @grabbable\n}\n`;
+        break;
+      case 'sphere':
+        snippet = `\n@object "${uniqueName}" {\n  model: "sphere"\n  color: "magenta"\n  position: [2, 1, 0]\n  @physics\n  @grabbable\n}\n`;
+        break;
+      case 'light':
+        snippet = `\n@object "${uniqueName}" {\n  type: "light"\n  color: "white"\n  position: [0, 4, 0]\n}\n`;
+        break;
+      case 'chair':
+        snippet = `\n@object "${uniqueName}" {\n  model: "chair"\n  color: "wood"\n  scale: [1, 1, 1]\n  position: [0, 0, 0]\n  @grabbable\n}\n`;
+        break;
+      case 'tree':
+        snippet = `\n@object "${uniqueName}" {\n  model: "tree"\n  color: "forest"\n  scale: [2, 4, 2]\n  position: [5, 0, 5]\n}\n`;
+        break;
+      case 'robot':
+        snippet = `\n@object "${uniqueName}" {\n  model: "robot"\n  ai: { behavior: "greet" }\n  position: [-3, 0, 0]\n}\n`;
+        break;
+      default:
+        snippet = `\n@object "${uniqueName}" {\n  model: "cube"\n  position: [0, 0, 0]\n}\n`;
     }
-    */
+
+    await editor.edit(editBuilder => {
+      const pos = document.positionAt(document.getText().length);
+      editBuilder.insert(pos, snippet);
+    });
+    
+    vscode.window.showInformationMessage(`Director Mode: Injected ${uniqueName}`);
   }
 
   public dispose() {

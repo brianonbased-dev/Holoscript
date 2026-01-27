@@ -9,7 +9,7 @@ export default defineConfig({
     debugger: 'src/HoloScriptDebugger.ts',
   },
   format: ['cjs', 'esm'],
-  dts: true,
+  dts: false, // DTS via tsc --emitDeclarationOnly (tsup rollup-dts drops some exports)
   clean: true,
   sourcemap: true,
   splitting: true,

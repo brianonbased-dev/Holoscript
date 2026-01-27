@@ -95,6 +95,7 @@ export class HoloScriptPreviewPanel {
             return;
           case 'transform':
           case 'voice_command':
+          case 'inject_asset':
             if (this._currentDocument) {
               RelayService.getInstance().handleMessage(message, this._currentDocument);
             }
@@ -279,13 +280,93 @@ export class HoloScriptPreviewPanel {
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    #asset-browser {
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      width: 200px;
+      max-height: 400px;
+      background: rgba(30, 30, 46, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 10px;
+      display: none;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+    }
+    #asset-browser.visible {
+      display: block;
+    }
+    .asset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .asset-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .asset-item:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .asset-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    .asset-name {
+      font-size: 10px;
+      color: #ccc;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: bold;
+      color: #888;
+      margin: 8px 0 4px;
+      text-transform: uppercase;
+    }
+    #inspector-overlay {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.8);
+      color: #0f0;
+      padding: 8px;
+      border: 1px solid #0f0;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
+      pointer-events: none; /* Let mouse pass through */
+      display: none;
+      z-index: 100;
+      white-space: pre;
+    }
   </style>
+  <script nonce="${nonce}">
+    // Mock Assets Database
+    const MOCK_ASSETS = [
+      { id: 'cube', name: 'Cube', icon: '📦', type: 'primitive' },
+      { id: 'sphere', name: 'Sphere', icon: '⚪', type: 'primitive' },
+      { id: 'light', name: 'Point Light', icon: '💡', type: 'light' },
+      { id: 'chair', name: 'Modern Chair', icon: '🪑', type: 'model' },
+      { id: 'tree', name: 'Pine Tree', icon: '🌲', type: 'model' },
+      { id: 'robot', name: 'Bot', icon: '🤖', type: 'npc' }
+    ];
+  </script>
 </head>
 <body>
   <div id="container">
     <canvas id="canvas"></canvas>
     <div id="overlay">
       <span id="file-name">No file loaded</span>
+    </div>
+    <div id="inspector-overlay"></div>
+    <div id="asset-browser">
+      <div class="section-title">Result</div>
+      <div class="asset-grid" id="asset-grid">
+        <!-- Injected via JS -->
+      </div>
     </div>
     <div id="toolbar">
       <button class="toolbar-btn" id="btn-reset" title="Reset Camera">🎥 Reset</button>
@@ -294,6 +375,10 @@ export class HoloScriptPreviewPanel {
       <button class="toolbar-btn" id="btn-axes" title="Toggle Axes">📊 Axes</button>
       <button class="toolbar-btn" id="btn-edit" title="Toggle Director Mode">🎬 Edit Mode</button>
       <button class="toolbar-btn" id="btn-voice" title="Voice Command">🎤 Voice</button>
+      <button class="toolbar-btn" id="btn-assets" title="Asset Browser">📦 Assets</button>
+      <div style="width: 1px; background: rgba(255,255,255,0.2); margin: 0 4px;"></div>
+      <button class="toolbar-btn" id="btn-pause" title="Pause/Play">⏸️</button>
+      <button class="toolbar-btn" id="btn-step" title="Step Frame">⏭️</button>
     </div>
     <div id="stats">
       <div>Objects: <span id="stat-objects">0</span></div>
@@ -458,6 +543,51 @@ export class HoloScriptPreviewPanel {
       }
 
       window.addEventListener('click', onMouseClick);
+      
+      // Inspector Hover Logic (Phase 5)
+      window.addEventListener('mousemove', (event) => {
+        const inspector = document.getElementById('inspector-overlay');
+        
+        if (!window.isPaused) {
+          inspector.style.display = 'none';
+          return;
+        }
+
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(objects, true);
+
+        if (intersects.length > 0) {
+          let target = intersects[0].object;
+          // Traverse up to find root valid object
+          while (target.parent && target.parent !== scene && !objects.includes(target)) {
+             target = target.parent;
+          }
+
+          if (objects.includes(target)) {
+             const pos = target.position;
+             const rot = target.rotation;
+             const scale = target.scale;
+             
+             inspector.style.display = 'block';
+             inspector.style.left = (event.clientX + 10) + 'px';
+             inspector.style.top = (event.clientY + 10) + 'px';
+             inspector.innerHTML = \`Please wait...\`; // Temp
+             inspector.innerText = 
+               \`Object: \${target.name || 'Unnamed'}\\n\` +
+               \`Pos: [\${pos.x.toFixed(2)}, \${pos.y.toFixed(2)}, \${pos.z.toFixed(2)}]\\n\` +
+               \`Rot: [\${rot.x.toFixed(2)}, \${rot.y.toFixed(2)}, \${rot.z.toFixed(2)}]\\n\` +
+               \`Scale: [\${scale.x.toFixed(2)}, \${scale.y.toFixed(2)}, \${scale.z.toFixed(2)}]\`;
+             return;
+          }
+        }
+        
+        inspector.style.display = 'none';
+      });
+
       // Clean up listener on dispose needed later? For simplicity we just add it once.
 
       // Grid
@@ -539,14 +669,65 @@ export class HoloScriptPreviewPanel {
       document.getElementById('btn-grid').addEventListener('click', toggleGrid);
       document.getElementById('btn-axes').addEventListener('click', toggleAxes);
       document.getElementById('btn-edit').addEventListener('click', toggleEditMode);
+      document.getElementById('btn-assets').addEventListener('click', toggleAssetBrowser);
       document.getElementById('btn-voice').addEventListener('click', () => {
         vscode.postMessage({ command: 'voice_start' });
+      });
+
+      // Debugger Controls (Phase 5)
+      let isPaused = false;
+      let stepOnce = false;
+
+      document.getElementById('btn-pause').addEventListener('click', () => {
+        isPaused = !isPaused;
+        document.getElementById('btn-pause').textContent = isPaused ? '▶️' : '⏸️';
+        document.getElementById('btn-step').disabled = !isPaused;
+      });
+
+      document.getElementById('btn-step').addEventListener('click', () => {
+        if (isPaused) stepOnce = true;
+      });
+      
+      // Initialize Asset Browser
+      const assetGrid = document.getElementById('asset-grid');
+      MOCK_ASSETS.forEach(asset => {
+        const item = document.createElement('div');
+        item.className = 'asset-item';
+        item.innerHTML = \`
+          <div class="asset-icon">\${asset.icon}</div>
+          <div class="asset-name">\${asset.name}</div>
+        \`;
+        item.onclick = () => {
+          vscode.postMessage({ 
+            command: 'inject_asset', 
+            assetId: asset.id,
+            assetType: asset.type 
+          });
+        };
+        assetGrid.appendChild(item);
       });
 
       // Handle resize
       window.addEventListener('resize', onWindowResize);
 
       // Start animation
+      // animate(); // Move animate call inside to capture variables scope if needed, 
+      // but animate is defined outside. We need to modify animate() separately or pass flags.
+      // Better approach: modify existing animate() to check isPaused.
+      // Since animate() is defined outside initPreview(), we need to make isPaused global or accessible.
+      // Let's attach them to window or move animate inside.
+      // For now, let's assume we modify animate() below.
+      
+      window.isPaused = false;
+      window.stepOnce = false;
+      document.getElementById('btn-pause').onclick = () => {
+        window.isPaused = !window.isPaused;
+        document.getElementById('btn-pause').textContent = window.isPaused ? '▶️' : '⏸️';
+      };
+      document.getElementById('btn-step').onclick = () => {
+        if (window.isPaused) window.stepOnce = true;
+      };
+
       animate();
 
       // Notify extension we're ready
@@ -555,6 +736,20 @@ export class HoloScriptPreviewPanel {
 
     function animate() {
       requestAnimationFrame(animate);
+
+      // Debugger: Pause/Step Logic
+      const isPaused = window.isPaused;
+      const stepOnce = window.stepOnce;
+      
+      if (isPaused && !stepOnce) {
+        controls.update();
+        renderer.render(scene, camera);
+        return; // Skip physics/animations
+      }
+      
+      if (stepOnce) {
+        window.stepOnce = false; // Reset single step
+      }
       
       const elapsed = clock.getElapsedTime();
       const delta = clock.getDelta();
@@ -677,6 +872,12 @@ export class HoloScriptPreviewPanel {
       } else {
         document.getElementById('file-name').textContent = 'Director Mode: Click objects to move';
       }
+    }
+
+    function toggleAssetBrowser() {
+      const browser = document.getElementById('asset-browser');
+      browser.classList.toggle('visible');
+      document.getElementById('btn-assets').classList.toggle('active', browser.classList.contains('visible'));
     }
 
     function clearScene() {

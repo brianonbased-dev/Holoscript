@@ -51,15 +51,19 @@ form#login @grabbable {
 
 One component. Runs on **Web, VR, AR, iOS, Android, Desktop**. No rewrites.
 
+**Real result:** We reduced our own service codebase by **90%** using HoloScript.
+
 ## Why HoloScript?
 
-| Before | After |
-|--------|-------|
-| 9 separate codebases | 1 HoloScript file |
-| ~50,000 lines across platforms | ~500 lines |
-| Months of maintenance | Build once, deploy everywhere |
+HoloScript stands alone as a purpose-built language for spatial computing, rather than a library or wrapper.
 
-**Real result:** We reduced our own service codebase by **90%** using HoloScript.
+- **Multi-Target Compilation:** Write once, compile to R3F, WebGPU, native Quest/Vision Pro, or server-side simulations.
+- **AI-Native Design:** Constrained grammar leads to higher LLM accuracy and fewer hallucinations.
+- **Compiler Optimizations:** Spatial semantics allow for automatic LOD, trait fusion, and dead environment culling.
+- **SQL of Spatial Computing:** A declarative standard that any tool can target, renderer-agnostic and platform-independent.
+- **Future-Proof:** Runtime independence means your code survives even if the underlying rendering framework changes.
+
+[**Read the full vision: Why HoloScript?**](./docs/WHY_HOLOSCRIPT.md)
 
 ## 🚀 What's New (January 2026)
 
