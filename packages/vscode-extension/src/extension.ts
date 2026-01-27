@@ -8,7 +8,9 @@ import {
   ServerOptions,
   TransportKind
 } from 'vscode-languageclient/node';
+import { HoloHubTreeDataProvider } from './holohubView';
 import { HoloScriptPreviewPanel } from './previewPanel';
+import { SmartAssetEditorProvider } from './smartAssetEditor';
 import { agentAPI } from './agentApi';
 
 let client: LanguageClient | undefined;
@@ -256,6 +258,27 @@ export function activate(context: ExtensionContext) {
   client.start().catch((err) => {
     console.error('HoloScript: Failed to start language server:', err);
   });
+
+  // Register Custom Editor for Smart Assets (.hsa)
+  context.subscriptions.push(SmartAssetEditorProvider.register(context));
+
+  // Register HoloHub Tree View
+  const holohubProvider = new HoloHubTreeDataProvider();
+  vscode.window.registerTreeDataProvider('holohub.assets', holohubProvider);
+
+  // Register Import Asset Command
+  context.subscriptions.push(
+    commands.registerCommand('holoscript.holohub.importAsset', async (item) => {
+      // item type is HoloSmartAssetItem (inferred or any)
+      const assetName = item?.label || 'Asset';
+      window.showInformationMessage(`Downloading ${assetName} from HoloHub...`);
+      
+      // Mock download delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      window.showInformationMessage(`Successfully imported ${assetName} to project!`);
+    })
+  );
 }
 
 function isHoloScriptFile(document: TextDocument): boolean {

@@ -4,13 +4,13 @@ Progressive examples to learn HoloScript from basics to advanced.
 
 ## Examples (Start Here!)
 
-| # | File | Concepts |
-|---|------|----------|
-| 1 | [hello.holo](hello.holo) | Basic scene, environment, first object |
-| 2 | [2-interactive.holo](2-interactive.holo) | VR traits, grabbing, physics |
-| 3 | [3-physics-playground.holo](3-physics-playground.holo) | Physics, spatial audio, templates |
-| 4 | [4-multiplayer-room.holo](4-multiplayer-room.holo) | Networking, player tracking, sync |
-| 5 | [5-escape-room.holo](5-escape-room.holo) | Full game with puzzles, UI, win conditions |
+| # | File | What You'll See |
+|---|------|-----------------|
+| 1 | [1-floating-cyan-orb.holo](1-floating-cyan-orb.holo) | A glowing cyan sphere at eye level |
+| 2 | [2-red-cube-teal-button.holo](2-red-cube-teal-button.holo) | Throwable red cube + teal button |
+| 3 | [3-ball-ramp-with-bouncy-spheres.holo](3-ball-ramp-with-bouncy-spheres.holo) | Gray ramp with RGB bouncy balls |
+| 4 | [4-networked-spheres.holo](4-networked-spheres.holo) | Three synced balls for multiplayer |
+| 5 | [5-color-button-panel.holo](5-color-button-panel.holo) | Four colored buttons on a panel |
 
 ## How to Use
 
@@ -22,19 +22,19 @@ Progressive examples to learn HoloScript from basics to advanced.
 ## Learning Path
 
 **Beginner** (Examples 1-2)
-- Understand scene structure
-- Add basic objects
-- Learn interaction traits
+- Scene structure: `composition`, `object`
+- Basic traits: `@grabbable`, `@pointable`, `@clickable`
+- Geometries: sphere, cube, cylinder
 
 **Intermediate** (Examples 3-4)
-- Physics simulation
-- Spatial audio
-- Multiplayer networking
+- Multiple objects in a scene
+- Physics: `@physics`, `@collidable`, `@throwable`
+- Networking: `@networked` for multiplayer sync
 
 **Advanced** (Example 5)
-- Game state management
-- Complex puzzles
-- UI systems
+- Complex layouts with multiple objects
+- Building interactive panels
+- Combining `@glowing` with `@clickable`
 
 ## Next Steps
 

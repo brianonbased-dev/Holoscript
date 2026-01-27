@@ -1,0 +1,44 @@
+{
+  "name": "@holoscript/sdk",
+  "version": "0.0.1",
+  "description": "HoloScript SDK: Smart Assets, Runtime, and Tools",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/schema/index.mjs",
+      "require": "./dist/schema/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest"
+  },
+  "keywords": [
+    "holoscript",
+    "smart-assets",
+    "sdk"
+  ],
+  "author": "HoloScript Team",
+  "license": "MIT",
+  "dependencies": {
+    "@holoscript/core": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.0"
+  }
+}

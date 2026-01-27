@@ -3,7 +3,7 @@
  */
 
 export interface CLIOptions {
-  command: 'parse' | 'validate' | 'run' | 'ast' | 'repl' | 'watch' | 'compile' | 'add' | 'remove' | 'list' | 'traits' | 'suggest' | 'generate' | 'templates' | 'help' | 'version';
+  command: 'parse' | 'validate' | 'run' | 'ast' | 'repl' | 'watch' | 'compile' | 'add' | 'remove' | 'list' | 'traits' | 'suggest' | 'generate' | 'templates' | 'pack' | 'unpack' | 'inspect' | 'help' | 'version';
   input?: string;
   output?: string;
   verbose: boolean;
@@ -39,7 +39,7 @@ export function parseArgs(args: string[]): CLIOptions {
 
     // Commands
     if (!arg.startsWith('-')) {
-      if (['parse', 'validate', 'run', 'ast', 'repl', 'watch', 'compile', 'add', 'remove', 'list', 'traits', 'suggest', 'generate', 'templates', 'help', 'version'].includes(arg)) {
+      if (['parse', 'validate', 'run', 'ast', 'repl', 'watch', 'compile', 'add', 'remove', 'list', 'traits', 'suggest', 'generate', 'templates', 'pack', 'unpack', 'inspect', 'help', 'version'].includes(arg)) {
         options.command = arg as CLIOptions['command'];
       } else if (['add', 'remove'].includes(options.command)) {
         // Collect package names for add/remove commands
