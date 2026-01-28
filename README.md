@@ -2,12 +2,12 @@
 
 **Write less code. Build more.**
 
-A declarative language that compiles to 9 platforms from one source.
+A declarative, open-source language that compiles to 9 platforms from one source.
 
 <p align="center">
-  <a href="#-vrchat-alpha">
-    <img src="https://img.shields.io/badge/🎮_VRChat_Alpha-NOW_AVAILABLE-ff6600?style=for-the-badge" alt="VRChat Alpha">
-  </a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="MIT License"></a>
+  <a href="https://www.npmjs.com/package/@holoscript/core"><img src="https://img.shields.io/npm/v/@holoscript/core?style=for-the-badge&label=core" alt="npm"></a>
+  <a href="#-vrchat-alpha"><img src="https://img.shields.io/badge/VRChat_Alpha-NOW_AVAILABLE-ff6600?style=for-the-badge" alt="VRChat Alpha"></a>
 </p>
 
 <p align="center">
@@ -92,7 +92,7 @@ To run Brittney locally for free inference:
 
 ## 📚 Guides
 - **[Best Practices Guide](./docs/guides/best-practices.md)** — 10 Rules for Ergonomics & Performance (New!)
-- [VRChat Export](./docs/VRCHAT_EXPORT.md) — Export to Udon
+- [VRChat Export](./docs/integration/VRCHAT_UNITY_GUIDE.md) — Export to Udon
 
 ## Install
 
@@ -116,15 +116,24 @@ const result = parser.parse(`
 
 ## Features
 
-### 🕹️ VR Traits (49 total)
-| Category | Traits |
-|----------|--------|
+### 🕹️ Trait System (139 traits across 23 domains)
+
+| Domain | Example Traits |
+|--------|----------------|
 | **Interaction** | `@grabbable`, `@throwable`, `@pointable`, `@teleportable` |
 | **Spatial** | `@stackable`, `@snappable`, `@rotatable`, `@scaleable` |
 | **Animation** | `@skeleton`, `@animation`, `@morph`, `@pose` |
 | **Materials** | `@material`, `@lighting`, `@rendering`, `@shader` |
-| **Physics** | `@physics`, `@collider`, `@rigidbody`, `@trigger` |
-| **AI/NPCs** | `@npc`, `@talkable`, `@patrol`, `@dialog` |
+| **Physics** | `@physics`, `@collider`, `@cloth`, `@fluid`, `@soft_body`, `@destruction` |
+| **AI/Agents** | `@npc`, `@behavior_tree`, `@llm_agent`, `@emotion`, `@perception` |
+| **Environment** | `@plane_detection`, `@anchor`, `@occlusion`, `@light_estimation` |
+| **Input** | `@hand_tracking`, `@eye_tracked`, `@body_tracking`, `@controller` |
+| **Accessibility** | `@accessible`, `@screen_reader`, `@subtitle`, `@motion_reduced` |
+| **Volumetric** | `@gaussian_splat`, `@nerf`, `@volumetric_video`, `@point_cloud` |
+| **Compute** | `@compute`, `@gpu_particle`, `@gpu_physics`, `@gpu_buffer` |
+| **Audio** | `@ambisonics`, `@hrtf`, `@reverb_zone`, `@audio_occlusion` |
+| **Co-Presence** | `@co_located`, `@shared_world`, `@voice_proximity`, `@avatar_embodiment` |
+| **Web3** | `@nft`, `@token_gated`, `@wallet`, `@marketplace` |
 
 ### 🛠️ Language Features
 - **@world Configuration** - Declarative scene setup in `.hsplus` files
@@ -148,7 +157,7 @@ const result = parser.parse(`
 
 | Package | Version | What it does | Status |
 |---------|---------|--------------|--------|
-| `@holoscript/core` | 2.1.0 | Parser, runtime, types | ✅ |
+| `@holoscript/core` | 2.1.0 | Parser, runtime, types, trait definitions | ✅ |
 | `@holoscript/runtime` | 2.1.0 | Execution engine | ✅ |
 | `@holoscript/cli` | 2.1.0 | Command line tools | ✅ |
 | `@holoscript/formatter` | 2.0.0 | Code formatting | ✅ |
@@ -156,11 +165,30 @@ const result = parser.parse(`
 | `@holoscript/lsp` | 1.0.0 | Language Server Protocol | ✅ |
 | `@holoscript/std` | 1.0.0 | Standard library | ✅ |
 | `@holoscript/fs` | 1.0.0 | File system utilities | ✅ |
-| `@holoscript/network` | 1.0.0 | Multiplayer networking | ✅ |
-| `@holoscript/llm` | 1.0.0 | AI/LLM integration | ✅ |
-| `@holoscript/spatial-audio` | 1.0.0 | 3D audio with HRTF & room acoustics | ✅ |
-| `@holoscript/state-sync` | 1.0.0 | CRDTs for distributed state | ✅ |
-| `@holoscript/streaming` | 1.0.0 | Asset streaming & LOD | ✅ |
+
+### Migrated to Hololand (Jan 2026)
+
+The following runtime/platform packages have been migrated to the [Hololand](https://github.com/brianonbased-dev/Hololand) repo where they belong as platform services. The HoloScript versions are deprecated.
+
+| Former Package | Migrated To | Migration Type |
+|---------------|-------------|----------------|
+| `@holoscript/network` | `@hololand/network` | Merged (transports) |
+| `@holoscript/multiplayer` | `@hololand/network` | Merged (player sync) |
+| `@holoscript/state-sync` | `@hololand/network` | Merged (CRDT sync) |
+| `@holoscript/spatial-audio` | `@hololand/audio` | Merged (spatial traits) |
+| `@holoscript/streaming` | `@hololand/streaming` | Moved |
+| `@holoscript/gpu` | `@hololand/renderer` | Merged (GPU compute) |
+| `@holoscript/ik` | `@hololand/animation` | Merged (IK solvers) |
+| `@holoscript/physics-joints` | `@hololand/world` | Merged (joints/ragdoll) |
+| `@holoscript/haptics` | `@hololand/haptics` | Moved |
+| `@holoscript/navigation` | `@hololand/navigation` | Moved |
+| `@holoscript/pcg` | `@hololand/pcg` | Moved |
+| `@holoscript/portals` | `@hololand/portals` | Moved |
+| `@holoscript/accessibility` | `@hololand/accessibility` | Moved |
+| `@holoscript/lod` | `@hololand/lod` | Moved |
+| `@holoscript/voice` | `@hololand/voice` | Moved |
+| `@holoscript/gestures` | `@hololand/gestures` | Moved |
+| `@holoscript/llm` | `@hololand/ai` | Merged (LLM inference) |
 
 ### Platform Adapters ([Hololand Repo](https://github.com/brianonbased-dev/Hololand))
 
@@ -178,11 +206,11 @@ const result = parser.parse(`
 > **NEW!** Run HoloScript directly in Three.js with full VR/XR support.
 
 ```bash
-npm install @holoscript/three-adapter three
+npm install @hololand/three-adapter three
 ```
 
 ```typescript
-import { createWorld } from '@holoscript/three-adapter';
+import { createWorld } from '@hololand/three-adapter';
 
 const world = createWorld({
   container: document.getElementById('app')!,
@@ -231,11 +259,11 @@ await world.loadConfig('/project/holoscript.config.hsplus');
 > **NEW!** Sync `@networked` entities across clients with WebSocket/WebRTC.
 
 ```bash
-npm install @holoscript/network
+npm install @hololand/network
 ```
 
 ```typescript
-import { createNetworkManager } from '@holoscript/network';
+import { createNetworkManager } from '@hololand/network';
 
 const network = createNetworkManager();
 
@@ -285,7 +313,7 @@ cube#shared_object @networked { sync: "shared" } {
 > **NEW!** Export HoloScript directly to VRChat worlds. Write once, deploy to VRChat.
 
 ```bash
-npm install @holoscript/vrchat-export
+npm install @hololand/vrchat-export
 ```
 
 ```holoscript
@@ -322,21 +350,20 @@ holoscript export --target vrchat my_world.hsplus
 - 🟡 Custom shaders (coming soon)
 - 🟡 Avatar interactions (coming soon)
 
-[📖 VRChat Export Guide](./docs/VRCHAT_EXPORT.md) | [🎥 Demo Video](#)
+[📖 VRChat Export Guide](./docs/integration/VRCHAT_UNITY_GUIDE.md) | [🎥 Demo Video](#)
 
 ---
 
 ## 🧪 Experimental
 | Package | Status | Description |
 |---------|--------|-------------|
-| `@holoscript/vrchat-export` | 🎮 **Alpha** | Compile HoloScript to VRChat Udon |
+| `@hololand/vrchat-export` | 🎮 **Alpha** | Compile HoloScript to VRChat Udon |
 | `@holoscript/commerce` | 🧪 | In-world payments & inventory |
-| `@holoscript/llm` | 🧪 | Local LLM inference bindings |
 
 ## Build with AI
 
 ```typescript
-import { InfinityBuilderClient } from '@holoscript/infinityassistant';
+import { InfinityBuilderClient } from '@infinity-assistant/sdk';
 
 const client = new InfinityBuilderClient({ 
   apiKey: process.env.INFINITY_BUILDER_API_KEY 
@@ -404,8 +431,16 @@ focus sun {
 
 ## Ecosystem
 
-- **[Hololand](https://github.com/brianonbased-dev/Hololand)** - VR/AR platform built on HoloScript
-- **[Infinity Assistant](https://infinityassistant.io)** - AI-powered building and deployment
+HoloScript is open source. Infrastructure and platform services are separately licensed:
+
+| Layer | What | License |
+|-------|------|---------|
+| **HoloScript Core** | Language, parser, 139 traits, 8 compilers, CLI, runtime | MIT |
+| **Infrastructure** | Networking, multiplayer, state sync, streaming, LSP, MCP | ELv2 |
+| **[Hololand](https://github.com/brianonbased-dev/Hololand)** | VR/AR platform — cloud anchors, asset CDN, marketplace | Commercial |
+| **[Infinity Assistant](https://infinityassistant.io)** | AI building — natural language to .holo, agent orchestration | Commercial |
+
+Write `.holo` anywhere for free. Use infrastructure packages in your apps. Deploy on Hololand. Build with Infinity Assistant.
 
 ## CLI
 
@@ -429,7 +464,7 @@ The official **HoloScript** extension provides:
 
 ## Contributing
 
-MIT license. PRs welcome.
+MIT license. PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup and guidelines.
 
 ```bash
 git clone https://github.com/brianonbased-dev/holoscript.git
@@ -441,8 +476,14 @@ pnpm test
 
 ## License
 
-MIT - Use it anywhere, for anything.
+HoloScript is **MIT licensed** — use it anywhere, for anything. See [LICENSE](./LICENSE).
+
+The following packages use the **Elastic License 2.0** (ELv2) — free to use and modify, but cannot be offered as a managed service competing with Hololand or Infinity Assistant:
+
+`@holoscript/lsp` `@holoscript/network` `@holoscript/multiplayer` `@holoscript/state-sync` `@holoscript/streaming` `@holoscript/mcp-server`
+
+All other packages (core, runtime, traits, compilers, CLI, std, etc.) are MIT. See [NOTICE](./NOTICE) for full details.
 
 ---
 
-**Questions?** Open an issue or visit [infinityassistant.io](https://infinityassistant.io)
+**Questions?** Open an [issue](https://github.com/brianonbased-dev/holoscript/issues) or visit [infinityassistant.io](https://infinityassistant.io)

@@ -54,6 +54,9 @@ Three major new packages for building production VR experiences:
 - **Debug Scripts** - Parser debugging utilities in `/scripts/`
 - **AI Assistant Configuration** - Claude Desktop and Copilot integration
 
+### Removed
+- **@holoscript/llm** - Migrated to `@hololand/ai` (LLM inference is a platform service, not language tooling). AI trait definitions (`@llm_agent`, `@dialogue`, etc.) remain in `@holoscript/core`.
+
 ---
 
 ## [2.1.0] - 2026-01-22
@@ -89,31 +92,13 @@ Major structural change: HoloScript is now the dedicated language repository, se
 
 ## [2.0.2] - 2026-01-18
 
-### Added
-- 
-
-### Changed
-- 
-
 ### Fixed
-- 
-
-### Removed
-- 
+- Minor bug fixes and stability improvements following 2.0.0 release
 
 ## [2.0.1] - 2026-01-18
 
-### Added
-- 
-
-### Changed
-- 
-
 ### Fixed
-- 
-
-### Removed
-- 
+- Post-release patch for 2.0.0
 
 ## [2.0.0] - 2026-01-17
 

@@ -28,7 +28,6 @@ HoloScript is a declarative language that compiles to 9+ platforms from a single
 ### ✅ Standard Library
 - [x] `@holoscript/std` - Core utilities
 - [x] `@holoscript/fs` - File system
-- [x] `@holoscript/network` - Networking primitives
 
 ---
 
@@ -163,20 +162,18 @@ HoloScript is a declarative language that compiles to 9+ platforms from a single
 
 ## Packages
 
-### Current (v2.1.0)
+### Current
 
-| Package | Purpose | Status |
-|---------|---------|--------|
-| `@holoscript/core` | Parser, AST, types | ✅ Production |
-| `@holoscript/runtime` | Execution engine | ✅ Production |
-| `@holoscript/cli` | Command line tools | ✅ Production |
-| `@holoscript/formatter` | Code formatting | ✅ Production |
-| `@holoscript/linter` | Static analysis | ✅ Production |
-| `@holoscript/lsp` | Language Server | ✅ Production |
-| `@holoscript/std` | Standard library | ✅ Production |
-| `@holoscript/fs` | File system | ✅ Production |
-| `@holoscript/network` | Networking | ✅ Production |
-| `@holoscript/llm` | LLM integration | ✅ Production |
+| Package | Version | Purpose | Status |
+|---------|---------|---------|--------|
+| `@holoscript/core` | 2.1.0 | Parser, AST, types | ✅ Production |
+| `@holoscript/runtime` | 2.1.0 | Execution engine | ✅ Production |
+| `@holoscript/cli` | 2.1.0 | Command line tools | ✅ Production |
+| `@holoscript/formatter` | 2.0.0 | Code formatting | ✅ Production |
+| `@holoscript/linter` | 2.0.0 | Static analysis | ✅ Production |
+| `@holoscript/lsp` | 1.0.0 | Language Server | ✅ Production |
+| `@holoscript/std` | 1.0.0 | Standard library | ✅ Production |
+| `@holoscript/fs` | 1.0.0 | File system | ✅ Production |
 
 ### Planned
 
@@ -213,4 +210,4 @@ pnpm test
 
 ---
 
-*Last updated: 2026-01-24*
+*Last updated: 2026-01-27*

@@ -27,7 +27,7 @@ features:
     title: AI-Native
     details: Designed for AI agents to understand and generate. Natural language → spatial code → any platform.
   - icon: 🎮
-    title: 55 VR Traits Built-in
+    title: 139 Traits Built-in
     details: "@grabbable, @physics, @networked, @spatial_audio - everything you need for immersive experiences."
   - icon: ⚡
     title: 50,000 → 500 Lines
