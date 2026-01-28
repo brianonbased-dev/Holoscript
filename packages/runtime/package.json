@@ -72,10 +72,18 @@
     "monaco-editor": "^0.45.0"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true },
-    "@react-three/fiber": { "optional": true },
-    "three": { "optional": true },
-    "monaco-editor": { "optional": true }
+    "react": {
+      "optional": true
+    },
+    "@react-three/fiber": {
+      "optional": true
+    },
+    "three": {
+      "optional": true
+    },
+    "monaco-editor": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "tsup": "^8.0.1",
@@ -93,11 +101,11 @@
     "vr",
     "spatial-programming"
   ],
-  "author": "HoloScript Team",
+  "author": "Brian X Base Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/brianonbased-dev/holoscript.git",
+    "url": "https://github.com/brianonbased-dev/Holoscript.git",
     "directory": "packages/runtime"
   }
 }

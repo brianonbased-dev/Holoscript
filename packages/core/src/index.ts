@@ -220,6 +220,7 @@ export {
   behaviorTreeHandler,
   goalOrientedHandler,
   llmAgentHandler,
+  neuralLinkHandler,
   memoryHandler,
   perceptionHandler,
   emotionHandler,
@@ -504,6 +505,56 @@ export {
   type AnimationEvent as AnimationTraitEvent,
   type AnimationConfig,
 } from './traits/AnimationTrait';
+
+// HoloScript+ Lip Sync Trait (NEW - AI Avatar Embodiment)
+export {
+  LipSyncTrait,
+  createLipSyncTrait,
+  DEFAULT_FREQUENCY_BANDS,
+  OCULUS_VISEME_MAP,
+  ARKIT_MOUTH_SHAPES,
+  type LipSyncMethod,
+  type BlendShapeSet,
+  type OculusViseme,
+  type ARKitViseme,
+  type VisemeTimestamp,
+  type FrequencyBand,
+  type LipSyncSession,
+  type LipSyncEventType,
+  type LipSyncEvent,
+  type LipSyncConfig,
+} from './traits/LipSyncTrait';
+
+// HoloScript+ Emotion Directive Trait (NEW - AI Avatar Embodiment)
+export {
+  EmotionDirectiveTrait,
+  createEmotionDirectiveTrait,
+  DEFAULT_EXPRESSION_PRESETS,
+  DEFAULT_ANIMATION_MAP,
+  type ExpressionPresetName,
+  type AnimationPresetName,
+  type DirectiveType,
+  type ConditionalDirective,
+  type TriggeringDirective,
+  type EmotionTaggedSegment,
+  type EmotionTaggedResponse,
+  type EmotionState,
+  type EmotionDirectiveEventType,
+  type EmotionDirectiveEvent,
+  type EmotionDirectiveConfig,
+} from './traits/EmotionDirectiveTrait';
+
+// HoloScript+ Avatar Embodiment Types (NEW - AI Avatar Embodiment)
+export type {
+  AvatarTrackingSource,
+  AvatarIKMode,
+  PipelineStage,
+  AvatarPersonality,
+  AvatarEmbodimentConfig,
+  AvatarEmbodimentState,
+  AvatarEmbodimentEventType,
+  AvatarEmbodimentEvent,
+} from './traits/AvatarEmbodimentTrait';
 
 // Performance Telemetry (NEW - Phase 1)
 export {

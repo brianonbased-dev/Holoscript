@@ -24,11 +24,11 @@
     "ar",
     "hololand"
   ],
-  "author": "Hololand Team",
+  "author": "Brian X Base Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hololand/HoloScript.git",
+    "url": "https://github.com/brianonbased-dev/Holoscript.git",
     "directory": "packages/formatter"
   },
   "engines": {

@@ -22,8 +22,11 @@ export const hrtfHandler: TraitHandler<any> = {
   defaultConfig: { profile: 'generic', database: 'cipic', custom_sofa_url: '', interpolation: 'bilinear', crossfade_time: 50 },
 
   onAttach(node, config, context) {
-    const state: Record<string, unknown> = { isActive: false, currentProfile: 'generic' };
+    const state = { isActive: true, currentProfile: config.profile || 'generic' };
     (node as any).__hrtfState = state;
+    if (context.audio.updateSpatialSource) {
+      context.audio.updateSpatialSource(node.id || '', { hrtfProfile: state.currentProfile });
+    }
   },
 
   onDetach(node) {
@@ -34,6 +37,12 @@ export const hrtfHandler: TraitHandler<any> = {
     const state = (node as any).__hrtfState;
     if (!state) return;
 
+    if (config.profile !== state.currentProfile) {
+      state.currentProfile = config.profile;
+      if (context.audio.updateSpatialSource) {
+        context.audio.updateSpatialSource(node.id || '', { hrtfProfile: state.currentProfile });
+      }
+    }
   },
 
   onEvent(node, config, context, event) {

@@ -31,6 +31,8 @@ export const VR_TRAITS = [
   // Networking & AI
   'networked',
   'proactive',
+  'ai_driven',
+  'agent_protocol',
 
   // Media Production Traits
   'recordable',
@@ -155,6 +157,10 @@ export const VR_TRAITS = [
   'shared_world',
   'voice_proximity',
   'avatar_embodiment',
+  'lip_sync',
+  'emotion_directive',
+  'stt',
+  'tts',
   'spectator',
   'role',
 

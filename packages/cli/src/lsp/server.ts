@@ -128,10 +128,37 @@ export class HoloScriptLanguageServer {
     if (!doc) return [];
 
     const isHolo = uri.endsWith('.holo');
-    const parseResult = isHolo ? this.holoParser.parse(doc.content) : this.parser.parse(doc.content);
     const diagnostics: Diagnostic[] = [];
 
-    // Parse errors
+    if (isHolo) {
+      const parseResult = this.holoParser.parse(doc.content);
+
+      for (const error of parseResult.errors) {
+        const errLine = error.loc?.line ?? 0;
+        const errCol = error.loc?.column ?? 0;
+        diagnostics.push({
+          range: {
+            start: { line: errLine, character: errCol },
+            end: { line: errLine, character: errCol + 1 },
+          },
+          severity: DiagnosticSeverity.Error,
+          code: 'parse-error',
+          source: 'holoscript',
+          message: error.message,
+        });
+      }
+
+      const customDiagnostics = this.runCustomValidations(
+        doc.content,
+        parseResult.ast as unknown as ASTNode[]
+      );
+      diagnostics.push(...customDiagnostics);
+
+      return diagnostics;
+    }
+
+    const parseResult = this.parser.parse(doc.content);
+
     for (const error of parseResult.errors) {
       diagnostics.push({
         range: {
@@ -145,13 +172,11 @@ export class HoloScriptLanguageServer {
       });
     }
 
-    // Type errors (only for .hsplus files for now as .holo logic is declarative)
-    if (!isHolo) {
-      this.typeChecker.reset();
-      const typeResult = this.typeChecker.check(parseResult.ast);
-      for (const diagnostic of typeResult.diagnostics) {
-        diagnostics.push(this.convertTypeDiagnostic(diagnostic));
-      }
+    // Type errors (only for .hsplus files as .holo logic is declarative)
+    this.typeChecker.reset();
+    const typeResult = this.typeChecker.check(parseResult.ast);
+    for (const diagnostic of typeResult.diagnostics) {
+      diagnostics.push(this.convertTypeDiagnostic(diagnostic));
     }
 
     // Custom VR Pattern Validations (P2 Pattern)

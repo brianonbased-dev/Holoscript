@@ -1,6 +1,6 @@
 {
   "name": "holoscript",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "private": true,
   "description": "HoloScript - Open source VR scene description language",
   "license": "MIT",
@@ -12,6 +12,8 @@
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
     "lint": "eslint packages/*/src/**/*.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "clean": "pnpm -r exec rm -rf dist",
     "version:patch": "node scripts/version.js patch",
     "version:minor": "node scripts/version.js minor",
@@ -21,13 +23,22 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "eslint": "^8.55.0",
-    "prettier": "^3.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.7.4",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   },
   "packageManager": "pnpm@8.12.0",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "author": "Brian X Base Team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brianonbased-dev/Holoscript.git"
   }
 }
