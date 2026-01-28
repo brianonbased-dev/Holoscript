@@ -14,7 +14,7 @@ The following research documentation has been moved to the proprietary AI_Worksp
 | HOLOLAND_AUDIT.md | AI_Workspace/Projects/HoloScript/research/ | Graphics pipeline audit and integration roadmap |
 | 2026-01-24_holoscript-multi-domain-utility-matrix.md | .ai-workspace/research/ | Multi-domain utility analysis (VR/AR/Gaming/Enterprise) |
 | 2026-01-24_brittney-proprietary-training-research.md | .ai-workspace/research/ | Brittney AI training methodology |
-| 2026-01-25_cloud-agent-traits-uaa2-starship.md | .ai-workspace/research/ | UAA2 Starship architecture & ∞++ compression pipeline |
+| 2026-01-25_cloud-agent-traits-uaa2-starship.md | .ai-workspace/research/ | uAA2++ Starship architecture & ∞++ compression pipeline |
 | 2026-01-25_infinity-compression-model-training.md | .ai-workspace/research/ | ∞++ model training research (fine-tuning, uAAL integration) |
 
 ## Why Moved?

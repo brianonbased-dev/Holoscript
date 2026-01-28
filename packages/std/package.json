@@ -33,9 +33,20 @@
     "clean": "rm -rf dist",
     "test": "echo 'No tests yet' && exit 0"
   },
-  "keywords": ["holoscript", "std", "standard-library", "3d", "spatial"],
-  "author": "Hololand",
+  "keywords": [
+    "holoscript",
+    "std",
+    "standard-library",
+    "3d",
+    "spatial"
+  ],
+  "author": "Brian X Base Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brianonbased-dev/Holoscript.git",
+    "directory": "packages/std"
+  },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "typescript": "^5.3.3",

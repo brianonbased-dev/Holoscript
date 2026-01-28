@@ -130,7 +130,17 @@ type TokenType =
   | 'ZONE'
   | 'UI'
   | 'TRANSITION'
-  | 'ELEMENT';
+  | 'ELEMENT'
+  | 'SPATIAL_AGENT'
+  | 'SPATIAL_CONTAINER'
+  | 'UI_PANEL'
+  | 'UI_TEXT'
+  | 'UI_CHART'
+  | 'UI_GAUGE'
+  | 'UI_VALUE'
+  | 'UI_STATUS_INDICATOR'
+  | 'TOOL_SLOT'
+  | 'BEHAVIOR';
 
 interface Token {
   type: TokenType;
@@ -175,6 +185,16 @@ const KEYWORDS: Record<string, TokenType> = {
   ui: 'UI',
   transition: 'TRANSITION',
   element: 'ELEMENT',
+  spatial_agent: 'SPATIAL_AGENT',
+  spatial_container: 'SPATIAL_CONTAINER',
+  ui_panel: 'UI_PANEL',
+  ui_text: 'UI_TEXT',
+  ui_chart: 'UI_CHART',
+  ui_gauge: 'UI_GAUGE',
+  ui_value: 'UI_VALUE',
+  ui_status_indicator: 'UI_STATUS_INDICATOR',
+  tool_slot: 'TOOL_SLOT',
+  behavior: 'BEHAVIOR',
   true: 'BOOLEAN',
   false: 'BOOLEAN',
   null: 'NULL',
@@ -617,6 +637,12 @@ export class HoloCompositionParser {
         composition.conditionals.push(this.parseConditionalBlock());
       } else if (this.check('FOR')) {
         composition.iterators.push(this.parseForEachBlock());
+      } else if (this.check('SPATIAL_AGENT')) {
+        composition.objects.push(this.parseSpatialObject('spatial_agent'));
+      } else if (this.check('SPATIAL_CONTAINER')) {
+        composition.spatialGroups.push(this.parseSpatialGroup());
+      } else if (this.current().type.startsWith('UI_')) {
+        composition.objects.push(this.parseSpatialObject(this.current().value.toLowerCase()));
       } else {
         this.error(`Unexpected token: ${this.current().type}`);
         this.advance();
@@ -1265,9 +1291,18 @@ export class HoloCompositionParser {
   // OBJECT
   // ===========================================================================
 
-  private parseObject(): HoloObjectDecl {
-    this.expect('OBJECT');
-    const name = this.expectString();
+  private parseObject(typeOverride?: string): HoloObjectDecl {
+    if (!typeOverride) {
+      this.expect('OBJECT');
+    } else {
+      this.advance(); // consume the type keyword (spatial_agent, etc.)
+    }
+    let name = '';
+    if (typeOverride === 'behavior' && this.check('LBRACE')) {
+      name = 'behavior'; // anonymous block name
+    } else {
+      name = this.expectString();
+    }
     let template: string | undefined;
 
     if (this.check('USING')) {
@@ -1287,8 +1322,9 @@ export class HoloCompositionParser {
       this.skipNewlines();
       if (this.check('RBRACE')) break;
 
-      if (this.check('OBJECT')) {
-        children.push(this.parseObject());
+      if (this.check('OBJECT') || this.check('SPATIAL_AGENT') || this.check('TOOL_SLOT') || this.check('BEHAVIOR') || this.current().type.startsWith('UI_')) {
+        const nestedType = this.check('OBJECT') ? undefined : this.current().value.toLowerCase();
+        children.push(this.parseObject(nestedType));
       } else if (this.check('AT' as any)) {
         this.advance(); // consume @
         const name = this.expectIdentifier();
@@ -1338,7 +1374,7 @@ export class HoloCompositionParser {
     }
 
     this.expect('RBRACE');
-    return {
+    const obj: HoloObjectDecl = {
       type: 'Object',
       name,
       template,
@@ -1347,6 +1383,16 @@ export class HoloCompositionParser {
       traits, // Added traits property
       children: children.length > 0 ? children : undefined,
     };
+
+    if (typeOverride) {
+      obj.properties.unshift({ type: 'ObjectProperty', key: 'type', value: typeOverride });
+    }
+
+    return obj;
+  }
+
+  private parseSpatialObject(type: string): HoloObjectDecl {
+    return this.parseObject(type);
   }
 
   // ===========================================================================

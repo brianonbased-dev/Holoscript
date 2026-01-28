@@ -30,8 +30,13 @@
     "smart-assets",
     "sdk"
   ],
-  "author": "HoloScript Team",
+  "author": "Brian X Base Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brianonbased-dev/Holoscript.git",
+    "directory": "packages/holoscript"
+  },
   "dependencies": {
     "@holoscript/core": "workspace:*",
     "zod": "^3.22.4"

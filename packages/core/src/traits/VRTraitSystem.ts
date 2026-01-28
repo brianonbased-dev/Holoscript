@@ -52,11 +52,19 @@ export interface TraitContext {
   physics: PhysicsContext;
   audio: AudioContext;
   haptics: HapticsContext;
+  accessibility?: AccessibilityContext;
   emit: (event: string, payload?: unknown) => void;
   getState: () => Record<string, unknown>;
   setState: (updates: Record<string, unknown>) => void;
   getScaleMultiplier: () => number;
   setScaleContext: (magnitude: string) => void;
+}
+
+export interface AccessibilityContext {
+  announce: (text: string) => void;
+  setScreenReaderFocus: (nodeId: string) => void;
+  setAltText: (nodeId: string, text: string) => void;
+  setHighContrast: (enabled: boolean) => void;
 }
 
 export interface VRContext {
@@ -88,6 +96,10 @@ export interface RaycastHit {
 
 export interface AudioContext {
   playSound: (source: string, options?: { position?: Vector3; volume?: number; spatial?: boolean }) => void;
+  updateSpatialSource?: (nodeId: string, options: { hrtfProfile?: string; occlusion?: number; reverbWet?: number }) => void;
+  registerAmbisonicSource?: (nodeId: string, order: number) => void;
+  setAudioPortal?: (portalId: string, targetZone: string, openingSize: number) => void;
+  updateAudioMaterial?: (nodeId: string, absorption: number, reflection: number) => void;
 }
 
 export interface HapticsContext {
@@ -111,7 +123,9 @@ export type TraitEvent =
   | { type: 'scale_end'; finalScale: number }
   | { type: 'rotate_start'; hand: VRHand }
   | { type: 'rotate_update'; rotation: Vector3 }
-  | { type: 'rotate_end'; finalRotation: Vector3 };
+  | { type: 'rotate_end'; finalRotation: Vector3 }
+  | { type: 'neural_link_execute'; data?: { prompt?: string } }
+  | { type: 'neural_link_response'; data?: { text?: string; generationTime?: number } };
 
 // =============================================================================
 // TRAIT STATE
@@ -1072,6 +1086,7 @@ import { heatmap3dHandler } from './Heatmap3DTrait';
 import { behaviorTreeHandler } from './BehaviorTreeTrait';
 import { goalOrientedHandler } from './GoalOrientedTrait';
 import { llmAgentHandler } from './LLMAgentTrait';
+import { neuralLinkHandler } from './NeuralLinkTrait';
 import { memoryHandler } from './MemoryTrait';
 import { perceptionHandler } from './PerceptionTrait';
 import { emotionHandler } from './EmotionTrait';
@@ -1202,6 +1217,7 @@ export class VRTraitRegistry {
     this.register(behaviorTreeHandler as TraitHandler);
     this.register(goalOrientedHandler as TraitHandler);
     this.register(llmAgentHandler as TraitHandler);
+    this.register(neuralLinkHandler as TraitHandler);
     this.register(memoryHandler as TraitHandler);
     this.register(perceptionHandler as TraitHandler);
     this.register(emotionHandler as TraitHandler);
@@ -1404,6 +1420,7 @@ export {
   behaviorTreeHandler,
   goalOrientedHandler,
   llmAgentHandler,
+  neuralLinkHandler,
   memoryHandler,
   perceptionHandler,
   emotionHandler,

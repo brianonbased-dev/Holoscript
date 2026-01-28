@@ -19,8 +19,13 @@
     "language-server",
     "hololand"
   ],
-  "author": "Hololand",
+  "author": "Brian X Base Team",
   "license": "ELv2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brianonbased-dev/Holoscript.git",
+    "directory": "packages/lsp"
+  },
   "dependencies": {
     "@holoscript/core": "workspace:*",
     "@holoscript/linter": "workspace:*",

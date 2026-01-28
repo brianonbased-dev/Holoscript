@@ -672,6 +672,9 @@ export class R3FCompiler {
         else if (name === 'llm_agent') {
           props.llmAgent = trait.config || true;
         }
+        else if (name === 'neural_link') {
+          props.neuralLink = trait.config || { model: 'brittney-v4.gguf', temperature: 0.7 };
+        }
         else if (name === 'perception') {
           props.perception = trait.config || { sight_range: 20 };
         }
@@ -956,6 +959,16 @@ export class R3FCompiler {
     const mapping: Record<string, string> = {
       'ambient_light': 'ambientLight', 'model': 'gltfModel',
       'audio': 'positionalAudio', 'composition': 'group', 'scale': 'group', 'focus': 'group',
+      'spatial_agent': 'SpatialAgent',
+      'spatial_container': 'group',
+      'ui_panel': 'UIPanel',
+      'ui_text': 'UIText',
+      'ui_chart': 'UIChart',
+      'ui_gauge': 'UIGauge',
+      'ui_value': 'UIValue',
+      'ui_status_indicator': 'UIStatusIndicator',
+      'tool_slot': 'ToolSlot',
+      'behavior': 'group',
     };
     return mapping[type] || type;
   }
@@ -1010,6 +1023,11 @@ export class R3FCompiler {
           else if (d.name === 'dialogue' as any) { props.dialogue = d.config || true; }
           else if (d.name === 'gesture' as any) { props.gesture = d.config || true; }
           else if (d.name === 'haptic' as any) { props.haptic = d.config || true; }
+          else if (d.name === 'avatar_embodiment' as any) { props.avatarEmbodiment = d.config || true; }
+          else if (d.name === 'lip_sync' as any) { props.lipSync = d.config || true; }
+          else if (d.name === 'emotion_directive' as any) { props.emotionDirective = d.config || true; }
+          else if (d.name === 'stt' as any) { props.stt = d.config || true; }
+          else if (d.name === 'tts' as any) { props.tts = d.config || true; }
           else if (d.name === 'generate' as any) { props.generate = d.config; }
         }
       }

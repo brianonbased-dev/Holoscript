@@ -23,11 +23,11 @@
     "metaverse",
     "voice-commands"
   ],
-  "author": "HoloScript Team",
+  "author": "Brian X Base Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/brianonbased-dev/holoscript.git",
+    "url": "https://github.com/brianonbased-dev/Holoscript.git",
     "directory": "packages/cli"
   },
   "dependencies": {

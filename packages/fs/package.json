@@ -47,11 +47,11 @@
     "filesystem",
     "file-io"
   ],
-  "author": "Hololand Team",
+  "author": "Brian X Base Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hololand/hololand.git",
-    "directory": "packages/holoscript-fs"
+    "url": "https://github.com/brianonbased-dev/Holoscript.git",
+    "directory": "packages/fs"
   }
 }
