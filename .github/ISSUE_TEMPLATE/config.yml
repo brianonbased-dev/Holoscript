@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://holoscript.dev/guides
+    about: Read the HoloScript documentation and guides
+  - name: 💬 GitHub Discussions
+    url: https://github.com/brianonbased-dev/HoloScript/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 🐛 Bug Report
+    url: https://github.com/brianonbased-dev/HoloScript/issues/new?template=bug_report.md
+    about: Report a bug or issue with HoloScript
+  - name: 💡 Feature Request
+    url: https://github.com/brianonbased-dev/HoloScript/issues/new?template=feature_request.md
+    about: Suggest a new feature or enhancement
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/brianonbased-dev/HoloScript/security/advisories/new
+    about: Report a security vulnerability privately

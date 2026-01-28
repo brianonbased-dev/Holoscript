@@ -3,7 +3,6 @@ name: Publish NPM Packages
 on:
   push:
     branches:
-      - master
       - main
     tags:
       - 'v*'
