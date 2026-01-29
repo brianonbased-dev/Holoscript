@@ -12,6 +12,7 @@ import { HoloHubTreeDataProvider } from './holohubView';
 import { HoloScriptPreviewPanel } from './previewPanel';
 import { SmartAssetEditorProvider } from './smartAssetEditor';
 import { agentAPI } from './agentApi';
+import { HoloScriptCompletionItemProvider } from './completionProvider';
 
 let client: LanguageClient | undefined;
 
@@ -278,6 +279,86 @@ export function activate(context: ExtensionContext) {
       
       window.showInformationMessage(`Successfully imported ${assetName} to project!`);
     })
+  );
+
+  // Register Formatter
+  try {
+    const formatter = require('@holoscript/formatter');
+    const { loadConfig } = formatter; // Dynamic import to avoid build issues if dep missing during dev
+    
+    context.subscriptions.push(
+      vscode.languages.registerDocumentFormattingEditProvider(
+        ['holoscript', 'holoscriptplus'],
+        {
+          provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
+            try {
+              const text = document.getText();
+              const config = loadConfig ? loadConfig(document.fileName) : {};
+              const result = formatter.format(text, document.languageId === 'holoscriptplus' ? 'hsplus' : 'holo');
+              
+              if (result.errors.length > 0) {
+                console.warn('Formatter errors:', result.errors);
+              }
+
+              if (!result.changed) return [];
+
+              const fullRange = new vscode.Range(
+                document.positionAt(0),
+                document.positionAt(text.length)
+              );
+              
+              return [vscode.TextEdit.replace(fullRange, result.formatted)];
+            } catch (err) {
+              console.error('Formatting failed:', err);
+              return [];
+            }
+          }
+        }
+      ),
+      vscode.languages.registerDocumentRangeFormattingEditProvider(
+        ['holoscript', 'holoscriptplus'],
+        {
+          provideDocumentRangeFormattingEdits(document: vscode.TextDocument, range: vscode.Range): vscode.TextEdit[] {
+            try {
+              const text = document.getText();
+              const config = loadConfig ? loadConfig(document.fileName) : {};
+              
+              if (typeof formatter.formatRange !== 'function') {
+                console.warn('HoloScript: formatter.formatRange not available (update package)');
+                return [];
+              }
+
+              // VS Code ranges are 0-based
+              const formatRange = {
+                startLine: range.start.line,
+                endLine: range.end.line
+              };
+
+              const result = formatter.formatRange(text, formatRange, document.languageId === 'holoscriptplus' ? 'hsplus' : 'holo');
+              
+              if (!result.changed) return [];
+
+              return [vscode.TextEdit.replace(range, result.formatted)];
+            } catch (err) {
+              console.error('Range formatting failed:', err);
+              return [];
+            }
+          }
+        }
+      )
+    );
+    console.log('HoloScript: Formatter registered.');
+  } catch (err) {
+    console.warn('HoloScript: Formatter package not found or failed to load:', err);
+  }
+
+  // Register Completion Provider
+  context.subscriptions.push(
+    vscode.languages.registerCompletionItemProvider(
+        ['holoscript', 'holoscriptplus'],
+        new HoloScriptCompletionItemProvider(),
+        '@' // Trigger character
+    )
   );
 }
 

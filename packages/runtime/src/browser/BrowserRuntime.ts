@@ -340,6 +340,9 @@ export interface HoloScriptRuntime {
   // Actions
   executeAction(name: string, ...args: unknown[]): unknown;
   
+  // Visual Regression
+  captureSnapshot(): Promise<string>;
+  
   // Cleanup
   dispose(): void;
 }
@@ -407,7 +410,8 @@ class BrowserRuntime implements HoloScriptRuntime {
         
         this.renderer = new THREE.WebGLRenderer({ 
           antialias: this.config.quality !== 'low',
-          alpha: true 
+          alpha: true,
+          preserveDrawingBuffer: true
         });
         this.renderer.setSize(root.clientWidth, root.clientHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -581,6 +585,18 @@ class BrowserRuntime implements HoloScriptRuntime {
     }
     
     return this.runAction(action, args);
+  }
+  
+  async captureSnapshot(): Promise<string> {
+    if (!this.renderer) {
+      throw new Error('Renderer not initialized');
+    }
+    
+    // Explicitly render to ensure we have the latest frame if preserveDrawingBuffer is true
+    this.renderer.render(this.scene, this.camera);
+    
+    // Get the data URL from the canvas
+    return this.renderer.domElement.toDataURL('image/png');
   }
   
   dispose(): void {

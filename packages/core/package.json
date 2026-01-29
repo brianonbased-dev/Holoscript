@@ -61,7 +61,13 @@
     "url": "https://github.com/brianonbased-dev/Holoscript.git",
     "directory": "packages/core"
   },
+  "dependencies": {
+    "pixelmatch": "^5.3.0",
+    "pngjs": "^7.0.0"
+  },
   "devDependencies": {
+    "@types/pixelmatch": "^5.2.6",
+    "@types/pngjs": "^6.0.4",
     "tsup": "^8.0.1",
     "typedoc": "^0.28.16",
     "typescript": "^5.3.3",

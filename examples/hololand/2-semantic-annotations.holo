@@ -1,0 +1,240 @@
+// 2-semantic-annotations.holo
+// Demonstrates Semantic Annotations and Data Binding
+
+composition "Character Stats Demo" {
+  environment {
+    skybox: "gradient"
+    ambient_light: 0.7
+  }
+
+  @state {
+    player_health: 100
+    player_max_health: 100
+    player_energy: 75
+    player_max_energy: 100
+    player_level: 5
+    is_alive: true
+    damage_taken: 0
+  }
+
+  // Semantic annotation for player character
+  @semantic("player-character") {
+    category: "character"
+    type: "player"
+
+    properties: {
+      position: @annotate("position", { networked: true, interpolated: true }),
+      rotation: @annotate("rotation", { networked: true }),
+      health: @annotate("health", {
+        min: 0,
+        max: @state.player_max_health,
+        ui_binding: "health_bar"
+      }),
+      energy: @annotate("energy", {
+        min: 0,
+        max: @state.player_max_energy,
+        regeneration_rate: 5
+      })
+    }
+
+    capabilities: ["movement", "jumping", "interaction", "combat"]
+  }
+
+  // Data bindings
+  @bindings {
+    // Health bar binding
+    bind(@state.player_health / @state.player_max_health) -> HealthBar.fill_amount
+    bind(@state.player_health > 0) -> HealthBar.visible
+
+    // Energy bar binding
+    bind(@state.player_energy / @state.player_max_energy) -> EnergyBar.fill_amount
+
+    // Color-coded health
+    bind(health_to_color(@state.player_health, @state.player_max_health)) -> HealthBar.color
+
+    // Death state
+    bind(!@state.is_alive) -> RespawnButton.visible
+    bind(@state.is_alive) -> PlayerModel.visible
+  }
+
+  // Player character
+  object "PlayerModel" {
+    @semantic_ref("player-character")
+    position: [0, 0, -3]
+    model: "characters/hero.glb"
+    scale: 0.8
+
+    @animated
+    animation: @state.is_alive ? "idle" : "death"
+  }
+
+  // Health bar UI
+  spatial_group "HealthUI" {
+    position: [0, 2.2, -3]
+    @billboard
+
+    object "HealthBarBg" {
+      geometry: "plane"
+      scale: [1, 0.1, 1]
+      color: "#333333"
+    }
+
+    object "HealthBar" {
+      geometry: "plane"
+      scale: [1, 0.1, 1]
+      position: [0, 0, 0.001]
+      color: "#4ecdc4"
+
+      // fill_amount is bound from @state.player_health
+      fill_amount: 1.0
+      material: { unlit: true }
+    }
+
+    object "HealthText" {
+      position: [0, 0.15, 0]
+      text: "${@state.player_health} / ${@state.player_max_health}"
+      font_size: 0.08
+      color: "#ffffff"
+    }
+  }
+
+  // Energy bar
+  spatial_group "EnergyUI" {
+    position: [0, 2.0, -3]
+    @billboard
+
+    object "EnergyBarBg" {
+      geometry: "plane"
+      scale: [0.8, 0.06, 1]
+      color: "#222222"
+    }
+
+    object "EnergyBar" {
+      geometry: "plane"
+      scale: [0.8, 0.06, 1]
+      position: [0, 0, 0.001]
+      color: "#ffe66d"
+      fill_amount: 0.75
+    }
+  }
+
+  // Action buttons
+  spatial_group "ActionButtons" {
+    position: [0, 0.8, -2]
+
+    object "TakeDamageBtn" {
+      @clickable
+      @hoverable
+      geometry: "box"
+      scale: [0.3, 0.15, 0.05]
+      color: "#ff6b6b"
+      text_overlay: "Take Damage"
+
+      on_click: { take_damage(25) }
+      on_hover_enter: { this.scale = [0.33, 0.165, 0.055] }
+      on_hover_exit: { this.scale = [0.3, 0.15, 0.05] }
+    }
+
+    object "HealBtn" {
+      @clickable
+      @hoverable
+      position: [0.4, 0, 0]
+      geometry: "box"
+      scale: [0.3, 0.15, 0.05]
+      color: "#4ecdc4"
+      text_overlay: "Heal"
+
+      on_click: { heal(30) }
+    }
+
+    object "UseEnergyBtn" {
+      @clickable
+      @hoverable
+      position: [0.8, 0, 0]
+      geometry: "box"
+      scale: [0.3, 0.15, 0.05]
+      color: "#ffe66d"
+      text_overlay: "Use Energy"
+
+      on_click: { use_energy(20) }
+    }
+  }
+
+  // Respawn button (only visible when dead)
+  object "RespawnButton" {
+    @clickable
+    position: [0, 1.5, -2.5]
+    geometry: "box"
+    scale: [0.5, 0.2, 0.05]
+    color: "#ff6b6b"
+    text_overlay: "RESPAWN"
+    visible: false
+
+    on_click: { respawn() }
+  }
+
+  // Level display
+  object "LevelBadge" {
+    position: [0.6, 2.3, -3]
+    @billboard
+    text: "Lv.${@state.player_level}"
+    font_size: 0.12
+    color: "#ffd700"
+  }
+
+  logic {
+    // Color mapping function for health
+    function health_to_color(health, max_health) {
+      let ratio = health / max_health
+      if (ratio > 0.5) return "#4ecdc4"      // Cyan - healthy
+      if (ratio > 0.25) return "#ffe66d"     // Yellow - warning
+      return "#ff6b6b"                         // Red - critical
+    }
+
+    function take_damage(amount) {
+      @state.player_health = max(0, @state.player_health - amount)
+      @state.damage_taken += amount
+
+      play_sound("hit.wav")
+      camera_shake(0.2, 0.1)
+
+      if (@state.player_health <= 0) {
+        @state.is_alive = false
+        emit("player:death", { total_damage: @state.damage_taken })
+      }
+    }
+
+    function heal(amount) {
+      if (!@state.is_alive) return
+
+      @state.player_health = min(@state.player_max_health, @state.player_health + amount)
+      spawn_particles("heal_particles", PlayerModel.position)
+      play_sound("heal.wav")
+    }
+
+    function use_energy(amount) {
+      if (@state.player_energy >= amount) {
+        @state.player_energy -= amount
+        spawn_particles("energy_burst", PlayerModel.position)
+        play_sound("energy_use.wav")
+      }
+    }
+
+    function respawn() {
+      @state.player_health = @state.player_max_health
+      @state.player_energy = @state.player_max_energy
+      @state.is_alive = true
+      @state.damage_taken = 0
+
+      play_sound("respawn.wav")
+      spawn_particles("respawn_effect", PlayerModel.position)
+    }
+
+    // Energy regeneration tick
+    on_tick(1.0) {
+      if (@state.is_alive && @state.player_energy < @state.player_max_energy) {
+        @state.player_energy = min(@state.player_max_energy, @state.player_energy + 5)
+      }
+    }
+  }
+}

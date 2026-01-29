@@ -1,0 +1,71 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { type FormatterConfig, DEFAULT_CONFIG } from './index';
+
+export class ConfigLoader {
+  private cache: Map<string, FormatterConfig> = new Map();
+
+  /**
+   * Load configuration for a specific file or directory.
+   */
+  public loadConfig(filePath: string): FormatterConfig {
+    const configPath = this.findConfigFile(filePath);
+    if (!configPath) {
+      return { ...DEFAULT_CONFIG };
+    }
+
+    return this.loadConfigFromFile(configPath);
+  }
+
+  public loadConfigFromFile(configPath: string): FormatterConfig {
+    if (this.cache.has(configPath)) {
+      return this.cache.get(configPath)!;
+    }
+
+    let rawConfig: any;
+    try {
+      if (configPath.endsWith('.js')) {
+        rawConfig = require(configPath);
+      } else {
+        const content = fs.readFileSync(configPath, 'utf8');
+        rawConfig = JSON.parse(content);
+      }
+    } catch (error) {
+      console.error(`Failed to load config from ${configPath}:`, error);
+      return { ...DEFAULT_CONFIG };
+    }
+
+    const combinedConfig: FormatterConfig = {
+      ...DEFAULT_CONFIG,
+      ...rawConfig
+    };
+
+    this.cache.set(configPath, combinedConfig);
+    return combinedConfig;
+  }
+
+  private findConfigFile(startDir: string): string | null {
+    let currentDir = fs.lstatSync(startDir).isDirectory() ? startDir : path.dirname(startDir);
+    const root = path.parse(currentDir).root;
+
+    while (currentDir !== root) {
+      const candidates = [
+        '.holofmtrc',
+        '.holofmtrc.json',
+        '.holofmtrc.js',
+        'holofmt.config.js'
+      ];
+
+      for (const candidate of candidates) {
+        const candidatePath = path.join(currentDir, candidate);
+        if (fs.existsSync(candidatePath)) {
+          return candidatePath;
+        }
+      }
+
+      currentDir = path.dirname(currentDir);
+    }
+
+    return null;
+  }
+}

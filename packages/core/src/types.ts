@@ -87,6 +87,7 @@ export type HoloScriptValue =
   | { [key: string]: any }
   // We can include ASTNode if values can be nodes (e.g. templates)
   | ASTNode
+  | SpreadExpression
   | Function
   | SpatialPosition
   | HologramProperties
@@ -102,6 +103,8 @@ export interface ASTNode {
   column?: number;
   /** HS+ Directives */
   directives?: HSPlusDirective[];
+  /** HS+ Traits (Pre-processed map) */
+  traits?: Map<VRTraitName, any>;
 }
 
 // ============================================================================
@@ -217,6 +220,13 @@ export type VRTraitName =
   | 'wind'
   | 'buoyancy'
   | 'destruction';
+
+export interface TraitConstraint {
+  type: 'requires' | 'conflicts' | 'oneof';
+  source: string;      // Trait being constrained
+  targets: string[];   // Related traits
+  message?: string;    // Custom error message
+}
 
 export type LifecycleHook =
   | 'on_mount'
@@ -391,6 +401,7 @@ export interface OrbNode extends ASTNode {
   name: string;
   properties: Record<string, HoloScriptValue>;
   methods: MethodNode[];
+  children: ASTNode[];
 }
 
 export interface MethodNode extends ASTNode {
@@ -418,7 +429,7 @@ export interface ConnectionNode extends ASTNode {
 
 export interface GateNode extends ASTNode {
   type: 'gate';
-  condition: string;
+  condition: string | TypeGuardExpression;
   truePath: ASTNode[];
   falsePath: ASTNode[];
 }
@@ -480,14 +491,14 @@ export interface VisualizeNode extends ASTNode {
 export interface ForLoopNode extends ASTNode {
   type: 'for-loop';
   init: string;
-  condition: string;
+  condition: string | TypeGuardExpression;
   update: string;
   body: ASTNode[];
 }
 
 export interface WhileLoopNode extends ASTNode {
   type: 'while-loop';
-  condition: string;
+  condition: string | TypeGuardExpression;
   body: ASTNode[];
 }
 
@@ -534,7 +545,7 @@ export interface TemplateNode extends ASTNode {
   type: 'template';
   name: string;
   parameters: string[];
-  body: ASTNode[];
+  children: ASTNode[];
 }
 
 export interface GlobalHandlerNode extends ASTNode {
@@ -588,6 +599,42 @@ export interface TypeGuardExpression extends ASTNode {
   guardType: string;
   /** Whether this is a negated check (is not) */
   negated?: boolean;
+}
+
+// ============================================================================
+// Spread Expression (...)
+// ============================================================================
+
+export interface SpreadExpression extends ASTNode {
+  type: 'spread';
+  target: string; // The identifier being spread (e.g. "BaseTemplate")
+}
+
+// ============================================================================
+// Phase 13: State Machine Types
+// ============================================================================
+
+export interface StateMachineNode extends ASTNode {
+  type: 'state-machine';
+  name: string;
+  initialState: string;
+  states: StateNode[];
+  transitions: TransitionNode[];
+}
+
+export interface StateNode extends ASTNode {
+  type: 'state';
+  name: string;
+  onEntry?: string; // Code block
+  onExit?: string;  // Code block
+}
+
+export interface TransitionNode extends ASTNode {
+  type: 'transition';
+  from: string;
+  to: string;
+  event: string;
+  condition?: string; // Optional expression
 }
 
 // ============================================================================

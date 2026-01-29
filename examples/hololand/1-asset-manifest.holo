@@ -1,0 +1,143 @@
+// 1-asset-manifest.holo
+// Demonstrates the Asset Manifest System for organizing game assets
+
+composition "Asset Gallery" {
+  // Asset manifest declaration
+  @manifest("gallery-assets") {
+    assets: [
+      { id: "hero-model", path: "models/hero.glb", type: "model", tags: ["character", "player"] },
+      { id: "hero-texture", path: "textures/hero_diffuse.png", type: "texture", tags: ["character"] },
+      { id: "environment", path: "models/environment.glb", type: "model", tags: ["scene"] },
+      { id: "skybox-hdri", path: "textures/studio.hdr", type: "texture", tags: ["environment"] },
+      { id: "footstep-audio", path: "audio/footsteps.mp3", type: "audio", tags: ["sfx", "character"] }
+    ]
+
+    // Asset dependencies
+    dependencies: [
+      { parent: "hero-model", children: ["hero-texture"] }
+    ]
+  }
+
+  environment {
+    skybox: @asset("skybox-hdri")
+    ambient_light: 0.6
+  }
+
+  @state {
+    current_asset_index: 0
+    loading_progress: 0
+    assets_loaded: false
+  }
+
+  // Asset display pedestal
+  object "DisplayPedestal" {
+    @collidable
+    position: [0, 0, -3]
+    geometry: "cylinder"
+    scale: [1, 0.1, 1]
+    material: {
+      type: "pbr"
+      metallic: 0.9
+      roughness: 0.1
+      color: "#333333"
+    }
+  }
+
+  // Asset preview area
+  object "AssetPreview" {
+    position: [0, 1, -3]
+    model: @asset("hero-model")
+    scale: 0.5
+
+    @rotating(speed: 20, axis: "y")
+    @grabbable
+
+    on_grab: {
+      this.rotating_enabled = false
+    }
+
+    on_release: {
+      this.rotating_enabled = true
+    }
+  }
+
+  // Asset info panel
+  spatial_group "InfoPanel" {
+    position: [1.5, 1.2, -3]
+    rotation: [0, -30, 0]
+    @billboard(axis: "y")
+
+    object "AssetName" {
+      text: "Hero Character"
+      font_size: 0.15
+      color: "#ffffff"
+    }
+
+    object "AssetPath" {
+      position: [0, -0.2, 0]
+      text: "models/hero.glb"
+      font_size: 0.08
+      color: "#888888"
+    }
+
+    object "AssetTags" {
+      position: [0, -0.35, 0]
+      text: "Tags: character, player"
+      font_size: 0.06
+      color: "#00ffff"
+    }
+  }
+
+  // Navigation buttons
+  spatial_group "Navigation" {
+    position: [0, 0.5, -2]
+
+    object "PrevButton" using "NavButton" {
+      position: [-0.5, 0, 0]
+      text: "<"
+      on_click: { cycle_asset(-1) }
+    }
+
+    object "NextButton" using "NavButton" {
+      position: [0.5, 0, 0]
+      text: ">"
+      on_click: { cycle_asset(1) }
+    }
+  }
+
+  template "NavButton" {
+    @clickable
+    @hoverable
+    geometry: "box"
+    scale: [0.2, 0.2, 0.05]
+    color: "#4ecdc4"
+
+    on_hover_enter: { this.color = "#6ff7ee" }
+    on_hover_exit: { this.color = "#4ecdc4" }
+  }
+
+  logic {
+    // Preload all manifest assets on scene load
+    on_scene_load {
+      @manifest.preload_all("gallery-assets", (progress) => {
+        @state.loading_progress = progress
+        if (progress >= 1.0) {
+          @state.assets_loaded = true
+        }
+      })
+    }
+
+    function cycle_asset(direction) {
+      let assets = @manifest.get_assets("gallery-assets")
+      let models = assets.filter(a => a.type == "model")
+
+      @state.current_asset_index = (@state.current_asset_index + direction + models.length) % models.length
+      let asset = models[@state.current_asset_index]
+
+      AssetPreview.model = @asset(asset.id)
+      AssetName.text = asset.name || asset.id
+      AssetPath.text = asset.path
+      AssetTags.text = "Tags: " + asset.tags.join(", ")
+    }
+  }
+}

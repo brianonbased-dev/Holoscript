@@ -10,6 +10,7 @@ import { add, remove, list } from './packageManager';
 import { TRAITS, formatTrait, formatAllTraits, suggestTraits } from './traits';
 import { generateObject, generateScene, listTemplates, getTemplate } from './generator';
 import { packAsset, unpackAsset, inspectAsset } from './smartAssets';
+import { WatchService } from './WatchService';
 
 const VERSION = '1.0.0-alpha.1';
 
@@ -282,7 +283,7 @@ async function main(): Promise<void> {
         process.exit(1);
       }
 
-      const suggested = suggestTraits(description);
+      const suggested = await suggestTraits(description);
       
       if (options.json) {
         console.log(JSON.stringify(suggested, null, 2));
@@ -464,6 +465,88 @@ async function main(): Promise<void> {
       } catch (err: any) {
         console.error(`\x1b[31mCompilation error: ${err.message}\x1b[0m`);
         process.exit(1);
+      }
+    }
+
+    case 'build': {
+      if (!options.input) {
+        console.error('\x1b[31mError: No input specified.\x1b[0m');
+        console.log('Usage: holoscript build <file_or_dir> [options]');
+        process.exit(1);
+      }
+
+      const fs = await import('fs');
+      const path = await import('path');
+      const inputPath = path.resolve(options.input);
+
+      if (!fs.existsSync(inputPath)) {
+        console.error(`\x1b[31mError: Input not found: ${inputPath}\x1b[0m`);
+        process.exit(1);
+      }
+
+      }
+      
+      const executeBuild = async () => {
+        const stats = fs.statSync(inputPath);
+        if (stats.isFile()) {
+          console.log(`\x1b[36mBuilding file: ${options.input}\x1b[0m`);
+          const content = fs.readFileSync(inputPath, 'utf-8');
+          const target = options.target || 'threejs';
+          
+          try {
+            const isHolo = options.input.endsWith('.holo');
+            let ast: any;
+            if (isHolo) {
+              const { HoloCompositionParser } = await import('@holoscript/core');
+              const result = new HoloCompositionParser().parse(content);
+              if (!result.success) {
+                console.error('\x1b[31mError parsing composition\x1b[0m');
+                return;
+              }
+              ast = { orbs: result.ast?.objects?.map((obj: any) => ({ name: obj.name, properties: Object.fromEntries(obj.properties.map((p: any) => [p.key, p.value])), traits: obj.traits || [] })) || [] };
+            } else {
+              const { HoloScriptCodeParser } = await import('@holoscript/core');
+              const result = new HoloScriptCodeParser().parse(content);
+              if (!result.success) {
+                console.error('\x1b[31mError parsing script\x1b[0m');
+                return;
+              }
+              ast = { orbs: result.ast.filter((n: any) => n.type === 'orb') };
+            }
+            
+            const outputCode = generateTargetCode(ast, target, options.verbose);
+            if (options.output) {
+              fs.writeFileSync(path.resolve(options.output), outputCode);
+              console.log(`\x1b[32m✓ Compiled to ${options.output}\x1b[0m`);
+            } else {
+              console.log(outputCode);
+            }
+          } catch (e: any) {
+            console.error(`\x1b[31mBuild error: ${e.message}\x1b[0m`);
+          }
+        } else if (stats.isDirectory()) {
+           console.log(`\x1b[36mBuilding asset from directory: ${options.input}\x1b[0m`);
+           try {
+             await packAsset(options.input, options.output, options.verbose);
+             console.log(`\x1b[32m✓ Packed asset to ${options.output || (options.input + '.hsa')}\x1b[0m`);
+           } catch (e: any) {
+             console.error(`\x1b[31mError packing asset: ${e.message}\x1b[0m`);
+           }
+        }
+      };
+
+      if (options.watch) {
+        const watcher = new WatchService({
+          input: options.input,
+          onChanged: executeBuild,
+          verbose: options.verbose
+        });
+        await watcher.start();
+        // Watch mode keeps the process alive
+        await new Promise(() => {});
+      } else {
+        await executeBuild();
+        process.exit(0);
       }
       break;
     }

@@ -264,22 +264,22 @@ describe('HoloScriptPlusParser', () => {
   // ========================================================================
 
   describe('Object Literal Parsing', () => {
-    it.skip('should parse simple key-value pairs', () => {
+    it('should parse simple key-value pairs', () => {
       const result = parser.parseObjectLiteral('type: pbr');
       expect(result.type).toBe('pbr');
     });
 
-    it.skip('should parse boolean values', () => {
+    it('should parse boolean values', () => {
       const result = parser.parseObjectLiteral('shadows: true');
       expect(result.shadows).toBe(true);
     });
 
-    it.skip('should parse numeric values', () => {
+    it('should parse numeric values', () => {
       const result = parser.parseObjectLiteral('targetFPS: 120');
       expect(result.targetFPS).toBe(120);
     });
 
-    it.skip('should parse string values', () => {
+    it('should parse string values', () => {
       const result = parser.parseObjectLiteral('compression: basis');
       expect(result.compression).toBe('basis');
     });

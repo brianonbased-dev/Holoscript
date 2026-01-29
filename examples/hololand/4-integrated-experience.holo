@@ -1,0 +1,495 @@
+// 4-integrated-experience.holo
+// Complete example demonstrating Asset Manifest, Semantic Annotations,
+// World Definition, and Hololand Runtime Integration working together
+
+composition "Virtual Art Gallery" {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // WORLD METADATA
+  // ─────────────────────────────────────────────────────────────────────────────
+  @world_metadata {
+    id: "virtual-art-gallery"
+    name: "Virtual Art Gallery"
+    display_name: "The Infinite Gallery"
+    description: "An immersive virtual art gallery experience"
+    version: "2.0.0"
+    author: "HoloScript Gallery Team"
+    tags: ["art", "museum", "social", "exploration"]
+    platforms: ["web", "quest", "visionos", "desktop"]
+    age_rating: "everyone"
+    category: "art"
+    max_users: 50
+  }
+
+  @world_config {
+    physics: {
+      engine: "rapier"
+      gravity: [0, -9.81, 0]
+    }
+    rendering: {
+      target_fps: 90
+      shadows: true
+      shadow_quality: "ultra"
+      anti_aliasing: "smaa"
+      bloom: true
+      ambient_occlusion: true
+      ao_quality: "high"
+      tone_mapping: "aces"
+    }
+    networking: {
+      tick_rate: 30
+      protocol: "websocket"
+      compression: "lz4"
+    }
+    audio: {
+      spatial_audio: true
+      reverb_preset: "hall"
+    }
+    accessibility: {
+      subtitles: true
+      audio_descriptions: true
+      screen_reader: true
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ASSET MANIFEST
+  // ─────────────────────────────────────────────────────────────────────────────
+  @manifest("gallery-manifest") {
+    assets: [
+      // Environment assets
+      { id: "gallery-hall", path: "models/gallery_hall.glb", type: "model", tags: ["environment", "main"] },
+      { id: "skybox-museum", path: "textures/museum_hdri.hdr", type: "texture", tags: ["environment"] },
+
+      // Artwork assets
+      { id: "painting-starry", path: "textures/starry_night.jpg", type: "texture", tags: ["artwork", "painting"] },
+      { id: "painting-mona", path: "textures/mona_lisa.jpg", type: "texture", tags: ["artwork", "painting"] },
+      { id: "sculpture-thinker", path: "models/the_thinker.glb", type: "model", tags: ["artwork", "sculpture"] },
+      { id: "sculpture-david", path: "models/david.glb", type: "model", tags: ["artwork", "sculpture"] },
+
+      // UI assets
+      { id: "info-panel-prefab", path: "prefabs/info_panel.glb", type: "model", tags: ["ui"] },
+      { id: "audio-guide", path: "audio/gallery_guide.mp3", type: "audio", tags: ["narration"] },
+
+      // Avatar assets
+      { id: "visitor-avatar", path: "models/visitor.glb", type: "model", tags: ["avatar", "character"] },
+      { id: "guide-avatar", path: "models/ai_guide.glb", type: "model", tags: ["avatar", "npc"] }
+    ]
+
+    dependencies: [
+      { parent: "gallery-hall", children: ["skybox-museum"] },
+      { parent: "visitor-avatar", children: ["info-panel-prefab"] }
+    ]
+
+    // Platform-specific variants
+    variants: {
+      quest: {
+        "gallery-hall": "models/gallery_hall_mobile.glb",
+        "sculpture-david": "models/david_lod2.glb"
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SEMANTIC ANNOTATIONS
+  // ─────────────────────────────────────────────────────────────────────────────
+  @semantic("artwork-collection") {
+    category: "content"
+    type: "artwork"
+
+    schema: {
+      title: { type: "string", required: true },
+      artist: { type: "string", required: true },
+      year: { type: "number" },
+      description: { type: "string" },
+      audio_guide_id: { type: "string" },
+      interaction_type: { type: "enum", values: ["view", "inspect", "interact"] }
+    }
+  }
+
+  @semantic("visitor") {
+    category: "character"
+    type: "player"
+
+    properties: {
+      position: @annotate("position", { networked: true, interpolated: true }),
+      rotation: @annotate("rotation", { networked: true }),
+      display_name: @annotate("string", { networked: true, max_length: 32 }),
+      current_exhibit: @annotate("string", { networked: false }),
+      visited_artworks: @annotate("array", { item_type: "string" })
+    }
+
+    capabilities: ["movement", "teleport", "voice_chat", "gesture"]
+  }
+
+  @semantic("ai-guide") {
+    category: "character"
+    type: "npc"
+
+    properties: {
+      position: @annotate("position"),
+      current_tour_stop: @annotate("number"),
+      is_giving_tour: @annotate("boolean")
+    }
+
+    capabilities: ["pathfinding", "speech", "gesture", "gaze_tracking"]
+  }
+
+  // Data bindings for UI
+  @bindings {
+    bind(@state.current_artwork_title) -> ArtworkInfoPanel.title_text
+    bind(@state.current_artwork_artist) -> ArtworkInfoPanel.artist_text
+    bind(@state.current_artwork_desc) -> ArtworkInfoPanel.description_text
+    bind(@state.audio_playing) -> AudioGuideButton.icon
+    bind(@state.visitor_count) -> VisitorCounter.text
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ZONES AND SPAWN POINTS
+  // ─────────────────────────────────────────────────────────────────────────────
+  @zones {
+    zone "entrance-hall" {
+      name: "Entrance Hall"
+      bounds: { type: "box", center: [0, 5, 0], size: [30, 10, 20] }
+      priority: 10
+      tags: ["entrance", "safe"]
+      audio: { background_music: "entrance_ambient.mp3" }
+      triggers: [
+        { type: "enter", action: "welcome_visitor", filter: "player" }
+      ]
+    }
+
+    zone "impressionist-wing" {
+      name: "Impressionist Wing"
+      bounds: { type: "box", center: [50, 5, 0], size: [40, 10, 30] }
+      priority: 5
+      tags: ["exhibit", "impressionist"]
+      audio: { background_music: "impressionist_ambient.mp3" }
+      triggers: [
+        { type: "enter", action: "update_exhibit", params: { exhibit: "impressionist" } }
+      ]
+    }
+
+    zone "sculpture-garden" {
+      name: "Sculpture Garden"
+      bounds: { type: "cylinder", center: [0, 5, 50], radius: 25, height: 15 }
+      priority: 5
+      tags: ["exhibit", "sculpture", "outdoor"]
+      environment: {
+        skybox: { type: "procedural", turbidity: 8 },
+        ambient_light: { intensity: 0.6 }
+      }
+      triggers: [
+        { type: "enter", action: "update_exhibit", params: { exhibit: "sculpture" } }
+      ]
+    }
+  }
+
+  @spawn_points {
+    spawn "main-entrance" {
+      name: "Main Entrance"
+      position: [0, 1, -8]
+      rotation: [0, 0, 0]
+      type: "default"
+      priority: 10
+      capacity: 50
+      tags: ["entrance", "primary"]
+    }
+
+    spawn "vip-entrance" {
+      name: "VIP Entrance"
+      position: [0, 1, 8]
+      rotation: [0, 180, 0]
+      type: "portal"
+      priority: 5
+      capacity: 10
+      conditions: { permission: "vip_access" }
+      tags: ["entrance", "vip"]
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STATE & ENVIRONMENT
+  // ─────────────────────────────────────────────────────────────────────────────
+  @state {
+    current_artwork_title: ""
+    current_artwork_artist: ""
+    current_artwork_desc: ""
+    audio_playing: false
+    visitor_count: 0
+    tour_in_progress: false
+  }
+
+  environment {
+    @skybox {
+      type: "hdri"
+      texture: @asset("skybox-museum")
+    }
+
+    @ambient_light {
+      color: "#f5f0e6"
+      intensity: 0.3
+    }
+
+    @directional_light("gallery-light") {
+      color: "#ffffff"
+      intensity: 0.8
+      direction: [0, -1, 0.5]
+      cast_shadows: true
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SCENE OBJECTS
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // Gallery building
+  object "GalleryHall" {
+    @collidable
+    position: [0, 0, 0]
+    model: @asset("gallery-hall")
+    @lod { distances: [50, 100, 200] }
+  }
+
+  // Artwork displays
+  spatial_group "ImpressionistWing" {
+    position: [50, 0, 0]
+
+    object "StarryNight" {
+      @semantic_ref("artwork-collection")
+      position: [0, 2, -10]
+      geometry: "plane"
+      scale: [3, 2, 1]
+      texture: @asset("painting-starry")
+
+      @artwork_metadata {
+        title: "The Starry Night"
+        artist: "Vincent van Gogh"
+        year: 1889
+        description: "One of the most recognized paintings in Western art"
+        audio_guide_id: "audio_starry_night"
+        interaction_type: "inspect"
+      }
+
+      @interactive {
+        highlight_on_gaze: true
+        gaze_duration: 0.5
+      }
+
+      on_gaze_complete: {
+        show_artwork_info(this)
+      }
+    }
+
+    object "MonaLisa" {
+      @semantic_ref("artwork-collection")
+      position: [0, 2, 10]
+      geometry: "plane"
+      scale: [2, 3, 1]
+      texture: @asset("painting-mona")
+      rotation: [0, 180, 0]
+
+      @artwork_metadata {
+        title: "Mona Lisa"
+        artist: "Leonardo da Vinci"
+        year: 1503
+        description: "The most famous portrait in the world"
+        interaction_type: "inspect"
+      }
+
+      @interactive { highlight_on_gaze: true }
+      on_gaze_complete: { show_artwork_info(this) }
+    }
+  }
+
+  spatial_group "SculptureGarden" {
+    position: [0, 0, 50]
+
+    object "TheThinker" {
+      @semantic_ref("artwork-collection")
+      position: [0, 0, 0]
+      model: @asset("sculpture-thinker")
+      scale: 1.5
+
+      @artwork_metadata {
+        title: "The Thinker"
+        artist: "Auguste Rodin"
+        year: 1904
+        description: "Bronze sculpture depicting a man in deep thought"
+        interaction_type: "view"
+      }
+
+      @rotating(speed: 5, axis: "y")
+      @grabbable(can_rotate: true, can_move: false)
+    }
+
+    object "David" {
+      @semantic_ref("artwork-collection")
+      position: [15, 0, 0]
+      model: @asset("sculpture-david")
+      scale: 0.8
+
+      @artwork_metadata {
+        title: "David"
+        artist: "Michelangelo"
+        year: 1504
+        description: "Masterpiece of Renaissance sculpture"
+        interaction_type: "view"
+      }
+
+      @lod { distances: [20, 40, 80] }
+    }
+  }
+
+  // AI Guide
+  object "AIGuide" {
+    @semantic_ref("ai-guide")
+    position: [0, 0, -5]
+    model: @asset("guide-avatar")
+    @animated(default: "idle")
+
+    @npc_behavior {
+      patrol_points: [[0, 0, -5], [50, 0, 0], [0, 0, 50]]
+      interaction_radius: 3
+      greeting: "Welcome to the Infinite Gallery! Would you like a guided tour?"
+    }
+
+    @clickable
+    on_click: {
+      if (!@state.tour_in_progress) {
+        start_guided_tour()
+      }
+    }
+  }
+
+  // Info Panel UI
+  spatial_group "ArtworkInfoPanel" {
+    position: [0, 3, 0]
+    visible: false
+    @billboard
+
+    object "PanelBackground" {
+      geometry: "plane"
+      scale: [2, 1.5, 1]
+      color: "#000000"
+      opacity: 0.8
+    }
+
+    object "TitleText" {
+      position: [0, 0.4, 0.01]
+      text: ""
+      font_size: 0.15
+      color: "#ffffff"
+    }
+
+    object "ArtistText" {
+      position: [0, 0.15, 0.01]
+      text: ""
+      font_size: 0.1
+      color: "#cccccc"
+    }
+
+    object "DescriptionText" {
+      position: [0, -0.15, 0.01]
+      text: ""
+      font_size: 0.06
+      color: "#aaaaaa"
+      max_width: 1.8
+    }
+
+    object "AudioGuideButton" {
+      @clickable
+      position: [0, -0.5, 0.01]
+      geometry: "box"
+      scale: [0.3, 0.1, 0.02]
+      color: "#4ecdc4"
+      text_overlay: "Play Audio Guide"
+
+      on_click: { toggle_audio_guide() }
+    }
+  }
+
+  // Visitor counter
+  object "VisitorCounter" {
+    position: [0, 4, -10]
+    @billboard
+    text: "Visitors: 0"
+    font_size: 0.2
+    color: "#888888"
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LOGIC
+  // ─────────────────────────────────────────────────────────────────────────────
+  logic {
+    function show_artwork_info(artwork) {
+      let metadata = artwork.artwork_metadata
+
+      @state.current_artwork_title = metadata.title
+      @state.current_artwork_artist = "${metadata.artist} (${metadata.year})"
+      @state.current_artwork_desc = metadata.description
+
+      ArtworkInfoPanel.position = artwork.position + [0, 1.5, 0.5]
+      ArtworkInfoPanel.visible = true
+
+      // Track visit
+      let visitor = @hololand.get_local_player()
+      if (visitor && !visitor.visited_artworks.includes(metadata.title)) {
+        visitor.visited_artworks.push(metadata.title)
+        emit("artwork:visited", { title: metadata.title, visitor: visitor.id })
+      }
+    }
+
+    function toggle_audio_guide() {
+      @state.audio_playing = !@state.audio_playing
+
+      if (@state.audio_playing) {
+        play_audio(@asset("audio-guide"), { spatial: false })
+      } else {
+        stop_audio(@asset("audio-guide"))
+      }
+    }
+
+    function start_guided_tour() {
+      @state.tour_in_progress = true
+      AIGuide.animation = "walking"
+
+      broadcast_message("The guided tour is starting!")
+
+      // Tour logic would continue with waypoints...
+    }
+
+    // Hololand runtime events
+    on_scene_load {
+      // Preload essential assets
+      @manifest.preload(["gallery-hall", "skybox-museum", "guide-avatar"])
+
+      // Connect to Hololand
+      @hololand.connect({
+        server: "wss://gallery.hololand.io",
+        world_id: "virtual-art-gallery"
+      })
+    }
+
+    on @hololand.player_joined(player) {
+      @state.visitor_count++
+      spawn_particles("welcome_sparkle", player.position)
+      notify("${player.display_name} has entered the gallery")
+    }
+
+    on @hololand.player_left(player) {
+      @state.visitor_count--
+    }
+
+    on @hololand.stream_message("chat", message) {
+      display_chat_bubble(message.sender, message.text)
+    }
+
+    // Hide info panel when not looking at art
+    on_tick(0.5) {
+      let looking_at_art = raycast_check("artwork-collection", 10)
+      if (!looking_at_art && ArtworkInfoPanel.visible) {
+        ArtworkInfoPanel.visible = false
+      }
+    }
+  }
+}

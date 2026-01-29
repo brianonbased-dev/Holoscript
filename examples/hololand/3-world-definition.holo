@@ -1,0 +1,333 @@
+// 3-world-definition.holo
+// Demonstrates Hololand World Definition Schema
+
+composition "Battle Arena" {
+  // World metadata
+  @world_metadata {
+    id: "battle-arena-001"
+    name: "Battle Arena"
+    display_name: "The Quantum Arena"
+    description: "A fast-paced multiplayer battle arena"
+    version: "1.0.0"
+    author: "HoloScript Team"
+    tags: ["pvp", "arena", "multiplayer", "action"]
+    platforms: ["web", "quest", "steamvr"]
+    age_rating: "teen"
+    category: "game"
+    max_users: 16
+  }
+
+  // World configuration
+  @world_config {
+    physics: {
+      engine: "rapier"
+      gravity: [0, -9.81, 0]
+      tick_rate: 60
+    }
+
+    rendering: {
+      target_fps: 72
+      shadows: true
+      shadow_quality: "high"
+      anti_aliasing: "fxaa"
+      bloom: true
+      ambient_occlusion: true
+    }
+
+    networking: {
+      tick_rate: 20
+      protocol: "websocket"
+      compression: "lz4"
+      prediction: true
+      interpolation_delay: 100
+    }
+
+    audio: {
+      spatial_audio: true
+      master_volume: 1.0
+      max_sources: 32
+    }
+
+    performance: {
+      max_draw_calls: 500
+      max_triangles: 1000000
+      max_networked_entities: 100
+    }
+  }
+
+  // Environment settings
+  environment {
+    @skybox {
+      type: "procedural"
+      turbidity: 10
+      rayleigh: 2
+      sun_position: [0.5, 0.8, 0.5]
+    }
+
+    @ambient_light {
+      color: "#ffffff"
+      intensity: 0.4
+      ground_color: "#444488"
+    }
+
+    @directional_light("sun") {
+      color: "#fffaf0"
+      intensity: 1.2
+      direction: [-0.5, -1, -0.5]
+      cast_shadows: true
+      shadow_map_size: 2048
+    }
+
+    @fog {
+      type: "exponential2"
+      color: "#8899cc"
+      density: 0.01
+    }
+  }
+
+  // World zones
+  @zones {
+    zone "safe-zone" {
+      name: "Spawn Safe Zone"
+      bounds: {
+        type: "sphere"
+        center: [0, 0, 0]
+        radius: 15
+      }
+      priority: 10
+      tags: ["safe", "spawn", "no-pvp"]
+
+      triggers: [
+        { type: "enter", action: "disable_pvp", filter: "player" },
+        { type: "exit", action: "enable_pvp", filter: "player" }
+      ]
+
+      audio: {
+        ambient_sounds: ["safe_zone_ambient.mp3"]
+        reverb_preset: "room"
+      }
+    }
+
+    zone "battle-zone" {
+      name: "Main Arena"
+      bounds: {
+        type: "box"
+        center: [0, 5, 0]
+        size: [100, 20, 100]
+      }
+      priority: 5
+      tags: ["pvp", "combat"]
+
+      triggers: [
+        { type: "enter", action: "start_combat_music", filter: "player" },
+        { type: "stay", action: "tick_combat", cooldown: 1.0, filter: "player" }
+      ]
+    }
+
+    zone "power-up-zone" {
+      name: "Power-Up Spawn"
+      bounds: {
+        type: "cylinder"
+        center: [25, 2, 0]
+        radius: 5
+        height: 4
+      }
+      priority: 8
+      tags: ["powerup"]
+
+      triggers: [
+        { type: "enter", action: "highlight_powerup", filter: "player" }
+      ]
+    }
+  }
+
+  // Spawn points
+  @spawn_points {
+    spawn "team-a-spawn-1" {
+      name: "Team A Primary"
+      position: [-40, 1, 0]
+      rotation: [0, 90, 0]
+      type: "default"
+      priority: 10
+      capacity: 4
+      tags: ["team-a", "primary"]
+    }
+
+    spawn "team-a-spawn-2" {
+      name: "Team A Secondary"
+      position: [-40, 1, 15]
+      rotation: [0, 90, 0]
+      type: "respawn"
+      priority: 5
+      capacity: 4
+      tags: ["team-a", "secondary"]
+    }
+
+    spawn "team-b-spawn-1" {
+      name: "Team B Primary"
+      position: [40, 1, 0]
+      rotation: [0, -90, 0]
+      type: "default"
+      priority: 10
+      capacity: 4
+      tags: ["team-b", "primary"]
+    }
+
+    spawn "team-b-spawn-2" {
+      name: "Team B Secondary"
+      position: [40, 1, -15]
+      rotation: [0, -90, 0]
+      type: "respawn"
+      priority: 5
+      capacity: 4
+      tags: ["team-b", "secondary"]
+    }
+  }
+
+  // Scene objects
+  @state {
+    match_started: false
+    time_remaining: 300
+    team_a_score: 0
+    team_b_score: 0
+  }
+
+  // Arena floor
+  object "ArenaFloor" {
+    @collidable
+    position: [0, 0, 0]
+    geometry: "box"
+    scale: [100, 0.5, 100]
+    material: {
+      type: "pbr"
+      color: "#444466"
+      metallic: 0.2
+      roughness: 0.8
+    }
+  }
+
+  // Central structure
+  object "CentralTower" {
+    @collidable
+    position: [0, 5, 0]
+    model: "arena/central_tower.glb"
+
+    @lod {
+      distances: [25, 50, 100]
+      models: [
+        "arena/central_tower_lod1.glb",
+        "arena/central_tower_lod2.glb",
+        "arena/central_tower_lod3.glb"
+      ]
+    }
+  }
+
+  // Power-up pedestals
+  template "PowerUpPedestal" {
+    @collidable
+    @glowing(intensity: 0.5, color: "#ffaa00")
+    geometry: "cylinder"
+    scale: [1, 0.3, 1]
+    material: { emissive: true, emissive_intensity: 0.3 }
+  }
+
+  object "PowerUp1" using "PowerUpPedestal" {
+    position: [25, 0.15, 0]
+    on_player_enter: { spawn_powerup("health", this.position) }
+  }
+
+  object "PowerUp2" using "PowerUpPedestal" {
+    position: [-25, 0.15, 0]
+    on_player_enter: { spawn_powerup("speed", this.position) }
+  }
+
+  object "PowerUp3" using "PowerUpPedestal" {
+    position: [0, 0.15, 25]
+    on_player_enter: { spawn_powerup("damage", this.position) }
+  }
+
+  object "PowerUp4" using "PowerUpPedestal" {
+    position: [0, 0.15, -25]
+    on_player_enter: { spawn_powerup("shield", this.position) }
+  }
+
+  // Scoreboard
+  spatial_group "Scoreboard" {
+    position: [0, 15, 0]
+    @billboard(axis: "y")
+
+    object "TeamAScore" {
+      position: [-2, 0, 0]
+      text: "Team A: ${@state.team_a_score}"
+      font_size: 1.0
+      color: "#ff6b6b"
+    }
+
+    object "TeamBScore" {
+      position: [2, 0, 0]
+      text: "Team B: ${@state.team_b_score}"
+      font_size: 1.0
+      color: "#4ecdc4"
+    }
+
+    object "Timer" {
+      position: [0, -1.5, 0]
+      text: format_time(@state.time_remaining)
+      font_size: 0.8
+      color: "#ffffff"
+    }
+  }
+
+  logic {
+    function format_time(seconds) {
+      let mins = floor(seconds / 60)
+      let secs = seconds % 60
+      return "${mins}:${secs < 10 ? '0' : ''}${secs}"
+    }
+
+    function spawn_powerup(type, position) {
+      if (!@state.match_started) return
+
+      let powerup = spawn "PowerUpItem" at [position.x, position.y + 1, position.z]
+      powerup.type = type
+      powerup.color = get_powerup_color(type)
+    }
+
+    function get_powerup_color(type) {
+      match type {
+        "health" => "#ff6b6b"
+        "speed" => "#4ecdc4"
+        "damage" => "#ff00ff"
+        "shield" => "#00ffff"
+        _ => "#ffffff"
+      }
+    }
+
+    // Match timer
+    on_tick(1.0) {
+      if (@state.match_started && @state.time_remaining > 0) {
+        @state.time_remaining -= 1
+      }
+
+      if (@state.time_remaining <= 0 && @state.match_started) {
+        end_match()
+      }
+    }
+
+    function end_match() {
+      @state.match_started = false
+      let winner = @state.team_a_score > @state.team_b_score ? "Team A" : "Team B"
+      broadcast_message("Match Over! ${winner} wins!")
+      play_sound("match_end.wav")
+    }
+
+    on @hololand.connection("connected") {
+      notify("Connected to Hololand server")
+    }
+
+    on @hololand.world_joined(world_id) {
+      notify("Joined world: ${world_id}")
+      @state.match_started = true
+    }
+  }
+}

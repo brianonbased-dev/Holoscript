@@ -32,9 +32,10 @@
   },
   "dependencies": {
     "@holoscript/core": "^2.0.0",
+    "@holoscript/sdk": "workspace:^",
     "@types/adm-zip": "^0.5.7",
     "adm-zip": "^0.5.16",
-    "@holoscript/sdk": "workspace:^"
+    "chokidar": "^3.5.3"
   },
   "devDependencies": {
     "tsup": "^8.0.1",

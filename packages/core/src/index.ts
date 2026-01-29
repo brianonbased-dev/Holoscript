@@ -42,11 +42,26 @@ export * from './constants';
 export { HoloScriptParser } from './HoloScriptParser';
 export { HoloScript2DParser } from './HoloScript2DParser';
 // Editor & Tools
-export * from './HoloScriptValidator';
+export { HoloScriptValidator, type ValidationError } from './HoloScriptValidator';
 export * from './HoloScriptCodeParser';
 
 // HoloScript+ Parser (NEW)
 export { HoloScriptPlusParser, createParser, parse as parseHoloScriptPlus } from './parser/HoloScriptPlusParser';
+
+// Rich Error System (NEW - Enhanced error messages with codes, context, suggestions)
+export {
+  type RichParseError,
+  HSPLUS_ERROR_CODES,
+  createRichError,
+  createTraitError,
+  createKeywordError,
+  findSimilarTrait,
+  findSimilarKeyword,
+  getSourceContext,
+  formatRichError,
+  formatRichErrors,
+  getErrorCodeDocumentation,
+} from './parser/RichErrors';
 
 // .holo Composition Parser (NEW - Scene-centric declarative format)
 export { HoloCompositionParser, parseHolo, parseHoloStrict } from './parser/HoloCompositionParser';
@@ -1114,16 +1129,54 @@ export {
   AnthropicAdapter,
   OllamaAdapter,
   LMStudioAdapter,
+  GeminiAdapter,
+  XAIAdapter,
+  TogetherAdapter,
+  FireworksAdapter,
+  NVIDIAAdapter,
+
+  // Semantic Search
+  SemanticSearchService,
+  type SearchResult,
 
   // Config types
   type OpenAIAdapterConfig,
   type AnthropicAdapterConfig,
   type OllamaAdapterConfig,
   type LMStudioAdapterConfig,
+  type GeminiAdapterConfig,
+  type XAIAdapterConfig,
+  type TogetherAdapterConfig,
+  type FireworksAdapterConfig,
+  type NVIDIAAdapterConfig,
 
   // Factory functions
   useOpenAI,
   useAnthropic,
   useOllama,
   useLMStudio,
+  useGemini,
+  useXAI,
+  useGrok,
+  useTogether,
+  useFireworks,
+  useNVIDIA,
 } from './ai';
+
+// =============================================================================
+// Asset System (Hololand Integration)
+// =============================================================================
+
+export * from './assets';
+
+// =============================================================================
+// Semantic Annotation System (Hololand Integration)
+// =============================================================================
+
+export * from './semantics';
+
+// =============================================================================
+// Hololand Runtime Integration
+// =============================================================================
+
+export * from './hololand';

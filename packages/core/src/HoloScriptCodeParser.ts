@@ -784,7 +784,7 @@ export class HoloScriptCodeParser {
     return {
       type: 'for-loop',
       init: init.trim(),
-      condition: condition.trim(),
+      condition: this.parseConditionExpression(condition.trim()),
       update: update.trim(),
       body,
       position: { x: 0, y: 0, z: 0 },
@@ -824,7 +824,7 @@ export class HoloScriptCodeParser {
 
     return {
       type: 'while-loop',
-      condition: condition.trim(),
+      condition: this.parseConditionExpression(condition.trim()),
       body: [],
       position: { x: 0, y: 0, z: 0 },
     };
@@ -1452,7 +1452,7 @@ export class HoloScriptCodeParser {
 
     return {
       type: 'gate',
-      condition: condition.trim(),
+      condition: this.parseConditionExpression(condition.trim()),
       truePath: truePath,
       falsePath: falsePath,
       position: { x: 0, y: 0, z: 0 },
@@ -1983,6 +1983,28 @@ export class HoloScriptCodeParser {
       expression: 'openChat()',
       position: { x: 0, y: 0, z: 0 },
     } as ASTNode;
+  }
+
+  /**
+   * Parse a condition string into a structured TypeGuardExpression if applicable,
+   * otherwise returns the string as-is.
+   */
+  private parseConditionExpression(condition: string): string | any {
+    // Check for 'subject is "Type"' pattern
+    const isPattern = /^([a-zA-Z_][a-zA-Z0-9_]*)\s+is\s+["']([^"']+)["']$/;
+    const match = condition.match(isPattern);
+    
+    if (match) {
+      return {
+        type: 'type-guard',
+        subject: match[1],
+        guardType: match[2],
+        line: 0, // Simplified for now
+        column: 0,
+      };
+    }
+    
+    return condition;
   }
 
   private skipNewlines(): void {

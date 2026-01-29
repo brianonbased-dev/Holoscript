@@ -1,21 +1,25 @@
-# VR Traits Reference
-
-Complete reference for all 55 built-in VR traits.
-
 ## Quick Reference
 
-### By Category
+### By Domain (165+ Traits)
 
-| Category | Traits |
+| Domain | Traits |
 |----------|--------|
-| **Interaction** | `@grabbable` `@throwable` `@holdable` `@clickable` `@hoverable` `@draggable` `@haptic` |
-| **Physics** | `@collidable` `@physics` `@rigid` `@kinematic` `@trigger` `@gravity` |
-| **Visual** | `@glowing` `@emissive` `@transparent` `@reflective` `@animated` `@billboard` |
-| **Networking** | `@networked` `@synced` `@persistent` `@owned` `@host_only` |
-| **Behavior** | `@stackable` `@attachable` `@equippable` `@consumable` `@destructible` |
-| **Spatial** | `@anchor` `@tracked` `@world_locked` `@hand_tracked` `@eye_tracked` `@seated` |
-| **Audio** | `@spatial_audio` `@ambient` `@voice_activated` |
-| **State** | `@state` `@reactive` `@observable` `@computed` |
+| **Core Interaction** | `@grabbable` `@throwable` `@pointable` `@hoverable` `@scalable` `@rotatable` `@stackable` `@snappable` `@breakable` `@haptic` `@stretchable` `@moldable` `@interactive` `@clickable` |
+| **Humanoid/Avatar** | `@skeleton` `@body` `@face` `@expressive` `@hair` `@clothing` `@hands` `@character_voice` `@locomotion` `@poseable` `@morph` `@avatar_embodiment` `@spectator` `@role` |
+| **Environment** | `@plane_detection` `@mesh_detection` `@anchor` `@persistent_anchor` `@shared_anchor` `@geospatial` `@occlusion` `@light_estimation` `@geospatial_anchor` `@terrain_anchor` `@rooftop_anchor` `@vps` `@poi` `@world_locked` |
+| **Input Modality** | `@eye_tracking` `@hand_tracking` `@controller` `@spatial_accessory` `@body_tracking` `@face_tracking` |
+| **Accessibility** | `@accessible` `@alt_text` `@spatial_audio_cue` `@sonification` `@haptic_cue` `@magnifiable` `@high_contrast` `@motion_reduced` `@subtitle` `@screen_reader` |
+| **Volumetric** | `@gaussian_splat` `@nerf` `@volumetric_video` `@point_cloud` `@photogrammetry` |
+| **WebGPU Compute** | `@compute` `@gpu_particle` `@gpu_physics` `@gpu_buffer` |
+| **Digital Twin & IoT** | `@sensor` `@digital_twin` `@data_binding` `@alert` `@heatmap_3d` |
+| **Auto-Agents** | `@behavior_tree` `@goal_oriented` `@llm_agent` `@memory` `@perception` `@emotion` `@dialogue` `@faction` `@patrol` `@npc` `@dialog` |
+| **Spatial Audio** | `@ambisonics` `@hrtf` `@reverb_zone` `@audio_occlusion` `@audio_portal` `@audio_material` `@head_tracked_audio` `@spatial_audio` `@ambient` `@voice_activated` |
+| **Interoperability** | `@usd` `@gltf` `@fbx` `@material_x` `@scene_graph` `@portable` |
+| **Web3 & Ownership** | `@nft` `@token_gated` `@wallet` `@marketplace` |
+| **Physics** | `@cloth` `@fluid` `@soft_body` `@rope` `@chain` `@wind` `@buoyancy` `@destruction` `@physics` `@collidable` `@rigidbody` `@joint` `@trigger` |
+| **State & Logic** | `@state` `@reactive` `@observable` `@computed` `@synced` `@persistent` `@owned` `@host_only` |
+| **Visual Effects** | `@animation` `@timeline` `@choreography` `@particle` `@transition` `@filter` `@trail` `@glowing` `@emissive` `@transparent` `@reflective` `@animated` `@billboard` `@rotating` `@lod` |
+| **Behavioral** | `@equippable` `@consumable` `@proactive` `@narrator` |
 
 ---
 
@@ -307,6 +311,79 @@ orb label {
   @billboard(lock_y: true)  // Only rotate on Y axis
 }
 ```
+
+---
+
+### @rotating
+
+Continuous rotation animation.
+
+```hsplus
+orb spinner {
+  @rotating
+  @rotating(speed: 45, axis: "y")
+  @rotating(speed: 90, axis: [1, 0, 1])  // Custom axis
+}
+```
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `speed` | number | `30` | Rotation speed (degrees/second) |
+| `axis` | string/array | `"y"` | Rotation axis: "x", "y", "z", or [x,y,z] |
+| `clockwise` | boolean | `true` | Rotation direction |
+| `paused` | boolean | `false` | Start paused |
+
+**Events:** `on_rotation_start`, `on_rotation_pause`, `on_rotation_cycle`
+
+---
+
+### @interactive
+
+General interactivity marker (enables all input modes).
+
+```hsplus
+orb button {
+  @interactive
+  @interactive(modes: ["click", "hover", "grab"])
+  @interactive(cursor: "pointer", highlight: true)
+}
+```
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `modes` | array | `["click", "hover"]` | Enabled interaction modes |
+| `cursor` | string | `"default"` | Cursor style on hover |
+| `highlight` | boolean | `true` | Highlight on interaction |
+| `sound` | string | `null` | Interaction sound effect |
+
+**Events:** `on_interact`, `on_focus`, `on_blur`
+
+---
+
+### @lod
+
+Level of Detail switching for performance optimization.
+
+```hsplus
+orb complex_model {
+  @lod
+  @lod(distances: [10, 30, 100])
+  @lod(levels: ["high.glb", "medium.glb", "low.glb"])
+}
+```
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `distances` | array | `[10, 25, 50]` | Switch distances in meters |
+| `levels` | array | `null` | Model files for each LOD |
+| `fade` | boolean | `true` | Fade between LOD levels |
+| `fade_duration` | number | `200` | Fade duration in ms |
+| `bias` | number | `0` | Distance bias adjustment |
+
+**Events:** `on_lod_change`
 
 ---
 
@@ -713,3 +790,52 @@ orb stats {
   @computed power = attack * 2 + defense
 }
 ```
+
+---
+
+## Autonomous Agent Traits
+
+### @llm_agent
+
+LLM-powered decision-making with bounded autonomy.
+
+```hsplus
+npc#assistant @llm_agent(model: "gemini-1.5-pro", context_window: 10) {
+  system_prompt: "You are a helpful museum guide."
+  @on_llm_response: (text) -> { speak(text) }
+}
+```
+
+### @behavior_tree
+
+Declarative behavior tree for complex NPC logic.
+
+```hsplus
+npc#guard @behavior_tree {
+  root: {
+    type: "selector",
+    children: [
+      { type: "action", action: "attack", condition: "player_visible" },
+      { type: "action", action: "patrol" }
+    ]
+  }
+}
+```
+
+---
+
+## High-Performance Compute
+
+### @compute
+
+WebGPU-accelerated compute shaders.
+
+```hsplus
+mesh#simulation @compute(shader_source: "fluid.wgsl", workgroup_size: [16, 16, 1]) {
+  @on_compute_complete: () -> { update_mesh() }
+}
+```
+
+---
+
+*Note: This is a living document. For a full list of all 165+ traits, see the [VRTraitSystem.ts](file:///c:/Users/josep/Documents/GitHub/HoloScript/packages/core/src/traits/VRTraitSystem.ts).*

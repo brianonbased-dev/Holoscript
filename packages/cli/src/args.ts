@@ -3,7 +3,7 @@
  */
 
 export interface CLIOptions {
-  command: 'parse' | 'validate' | 'run' | 'ast' | 'repl' | 'watch' | 'compile' | 'add' | 'remove' | 'list' | 'traits' | 'suggest' | 'generate' | 'templates' | 'pack' | 'unpack' | 'inspect' | 'help' | 'version';
+  command: 'parse' | 'validate' | 'run' | 'ast' | 'repl' | 'watch' | 'compile' | 'build' | 'add' | 'remove' | 'list' | 'traits' | 'suggest' | 'generate' | 'templates' | 'pack' | 'unpack' | 'inspect' | 'help' | 'version';
   input?: string;
   output?: string;
   verbose: boolean;
@@ -16,6 +16,7 @@ export interface CLIOptions {
   description?: string;
   brittneyUrl?: string;
   target?: string;
+  watch: boolean;
 }
 
 const DEFAULT_OPTIONS: CLIOptions = {
@@ -28,6 +29,7 @@ const DEFAULT_OPTIONS: CLIOptions = {
   packages: [],
   dev: false,
   brittneyUrl: process.env.BRITTNEY_SERVICE_URL,
+  watch: false,
 };
 
 export function parseArgs(args: string[]): CLIOptions {
@@ -39,7 +41,7 @@ export function parseArgs(args: string[]): CLIOptions {
 
     // Commands
     if (!arg.startsWith('-')) {
-      if (['parse', 'validate', 'run', 'ast', 'repl', 'watch', 'compile', 'add', 'remove', 'list', 'traits', 'suggest', 'generate', 'templates', 'pack', 'unpack', 'inspect', 'help', 'version'].includes(arg)) {
+      if (['parse', 'validate', 'run', 'ast', 'repl', 'watch', 'compile', 'build', 'add', 'remove', 'list', 'traits', 'suggest', 'generate', 'templates', 'pack', 'unpack', 'inspect', 'help', 'version'].includes(arg)) {
         options.command = arg as CLIOptions['command'];
       } else if (['add', 'remove'].includes(options.command)) {
         // Collect package names for add/remove commands
@@ -96,6 +98,10 @@ export function parseArgs(args: string[]): CLIOptions {
       case '--target':
         options.target = args[++i];
         break;
+      case '-w':
+      case '--watch':
+        options.watch = true;
+        break;
     }
     i++;
   }
@@ -113,6 +119,8 @@ Usage: holoscript <command> [options] [input]
   parse <file>      Parse a HoloScript file and validate syntax
   run <file>        Execute a HoloScript file
   compile <file>    Compile to target platform (threejs, unity, vrchat)
+  build <input>     Unified build/pack command (detects file vs dir)
+                    Use -w or --watch for continuous build
   ast <file>        Output the AST as JSON
   repl              Start interactive REPL mode
   watch <file>      Watch file and re-execute on changes
@@ -141,6 +149,7 @@ Usage: holoscript <command> [options] [input]
   --show-ast          Show AST during REPL execution
   -D, --dev           Install as dev dependency (for add command)
   --brittney-url      Brittney AI service URL (optional, enhances generation)
+  -w, --watch         Enable watch mode for continuous execution/build
 
 \x1b[1mExamples:\x1b[0m
   holoscript parse world.hs
@@ -150,6 +159,9 @@ Usage: holoscript <command> [options] [input]
   holoscript ast world.hs -o ast.json
   holoscript repl
   holoscript watch world.hs
+  
+  holoscript build world.holo --target threejs
+  holoscript build components/glowing_orb/
 
   \x1b[2m# Traits & Generation\x1b[0m
   holoscript traits                    # List all 49 VR traits

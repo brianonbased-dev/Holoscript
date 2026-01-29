@@ -729,11 +729,30 @@ export function formatAllTraits(verbose: boolean = false, json: boolean = false)
 /**
  * Suggest traits based on object description
  */
-export function suggestTraits(description: string): TraitInfo[] {
+export async function suggestTraits(description: string): Promise<TraitInfo[]> {
   const desc = description.toLowerCase();
   const suggested: TraitInfo[] = [];
+
+  // Try AI-assisted search if adapter available
+  const { getDefaultAIAdapter } = await import('@holoscript/core');
+  const adapter = getDefaultAIAdapter();
   
-  // Keyword matching
+  if (adapter && adapter.getEmbeddings) {
+    try {
+      const { SemanticSearchService } = await import('@holoscript/core');
+      const traitList = Object.values(TRAITS);
+      const searchService = new SemanticSearchService(adapter, traitList);
+      
+      await searchService.initialize();
+      const aiResults = await searchService.search(description, 5);
+      
+      return aiResults.map(r => r.item);
+    } catch (e) {
+      console.warn(`\x1b[2m[AI Search Failed: ${(e as Error).message}. Falling back to keywords...]\x1b[0m`);
+    }
+  }
+  
+  // Keyword matching (Fallback)
   const keywords: Record<string, string[]> = {
     grabbable: ['grab', 'pick up', 'hold', 'carry', 'interactive', 'hand'],
     throwable: ['throw', 'toss', 'ball', 'projectile'],

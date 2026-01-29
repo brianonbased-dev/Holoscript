@@ -1,3 +1,66 @@
+## [2.1.1] - 2026-01-28
+
+### 🔧 Parser Enhancements
+
+Major HoloScript+ parser improvements for semantic scene descriptions:
+
+### Added
+- **16 Structural Directives** - Scene-level metadata and configuration
+  - `@manifest` - Scene manifest with title, version, author
+  - `@semantic` - Semantic description blocks
+  - `@world_metadata` - World-level settings (theme, mood, time_of_day)
+  - `@zones` - Named spatial zones with purposes
+  - `@spawn_points` - Player spawn locations
+  - `@skybox` - Skybox configuration (preset, time, clouds)
+  - `@ambient_light` - Global ambient lighting
+  - `@directional_light` - Sun/moon directional lights
+  - `@fog` - Volumetric fog settings
+  - `@post_processing` - Post-process effects
+  - `@audio_zones` - 3D audio regions
+  - `@navigation` - NavMesh configuration
+  - `@physics_world` - Physics simulation settings
+  - `@network_config` - Multiplayer networking
+  - `@performance` - LOD and culling hints
+  - `@accessibility` - A11y configuration
+
+- **8 Simple Traits** - Concise object behavior modifiers
+  - `@animated` - Mark objects for animation
+  - `@billboard` - Always face camera
+  - `@rotating` - Continuous rotation
+  - `@collidable` - Physics collision
+  - `@clickable` - Click interaction
+  - `@glowing` - Emissive glow effect
+  - `@interactive` - General interactivity
+  - `@lod` - Level of detail switching
+
+- **Logic Block Parsing** - Embedded scripting support
+  - Function definitions with parameters
+  - `on_tick` handlers for frame updates
+  - `on_scene_load` initialization handlers
+  - Event handlers for interactions
+
+- **Template System** - Reusable object definitions
+  - Named template blocks (`template "Name" { ... }`)
+  - `using` syntax for template instantiation
+  - Property overrides on instantiation
+
+- **Environment Block** - Scene-wide lighting and atmosphere
+  - Lighting directives within environment blocks
+  - Skybox and fog configuration
+  - Ambient and directional light settings
+
+### Fixed
+- Child node parsing for `logic`, `template`, `environment` blocks
+  - Blocks now correctly parsed as children instead of properties
+  - Fixed disambiguation between `logic: value` and `logic { ... }`
+
+### Changed
+- Parser now supports 687 tests (up from 679)
+- Removed 3 outdated todo tests (features implemented in new parser)
+- Unskipped 4 `parseObjectLiteral` tests
+
+---
+
 ## [1.3.0] - 2026-01-26 (VS Code Extension)
 
 ### 🎓 Onboarding & Walkthrough

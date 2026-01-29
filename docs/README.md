@@ -26,11 +26,14 @@
 - [Phase 6 UI Components](guides/PHASE_6_UI_COMPONENTS_GUIDE.md) - UI trait system
 
 ### 🔗 Integration
+- [Hololand Integration Guide](integration/HOLOLAND_INTEGRATION_GUIDE.md) - Complete integration guide
 - [Hololand Audit](integration/HOLOLAND_AUDIT.md) - Hololand codebase review
 - [Hololand Graphics](integration/HOLOLAND_GRAPHICS_INTEGRATION.md) - Graphics integration
 - [VRChat/Unity Guide](integration/VRCHAT_UNITY_GUIDE.md) - Unity platform support
 
 ### 🔧 API Reference
+- [Traits Reference](api/traits.md) - VR trait documentation (165+ traits)
+- [Directives Reference](api/directives.md) - Structural directives (16 directives)
 - [TypeDoc API](api/index.html) - Auto-generated API documentation
 
 ### 📊 Project Status

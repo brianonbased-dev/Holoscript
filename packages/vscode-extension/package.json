@@ -313,6 +313,42 @@
           }
         ]
       }
+    ],
+    "debuggers": [
+      {
+        "type": "holoscript-debug",
+        "label": "HoloScript Debug",
+        "program": "./node_modules/@holoscript/lsp/dist/debugServer.js",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "The absolute path to the .holo or .hs file to debug.",
+                "default": "${file}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "holoscript-debug",
+            "request": "launch",
+            "name": "Debug HoloScript",
+            "program": "${file}",
+            "stopOnEntry": true
+          }
+        ]
+      }
     ]
   },
   "scripts": {
@@ -335,6 +371,7 @@
   },
   "dependencies": {
     "@holoscript/sdk": "workspace:^",
+    "@holoscript/formatter": "workspace:*",
     "@types/adm-zip": "^0.5.7",
     "adm-zip": "^0.5.16",
     "vscode-languageclient": "^9.0.1"

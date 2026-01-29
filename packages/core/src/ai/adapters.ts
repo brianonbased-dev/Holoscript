@@ -212,6 +212,30 @@ export class OpenAIAdapter implements AIAdapter {
     const data = await response.json();
     return data.choices[0].message.content;
   }
+
+  async getEmbeddings(text: string | string[]): Promise<number[][]> {
+    const baseUrl = this.config.baseUrl || 'https://api.openai.com/v1';
+    const inputs = Array.isArray(text) ? text : [text];
+
+    const response = await fetch(baseUrl + '/embeddings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + this.config.apiKey,
+      },
+      body: JSON.stringify({
+        model: 'text-embedding-3-small',
+        input: inputs,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('OpenAI Embeddings API error: ' + response.statusText);
+    }
+
+    const data = await response.json();
+    return data.data.map((item: any) => item.embedding);
+  }
 }
 
 // ============================================================================
@@ -437,6 +461,31 @@ export class OllamaAdapter implements AIAdapter {
     const data = await response.json();
     return data.response;
   }
+
+  async getEmbeddings(text: string | string[]): Promise<number[][]> {
+    const inputs = Array.isArray(text) ? text : [text];
+    const results: number[][] = [];
+
+    for (const input of inputs) {
+      const response = await fetch(this.baseUrl + '/api/embeddings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: this.model,
+          prompt: input,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Ollama Embeddings API error: ' + response.statusText);
+      }
+
+      const data = await response.json();
+      results.push(data.embedding);
+    }
+
+    return results;
+  }
 }
 
 // ============================================================================
@@ -535,6 +584,643 @@ export function useOllama(config: OllamaAdapterConfig = {}): OllamaAdapter {
  */
 export function useLMStudio(config: LMStudioAdapterConfig = {}): LMStudioAdapter {
   const adapter = new LMStudioAdapter(config);
+  registerAIAdapter(adapter, true);
+  return adapter;
+}
+
+// ============================================================================
+// Google Gemini Adapter
+// ============================================================================
+
+export interface GeminiAdapterConfig {
+  apiKey: string;
+  model?: string;
+}
+
+export class GeminiAdapter implements AIAdapter {
+  readonly id = 'gemini';
+  readonly name = 'Google Gemini';
+
+  private config: GeminiAdapterConfig;
+  private model: string;
+
+  constructor(config: GeminiAdapterConfig) {
+    this.config = config;
+    this.model = config.model || 'gemini-1.5-flash';
+  }
+
+  isReady(): boolean {
+    return !!this.config.apiKey;
+  }
+
+  async generateHoloScript(
+    prompt: string,
+    options?: GenerateOptions
+  ): Promise<GenerateResult> {
+    const response = await this.callAPI(
+      'Create a HoloScript scene: ' + prompt,
+      options
+    );
+
+    return {
+      holoScript: this.extractCode(response),
+      confidence: 0.85,
+    };
+  }
+
+  async explainHoloScript(holoScript: string): Promise<ExplainResult> {
+    const response = await this.callAPI(
+      'Explain this HoloScript code clearly:\n\n' + holoScript
+    );
+    return { explanation: response };
+  }
+
+  async optimizeHoloScript(
+    holoScript: string,
+    target: 'mobile' | 'desktop' | 'vr' | 'ar'
+  ): Promise<OptimizeResult> {
+    const response = await this.callAPI(
+      'Optimize this HoloScript for ' + target + '. Return only the optimized code:\n\n' + holoScript
+    );
+    return {
+      holoScript: this.extractCode(response),
+      improvements: ['Optimized for ' + target],
+    };
+  }
+
+  async fixHoloScript(holoScript: string, errors: string[]): Promise<FixResult> {
+    const response = await this.callAPI(
+      'Fix these errors in the HoloScript:\nErrors: ' + errors.join(', ') + '\n\nCode:\n' + holoScript
+    );
+    return {
+      holoScript: this.extractCode(response),
+      fixes: errors.map((e) => ({ line: 0, issue: e, fix: 'auto-fixed' })),
+    };
+  }
+
+  async chat(
+    message: string,
+    holoScript?: string,
+    _history?: Array<{ role: 'user' | 'assistant'; content: string }>
+  ): Promise<string> {
+    const fullMessage = holoScript
+      ? 'Context:\n' + holoScript + '\n\nQuestion: ' + message
+      : message;
+    return this.callAPI(fullMessage);
+  }
+
+  private extractCode(response: string): string {
+    const match = response.match(/```(?:holoscript|holo)?\n([\s\S]*?)```/);
+    return match ? match[1].trim() : response.trim();
+  }
+
+  private async callAPI(
+    message: string,
+    _options?: GenerateOptions
+  ): Promise<string> {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.config.apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: HOLOSCRIPT_SYSTEM_PROMPT },
+              { text: message }
+            ]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 4096,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Gemini API error: ' + response.statusText);
+    }
+
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+  }
+}
+
+// ============================================================================
+// XAI (Grok) Adapter
+// ============================================================================
+
+export interface XAIAdapterConfig {
+  apiKey: string;
+  model?: string;
+}
+
+export class XAIAdapter implements AIAdapter {
+  readonly id = 'xai';
+  readonly name = 'xAI Grok';
+
+  private config: XAIAdapterConfig;
+  private model: string;
+
+  constructor(config: XAIAdapterConfig) {
+    this.config = config;
+    this.model = config.model || 'grok-beta';
+  }
+
+  isReady(): boolean {
+    return !!this.config.apiKey;
+  }
+
+  async generateHoloScript(
+    prompt: string,
+    options?: GenerateOptions
+  ): Promise<GenerateResult> {
+    const response = await this.callAPI(
+      'Create a HoloScript scene: ' + prompt,
+      options
+    );
+
+    return {
+      holoScript: this.extractCode(response),
+      confidence: 0.85,
+    };
+  }
+
+  async explainHoloScript(holoScript: string): Promise<ExplainResult> {
+    const response = await this.callAPI(
+      'Explain this HoloScript code clearly:\n\n' + holoScript
+    );
+    return { explanation: response };
+  }
+
+  async optimizeHoloScript(
+    holoScript: string,
+    target: 'mobile' | 'desktop' | 'vr' | 'ar'
+  ): Promise<OptimizeResult> {
+    const response = await this.callAPI(
+      'Optimize this HoloScript for ' + target + '. Return only the optimized code:\n\n' + holoScript
+    );
+    return {
+      holoScript: this.extractCode(response),
+      improvements: ['Optimized for ' + target],
+    };
+  }
+
+  async fixHoloScript(holoScript: string, errors: string[]): Promise<FixResult> {
+    const response = await this.callAPI(
+      'Fix these errors in the HoloScript:\nErrors: ' + errors.join(', ') + '\n\nCode:\n' + holoScript
+    );
+    return {
+      holoScript: this.extractCode(response),
+      fixes: errors.map((e) => ({ line: 0, issue: e, fix: 'auto-fixed' })),
+    };
+  }
+
+  async chat(
+    message: string,
+    holoScript?: string,
+    _history?: Array<{ role: 'user' | 'assistant'; content: string }>
+  ): Promise<string> {
+    const fullMessage = holoScript
+      ? 'Context:\n' + holoScript + '\n\nQuestion: ' + message
+      : message;
+    return this.callAPI(fullMessage);
+  }
+
+  private extractCode(response: string): string {
+    const match = response.match(/```(?:holoscript|holo)?\n([\s\S]*?)```/);
+    return match ? match[1].trim() : response.trim();
+  }
+
+  private async callAPI(
+    message: string,
+    _options?: GenerateOptions
+  ): Promise<string> {
+    const response = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + this.config.apiKey,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: HOLOSCRIPT_SYSTEM_PROMPT },
+          { role: 'user', content: message },
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('xAI API error: ' + response.statusText);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ============================================================================
+// Together AI Adapter
+// ============================================================================
+
+export interface TogetherAdapterConfig {
+  apiKey: string;
+  model?: string;
+}
+
+export class TogetherAdapter implements AIAdapter {
+  readonly id = 'together';
+  readonly name = 'Together AI';
+
+  private config: TogetherAdapterConfig;
+  private model: string;
+
+  constructor(config: TogetherAdapterConfig) {
+    this.config = config;
+    this.model = config.model || 'meta-llama/Llama-3.3-70B-Instruct-Turbo';
+  }
+
+  isReady(): boolean {
+    return !!this.config.apiKey;
+  }
+
+  async generateHoloScript(
+    prompt: string,
+    options?: GenerateOptions
+  ): Promise<GenerateResult> {
+    const response = await this.callAPI(
+      'Create a HoloScript scene: ' + prompt,
+      options
+    );
+
+    return {
+      holoScript: this.extractCode(response),
+      confidence: 0.80,
+    };
+  }
+
+  async explainHoloScript(holoScript: string): Promise<ExplainResult> {
+    const response = await this.callAPI(
+      'Explain this HoloScript code clearly:\n\n' + holoScript
+    );
+    return { explanation: response };
+  }
+
+  async optimizeHoloScript(
+    holoScript: string,
+    target: 'mobile' | 'desktop' | 'vr' | 'ar'
+  ): Promise<OptimizeResult> {
+    const response = await this.callAPI(
+      'Optimize this HoloScript for ' + target + '. Return only the optimized code:\n\n' + holoScript
+    );
+    return {
+      holoScript: this.extractCode(response),
+      improvements: ['Optimized for ' + target],
+    };
+  }
+
+  async fixHoloScript(holoScript: string, errors: string[]): Promise<FixResult> {
+    const response = await this.callAPI(
+      'Fix these errors in the HoloScript:\nErrors: ' + errors.join(', ') + '\n\nCode:\n' + holoScript
+    );
+    return {
+      holoScript: this.extractCode(response),
+      fixes: errors.map((e) => ({ line: 0, issue: e, fix: 'auto-fixed' })),
+    };
+  }
+
+  async chat(
+    message: string,
+    holoScript?: string,
+    _history?: Array<{ role: 'user' | 'assistant'; content: string }>
+  ): Promise<string> {
+    const fullMessage = holoScript
+      ? 'Context:\n' + holoScript + '\n\nQuestion: ' + message
+      : message;
+    return this.callAPI(fullMessage);
+  }
+
+  private extractCode(response: string): string {
+    const match = response.match(/```(?:holoscript|holo)?\n([\s\S]*?)```/);
+    return match ? match[1].trim() : response.trim();
+  }
+
+  private async callAPI(
+    message: string,
+    _options?: GenerateOptions
+  ): Promise<string> {
+    const response = await fetch('https://api.together.xyz/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + this.config.apiKey,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: HOLOSCRIPT_SYSTEM_PROMPT },
+          { role: 'user', content: message },
+        ],
+        temperature: 0.7,
+        max_tokens: 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Together AI API error: ' + response.statusText);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ============================================================================
+// Fireworks AI Adapter
+// ============================================================================
+
+export interface FireworksAdapterConfig {
+  apiKey: string;
+  model?: string;
+}
+
+export class FireworksAdapter implements AIAdapter {
+  readonly id = 'fireworks';
+  readonly name = 'Fireworks AI';
+
+  private config: FireworksAdapterConfig;
+  private model: string;
+
+  constructor(config: FireworksAdapterConfig) {
+    this.config = config;
+    this.model = config.model || 'accounts/fireworks/models/llama-v3p1-70b-instruct';
+  }
+
+  isReady(): boolean {
+    return !!this.config.apiKey;
+  }
+
+  async generateHoloScript(
+    prompt: string,
+    options?: GenerateOptions
+  ): Promise<GenerateResult> {
+    const response = await this.callAPI(
+      'Create a HoloScript scene: ' + prompt,
+      options
+    );
+
+    return {
+      holoScript: this.extractCode(response),
+      confidence: 0.80,
+    };
+  }
+
+  async explainHoloScript(holoScript: string): Promise<ExplainResult> {
+    const response = await this.callAPI(
+      'Explain this HoloScript code clearly:\n\n' + holoScript
+    );
+    return { explanation: response };
+  }
+
+  async optimizeHoloScript(
+    holoScript: string,
+    target: 'mobile' | 'desktop' | 'vr' | 'ar'
+  ): Promise<OptimizeResult> {
+    const response = await this.callAPI(
+      'Optimize this HoloScript for ' + target + '. Return only the optimized code:\n\n' + holoScript
+    );
+    return {
+      holoScript: this.extractCode(response),
+      improvements: ['Optimized for ' + target],
+    };
+  }
+
+  async fixHoloScript(holoScript: string, errors: string[]): Promise<FixResult> {
+    const response = await this.callAPI(
+      'Fix these errors in the HoloScript:\nErrors: ' + errors.join(', ') + '\n\nCode:\n' + holoScript
+    );
+    return {
+      holoScript: this.extractCode(response),
+      fixes: errors.map((e) => ({ line: 0, issue: e, fix: 'auto-fixed' })),
+    };
+  }
+
+  async chat(
+    message: string,
+    holoScript?: string,
+    _history?: Array<{ role: 'user' | 'assistant'; content: string }>
+  ): Promise<string> {
+    const fullMessage = holoScript
+      ? 'Context:\n' + holoScript + '\n\nQuestion: ' + message
+      : message;
+    return this.callAPI(fullMessage);
+  }
+
+  private extractCode(response: string): string {
+    const match = response.match(/```(?:holoscript|holo)?\n([\s\S]*?)```/);
+    return match ? match[1].trim() : response.trim();
+  }
+
+  private async callAPI(
+    message: string,
+    _options?: GenerateOptions
+  ): Promise<string> {
+    const response = await fetch('https://api.fireworks.ai/inference/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + this.config.apiKey,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: HOLOSCRIPT_SYSTEM_PROMPT },
+          { role: 'user', content: message },
+        ],
+        temperature: 0.7,
+        max_tokens: 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Fireworks AI API error: ' + response.statusText);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ============================================================================
+// NVIDIA NIM Adapter
+// ============================================================================
+
+export interface NVIDIAAdapterConfig {
+  apiKey: string;
+  model?: string;
+  baseUrl?: string;
+}
+
+export class NVIDIAAdapter implements AIAdapter {
+  readonly id = 'nvidia';
+  readonly name = 'NVIDIA NIM';
+
+  private config: NVIDIAAdapterConfig;
+  private model: string;
+  private baseUrl: string;
+
+  constructor(config: NVIDIAAdapterConfig) {
+    this.config = config;
+    this.model = config.model || 'meta/llama-3.1-70b-instruct';
+    this.baseUrl = config.baseUrl || 'https://integrate.api.nvidia.com/v1';
+  }
+
+  isReady(): boolean {
+    return !!this.config.apiKey;
+  }
+
+  async generateHoloScript(
+    prompt: string,
+    options?: GenerateOptions
+  ): Promise<GenerateResult> {
+    const response = await this.callAPI(
+      'Create a HoloScript scene: ' + prompt,
+      options
+    );
+
+    return {
+      holoScript: this.extractCode(response),
+      confidence: 0.85,
+    };
+  }
+
+  async explainHoloScript(holoScript: string): Promise<ExplainResult> {
+    const response = await this.callAPI(
+      'Explain this HoloScript code clearly:\n\n' + holoScript
+    );
+    return { explanation: response };
+  }
+
+  async optimizeHoloScript(
+    holoScript: string,
+    target: 'mobile' | 'desktop' | 'vr' | 'ar'
+  ): Promise<OptimizeResult> {
+    const response = await this.callAPI(
+      'Optimize this HoloScript for ' + target + '. Return only the optimized code:\n\n' + holoScript
+    );
+    return {
+      holoScript: this.extractCode(response),
+      improvements: ['Optimized for ' + target],
+    };
+  }
+
+  async fixHoloScript(holoScript: string, errors: string[]): Promise<FixResult> {
+    const response = await this.callAPI(
+      'Fix these errors in the HoloScript:\nErrors: ' + errors.join(', ') + '\n\nCode:\n' + holoScript
+    );
+    return {
+      holoScript: this.extractCode(response),
+      fixes: errors.map((e) => ({ line: 0, issue: e, fix: 'auto-fixed' })),
+    };
+  }
+
+  async chat(
+    message: string,
+    holoScript?: string,
+    _history?: Array<{ role: 'user' | 'assistant'; content: string }>
+  ): Promise<string> {
+    const fullMessage = holoScript
+      ? 'Context:\n' + holoScript + '\n\nQuestion: ' + message
+      : message;
+    return this.callAPI(fullMessage);
+  }
+
+  private extractCode(response: string): string {
+    const match = response.match(/```(?:holoscript|holo)?\n([\s\S]*?)```/);
+    return match ? match[1].trim() : response.trim();
+  }
+
+  private async callAPI(
+    message: string,
+    _options?: GenerateOptions
+  ): Promise<string> {
+    const response = await fetch(this.baseUrl + '/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + this.config.apiKey,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: HOLOSCRIPT_SYSTEM_PROMPT },
+          { role: 'user', content: message },
+        ],
+        temperature: 0.7,
+        max_tokens: 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('NVIDIA NIM API error: ' + response.statusText);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ============================================================================
+// Additional Factory Functions
+// ============================================================================
+
+/**
+ * Create and register a Gemini adapter
+ */
+export function useGemini(config: GeminiAdapterConfig): GeminiAdapter {
+  const adapter = new GeminiAdapter(config);
+  registerAIAdapter(adapter, true);
+  return adapter;
+}
+
+/**
+ * Create and register an xAI (Grok) adapter
+ */
+export function useXAI(config: XAIAdapterConfig): XAIAdapter {
+  const adapter = new XAIAdapter(config);
+  registerAIAdapter(adapter, true);
+  return adapter;
+}
+
+/** Alias for useXAI */
+export const useGrok = useXAI;
+
+/**
+ * Create and register a Together AI adapter
+ */
+export function useTogether(config: TogetherAdapterConfig): TogetherAdapter {
+  const adapter = new TogetherAdapter(config);
+  registerAIAdapter(adapter, true);
+  return adapter;
+}
+
+/**
+ * Create and register a Fireworks AI adapter
+ */
+export function useFireworks(config: FireworksAdapterConfig): FireworksAdapter {
+  const adapter = new FireworksAdapter(config);
+  registerAIAdapter(adapter, true);
+  return adapter;
+}
+
+/**
+ * Create and register an NVIDIA NIM adapter
+ */
+export function useNVIDIA(config: NVIDIAAdapterConfig): NVIDIAAdapter {
+  const adapter = new NVIDIAAdapter(config);
   registerAIAdapter(adapter, true);
   return adapter;
 }

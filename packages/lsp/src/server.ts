@@ -52,6 +52,9 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
   HoloScriptPlusParser,
   HoloScriptValidator,
+  getDefaultAIAdapter,
+  registerAIAdapter,
+  useGemini,
   type ASTProgram,
   type HSPlusASTNode as HSPlusNode,
   type HSPlusCompileResult,
@@ -59,6 +62,7 @@ import {
 
 import { getTraitDoc, formatTraitDocCompact, getAllTraitNames, TRAIT_DOCS } from './traitDocs';
 import { HoloScriptLinter, type LintDiagnostic, type Severity as LintSeverity } from '@holoscript/linter';
+import { SemanticCompletionProvider } from './SemanticCompletionProvider';
 
 // Create connection and document manager
 const connection = createConnection(ProposedFeatures.all);
@@ -68,6 +72,9 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 const parser = new HoloScriptPlusParser();
 const validator = new HoloScriptValidator();
 const linter = new HoloScriptLinter();
+
+// Semantic intelligence
+let semanticCompletion: SemanticCompletionProvider | null = null;
 
 // Cache for parsed documents
 const documentCache = new Map<string, {
@@ -85,13 +92,25 @@ const legend: SemanticTokensLegend = {
   tokenModifiers,
 };
 
-connection.onInitialize((params: InitializeParams): InitializeResult => {
+connection.onInitialize(async (params: InitializeParams): Promise<InitializeResult> => {
+  // Initialize AI if configured
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (apiKey) {
+    useGemini({ apiKey });
+    const adapter = getDefaultAIAdapter();
+    if (adapter) {
+      semanticCompletion = new SemanticCompletionProvider(adapter);
+      await semanticCompletion.initialize();
+      console.log('[LSP] Semantic intelligence initialized with Gemini');
+    }
+  }
+
   return {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
       completionProvider: {
         resolveProvider: true,
-        triggerCharacters: ['.', ':', '{', '[', '"', "'", ' '],
+        triggerCharacters: ['.', ':', '{', '[', '"', "'", ' ', '@'],
       },
       hoverProvider: true,
       definitionProvider: true,
@@ -214,7 +233,7 @@ async function validateDocument(document: TextDocument): Promise<void> {
 /**
  * Provide auto-completion items
  */
-connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] => {
+connection.onCompletion(async (params: TextDocumentPositionParams): Promise<CompletionItem[]> => {
   const document = documents.get(params.textDocument.uri);
   if (!document) return [];
 
@@ -263,6 +282,29 @@ connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] =
       { label: 'audio', kind: CompletionItemKind.Property, insertText: 'audio: {\n  src: "${1:sound.mp3}"\n  spatial: ${2:true}\n}', insertTextFormat: 2 },
       { label: 'animation', kind: CompletionItemKind.Property, insertText: 'animation: {\n  name: "${1:idle}"\n  loop: ${2:true}\n}', insertTextFormat: 2 },
     );
+  }
+
+  // Trait completions after @ symbol
+  if (linePrefix.endsWith('@') || linePrefix.match(/@\w*$/)) {
+    const traitNames = getAllTraitNames();
+    for (const traitName of traitNames) {
+      const doc = getTraitDoc(traitName.replace('@', ''));
+      items.push({
+        label: traitName,
+        kind: CompletionItemKind.Interface,
+        detail: doc?.name || 'Trait',
+        documentation: doc?.description,
+        insertText: traitName.substring(1),
+        sortText: `0_${traitName}`,
+      });
+    }
+
+    // AI Semantic Suggestions
+    if (semanticCompletion) {
+      const query = linePrefix.substring(linePrefix.lastIndexOf('@') + 1);
+      const aiItems = await semanticCompletion.getCompletions(query);
+      items.push(...aiItems);
+    }
   }
 
   // Add symbols from current document

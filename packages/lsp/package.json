@@ -29,6 +29,8 @@
   "dependencies": {
     "@holoscript/core": "workspace:*",
     "@holoscript/linter": "workspace:*",
+    "vscode-debugadapter": "^1.51.0",
+    "vscode-debugprotocol": "^1.51.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.11",
     "vscode-uri": "^3.0.8"

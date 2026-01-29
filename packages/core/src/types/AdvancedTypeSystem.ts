@@ -266,6 +266,20 @@ export class AdvancedTypeChecker {
     this.registerBuiltins();
   }
 
+  /**
+   * Infer type from value
+   */
+  public inferType(value: any): HoloScriptType {
+    return this.inference.inferType(value);
+  }
+
+  /**
+   * Check if from is assignable to to
+   */
+  public isAssignableTo(from: HoloScriptType, to: HoloScriptType): boolean {
+    return this.inference.isAssignableTo(from, to);
+  }
+
   private registerBuiltins(): void {
     this.types.set('Vector3', {
       kind: 'custom',
@@ -328,7 +342,10 @@ export class AdvancedTypeChecker {
     };
   }
 
-  private formatType(type: HoloScriptType): string {
+  /**
+   * Format type for display
+   */
+  public formatType(type: HoloScriptType): string {
     switch (type.kind) {
       case 'primitive':
         return (type as PrimitiveType).name;

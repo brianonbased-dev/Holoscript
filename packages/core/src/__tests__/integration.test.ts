@@ -310,15 +310,9 @@ describe('HoloScript Integration Tests', () => {
       expect(parseResult.success).toBe(true);
       expect(parseResult.ast[0].type).toBe('for-loop');
     });
-
-    it.todo('should parse while loops - needs parser enhancement');
-
-    it.todo('should parse forEach loops - needs parser enhancement');
   });
 
   describe('Module System', () => {
-    it.todo('should parse import statements - needs parser enhancement');
-
     it('should parse export statements', () => {
       const code = `
         export function helper() {

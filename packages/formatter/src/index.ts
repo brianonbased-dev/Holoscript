@@ -15,6 +15,11 @@
 export type BraceStyle = 'same-line' | 'next-line' | 'stroustrup';
 export type TrailingComma = 'none' | 'all' | 'multi-line';
 
+export interface Range {
+  startLine: number; // 0-based
+  endLine: number;   // 0-based, inclusive
+}
+
 export interface FormatterConfig {
   // Indentation
   indentSize: number;
@@ -130,6 +135,39 @@ export class HoloScriptFormatter {
       formatted,
       changed: formatted !== source,
       errors,
+    };
+  }
+
+  /**
+   * Format a specific range of lines
+   */
+  formatRange(source: string, range: Range, fileType: 'holo' | 'hsplus' = 'holo'): FormatResult {
+    // 1. Format entire source to calculate correct context
+    const fullResult = this.format(source, fileType);
+    
+    // 2. Extract the lines for the range
+    const sourceLines = source.split('\n');
+    const formattedLines = fullResult.formatted.split('\n');
+    
+    // Ensure range is valid
+    const start = Math.max(0, range.startLine);
+    const end = Math.min(formattedLines.length - 1, range.endLine);
+    
+    if (start > end) {
+       return { formatted: '', changed: false, errors: [] };
+    }
+
+    // 3. Construct result substring
+    // We strictly return the formatted content for the range lines
+    const resultLines = formattedLines.slice(start, end + 1);
+    const resultString = resultLines.join('\n');
+    
+    const originalSlice = sourceLines.slice(start, end + 1).join('\n');
+
+    return {
+      formatted: resultString,
+      changed: resultString !== originalSlice,
+      errors: fullResult.errors
     };
   }
 
@@ -303,6 +341,17 @@ export function check(source: string, fileType: 'holo' | 'hsplus' = 'holo'): boo
  */
 export function createFormatter(config: Partial<FormatterConfig> = {}): HoloScriptFormatter {
   return new HoloScriptFormatter(config);
+}
+
+// Config Loader integration
+import { ConfigLoader } from './ConfigLoader';
+
+/**
+ * Load formatter configuration for a specific file
+ */
+export function loadConfig(filePath: string): FormatterConfig {
+  const loader = new ConfigLoader();
+  return loader.loadConfig(filePath);
 }
 
 // Default export

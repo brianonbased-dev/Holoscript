@@ -16,7 +16,8 @@
 
 import { logger } from './logger';
 import { ExpressionEvaluator, createState } from './ReactiveState';
-import { eventBus } from './runtime/EventBus'; // Added
+import { eventBus } from './runtime/EventBus';
+import { stateMachineInterpreter } from './runtime/StateMachineInterpreter';
 import type {
   ASTNode,
   OrbNode,
@@ -383,6 +384,9 @@ export class HoloScriptRuntime {
         case 'state-declaration':
           result = await this.executeStateDeclaration(node as any);
           break;
+        case 'state-machine':
+          result = await this.executeStateMachine(node as StateMachineNode);
+          break;
         default:
           result = {
             success: false,
@@ -717,6 +721,18 @@ export class HoloScriptRuntime {
     // Apply directives if any
     if (node.directives) {
         this.applyDirectives(node);
+        
+        // Phase 13: Check for @logic with machine config
+        const logicDirective = node.directives.find(d => d.type === 'trait' && (d as any).name === 'logic');
+        if (logicDirective && (logicDirective as any).config && (logicDirective as any).config.machine) {
+           const machineName = (logicDirective as any).config.machine;
+           const machineDef = this.context.stateMachines.get(machineName);
+           if (machineDef) {
+              stateMachineInterpreter.createInstance(node.name, machineDef, orbData.properties);
+           } else {
+              logger.warn(`[StateMachine] Machine definition ${machineName} not found for orb ${node.name}`);
+           }
+        }
     }
 
     this.createParticleEffect(`${node.name}_creation`, adjustedPos, '#00ffff', 20);
@@ -849,6 +865,18 @@ export class HoloScriptRuntime {
       output: `Stream '${node.name}' processed ${Array.isArray(data) ? data.length : 1} item(s)`,
       hologram: node.hologram,
       spatialPosition: node.position,
+    };
+  }
+
+  /**
+   * Execute State Machine declaration (Phase 13)
+   */
+  private async executeStateMachine(node: StateMachineNode): Promise<ExecutionResult> {
+    this.context.stateMachines.set(node.name, node);
+    logger.info(`State machine registered: ${node.name}`);
+    return {
+      success: true,
+      output: { registered: node.name },
     };
   }
 
@@ -1442,6 +1470,11 @@ export class HoloScriptRuntime {
 
     // Global bus broadcast
     await eventBus.emit(event, data as any);
+
+    // Phase 13: State Machine transitions
+    if (data && typeof data === 'object' && (data as any).id) {
+       stateMachineInterpreter.sendEvent((data as any).id, event);
+    }
   }
 
   /**
@@ -1849,7 +1882,10 @@ export class HoloScriptRuntime {
       focusHistory: [],
       environment: {},
       templates: new Map(),
+      // HS+ State
       state: createState({}),
+      // Phase 13: State Machines
+      stateMachines: new Map(),
     };
   }
 

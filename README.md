@@ -116,24 +116,22 @@ const result = parser.parse(`
 
 ## Features
 
-### 🕹️ Trait System (139 traits across 23 domains)
+### 🕹️ Trait System (157 traits across 18 domains)
 
 | Domain | Example Traits |
 |--------|----------------|
-| **Interaction** | `@grabbable`, `@throwable`, `@pointable`, `@teleportable` |
-| **Spatial** | `@stackable`, `@snappable`, `@rotatable`, `@scaleable` |
-| **Animation** | `@skeleton`, `@animation`, `@morph`, `@pose` |
-| **Materials** | `@material`, `@lighting`, `@rendering`, `@shader` |
-| **Physics** | `@physics`, `@collider`, `@cloth`, `@fluid`, `@soft_body`, `@destruction` |
-| **AI/Agents** | `@npc`, `@behavior_tree`, `@llm_agent`, `@emotion`, `@perception` |
-| **Environment** | `@plane_detection`, `@anchor`, `@occlusion`, `@light_estimation` |
-| **Input** | `@hand_tracking`, `@eye_tracked`, `@body_tracking`, `@controller` |
-| **Accessibility** | `@accessible`, `@screen_reader`, `@subtitle`, `@motion_reduced` |
-| **Volumetric** | `@gaussian_splat`, `@nerf`, `@volumetric_video`, `@point_cloud` |
-| **Compute** | `@compute`, `@gpu_particle`, `@gpu_physics`, `@gpu_buffer` |
-| **Audio** | `@ambisonics`, `@hrtf`, `@reverb_zone`, `@audio_occlusion` |
-| **Co-Presence** | `@co_located`, `@shared_world`, `@voice_proximity`, `@avatar_embodiment` |
-| **Web3** | `@nft`, `@token_gated`, `@wallet`, `@marketplace` |
+| **Interaction** | `@grabbable`, `@throwable`, `@pointable`, `@stretchable`, `@moldable`, `@haptic` |
+| **Humanoid/Avatar** | `@skeleton`, `@body`, `@face`, `@expressive`, `@hair`, `@clothing`, `@hands` |
+| **Spatial** | `@plane_detection`, `@mesh_detection`, `@anchor`, `@persistent_anchor`, `@geospatial`, `@occlusion` |
+| **Input Modality** | `@eye_tracking`, `@hand_tracking`, `@controller`, `@spatial_accessory` |
+| **Accessibility** | `@accessible`, `@alt_text`, `@spatial_audio_cue`, `@sonification`, `@subtitle` |
+| **Compute & GPU** | `@compute`, `@gpu_particle`, `@gpu_physics`, `@gpu_buffer` |
+| **Autonomous Agents** | `@behavior_tree`, `@goal_oriented`, `@llm_agent`, `@memory`, `@perception` |
+| **Animation/Phys** | `@cloth`, `@fluid`, `@soft_body`, `@destruction`, `@rigidbody`, `@joint`, `@ik` |
+| **Social/Multi** | `@co_located`, `@remote_presence`, `@shared_world`, `@voice_proximity` |
+| **Web3 & Ownership** | `@nft`, `@token_gated`, `@wallet`, `@marketplace`, `@portable` |
+| **Audio** | `@ambisonics`, `@hrtf`, `@reverb_zone`, `@audio_occlusion`, `@spatial_audio` |
+| **State & Logic** | `@state`, `@reactive`, `@observable`, `@computed`, `@synced`, `@persistent` |
 
 ### 🛠️ Language Features
 - **@world Configuration** - Declarative scene setup in `.hsplus` files

@@ -176,6 +176,12 @@ export interface AIAdapter {
     holoScript?: string,
     history?: Array<{ role: 'user' | 'assistant'; content: string }>
   ): Promise<string>;
+
+  /**
+   * Get vector embeddings for text
+   * @param text Text to embed
+   */
+  getEmbeddings?(text: string | string[]): Promise<number[][]>;
 }
 
 // ============================================================================

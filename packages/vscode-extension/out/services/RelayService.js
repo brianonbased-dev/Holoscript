@@ -114,11 +114,7 @@ class RelayService {
         // Ideally this calls Brittney via MCP
         vscode.window.showInformationMessage(`Director Voice: "${commandText}"`);
         // Quick demo handling
-        /*
-         * Handle asset injection from Asset Browser.
-         */
     }
-    // Quick demo handling
     /*
      * Handle asset injection from Asset Browser.
      */

@@ -187,9 +187,48 @@ export const VR_TRAITS = [
   'wind',
   'buoyancy',
   'destruction',
+
+  // Simple Modifier Traits
+  'animated',
+  'billboard',
+  'rotating',
+  'collidable',
+  'clickable',
+  'glowing',
+  'interactive',
+  'lod',
 ] as const;
 
-export type VRTraitName = typeof VR_TRAITS[number];
+export type VRTraitName = (typeof VR_TRAITS)[number];
+
+// ============================================================================
+// Structural Directives (non-trait directives that define blocks)
+// ============================================================================
+
+export const STRUCTURAL_DIRECTIVES = [
+  // Asset & Manifest
+  'manifest',
+  'asset',
+  // Semantic Annotations
+  'semantic',
+  'annotate',
+  'semantic_ref',
+  'bindings',
+  'artwork_metadata',
+  'npc_behavior',
+  // World Definition
+  'world_metadata',
+  'world_config',
+  'zones',
+  'spawn_points',
+  // Environment Lighting
+  'skybox',
+  'ambient_light',
+  'directional_light',
+  'fog',
+] as const;
+
+export type StructuralDirectiveName = (typeof STRUCTURAL_DIRECTIVES)[number];
 
 export const LIFECYCLE_HOOKS = [
   // Standard lifecycle

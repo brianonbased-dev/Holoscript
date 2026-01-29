@@ -77,16 +77,37 @@ export {
   AnthropicAdapter,
   OllamaAdapter,
   LMStudioAdapter,
+  GeminiAdapter,
+  XAIAdapter,
+  TogetherAdapter,
+  FireworksAdapter,
+  NVIDIAAdapter,
 
   // Config types
   type OpenAIAdapterConfig,
   type AnthropicAdapterConfig,
   type OllamaAdapterConfig,
   type LMStudioAdapterConfig,
+  type GeminiAdapterConfig,
+  type XAIAdapterConfig,
+  type TogetherAdapterConfig,
+  type FireworksAdapterConfig,
+  type NVIDIAAdapterConfig,
 
   // Factory functions (create + register in one call)
   useOpenAI,
   useAnthropic,
   useOllama,
   useLMStudio,
+  useGemini,
+  useXAI,
+  useGrok,
+  useTogether,
+  useFireworks,
+  useNVIDIA,
 } from './adapters';
+
+export {
+  SemanticSearchService,
+  type SearchResult,
+} from './SemanticSearchService';

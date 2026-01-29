@@ -271,11 +271,42 @@ const BUILT_IN_RULES: Rule[] = [
       if (!context.ast) return diagnostics;
 
       const validTraits = [
-        'grabbable', 'throwable', 'pointable', 'hoverable',
-        'scalable', 'rotatable', 'stackable', 'snappable',
-        'breakable', 'talkable', 'patrol', 'merchant',
-        'physics', 'collision', 'skeleton', 'body',
-        'networked', 'spatial_audio', 'voice'
+        // Interaction
+        'grabbable', 'throwable', 'pointable', 'hoverable', 'scalable', 'rotatable', 
+        'stackable', 'snappable', 'breakable', 'haptic', 'stretchable', 'moldable',
+        // Humanoid/Avatar
+        'skeleton', 'body', 'face', 'expressive', 'hair', 'clothing', 'hands', 
+        'character_voice', 'locomotion', 'poseable', 'morph', 'networked', 'proactive',
+        // Media/Social
+        'recordable', 'streamable', 'camera', 'video', 'trackable', 'survey',
+        'abtest', 'heatmap', 'shareable', 'embeddable', 'qr', 'collaborative',
+        // Environment
+        'plane_detection', 'mesh_detection', 'anchor', 'persistent_anchor', 
+        'shared_anchor', 'geospatial', 'occlusion', 'light_estimation',
+        // Input
+        'eye_tracking', 'hand_tracking', 'controller', 'spatial_accessory', 
+        'body_tracking', 'face_tracking',
+        // Accessibility
+        'accessible', 'alt_text', 'spatial_audio_cue', 'sonification', 
+        'haptic_cue', 'magnifiable', 'high_contrast', 'motion_reduced', 
+        'subtitle', 'screen_reader',
+        // Volumetric/GPU
+        'gaussian_splat', 'nerf', 'volumetric_video', 'point_cloud', 'photogrammetry',
+        'compute', 'gpu_particle', 'gpu_physics', 'gpu_buffer',
+        // Digital Twin/IOT
+        'sensor', 'digital_twin', 'data_binding', 'alert', 'heatmap_3d',
+        // Autonomous Agent
+        'behavior_tree', 'goal_oriented', 'llm_agent', 'memory', 'perception', 
+        'emotion', 'dialogue', 'faction', 'patrol',
+        // Audio
+        'ambisonics', 'hrtf', 'reverb_zone', 'audio_occlusion', 'audio_portal', 
+        'audio_material', 'head_tracked_audio', 'spatial_audio', 'voice', 
+        'reactive_audio',
+        // Interop/Web3
+        'usd', 'gltf', 'fbx', 'material_x', 'scene_graph', 'nft', 
+        'token_gated', 'wallet', 'marketplace', 'portable',
+        // Physics
+        'cloth', 'fluid', 'soft_body', 'rope', 'chain', 'wind', 'buoyancy', 'destruction'
       ];
 
       const checkTraits = (nodes: HSPlusNode[]) => {
