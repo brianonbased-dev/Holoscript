@@ -31,6 +31,16 @@ coverage/
 # AI Workspace (Proprietary Research)
 .ai-workspace/
 
+# Proprietary Training Data
+*.jsonl
+training_audit.csv
+synthetic_*.txt
+scripts/data/
+scripts/*synthetic*.py
+scripts/*train*.py
+scripts/inference_test.py
+scripts/debug_gen.py
+
 # Package manager
 pnpm-lock.yaml
 package-lock.json
