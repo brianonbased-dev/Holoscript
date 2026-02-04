@@ -23,7 +23,7 @@ describe('Language Modernization Features', () => {
     expect(hasSpread).toBe(true);
   });
 
-  it.skip('parses null coalescing operator in values', () => {
+  it('parses null coalescing operator in values', () => {
     const code = `
       object Test {
         prop: config.val ?? "default"
@@ -32,10 +32,9 @@ describe('Language Modernization Features', () => {
     const parser = new HoloScriptPlusParser();
     const result = parser.parse(code);
     
-    if (!result.success) console.log(JSON.stringify(result.errors, null, 2));
-    expect(result.errors).toEqual([]);
-    const root = result.ast.root as any;
-    const testObj = root.children[0];
+    if (!result.success) throw new Error(JSON.stringify(result.errors, null, 2));
+    expect(result.success).toBe(true);
+    const testObj = result.ast.children?.[0];
     
     const propValue = testObj.properties['prop'];
     expect(propValue.type).toBe('binary');
