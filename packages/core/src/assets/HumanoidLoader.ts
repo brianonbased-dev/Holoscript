@@ -310,11 +310,13 @@ export class HumanoidLoader {
     // This allows the loader to work without Three.js being bundled
     try {
       // Try to dynamically import GLTFLoader
+      // @ts-expect-error - Three.js is optional
       const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
       this.gltfLoader = new GLTFLoader();
 
       // Try to import VRM loader plugin
       try {
+        // @ts-expect-error - VRM plugin is optional
         const { VRMLoaderPlugin } = await import('@pixiv/three-vrm');
         (this.gltfLoader as any).register((parser: unknown) => new VRMLoaderPlugin(parser));
         this.vrmLoaderPlugin = VRMLoaderPlugin;
@@ -325,6 +327,7 @@ export class HumanoidLoader {
 
       // Try to add Draco support
       try {
+        // @ts-expect-error - Draco loader is optional
         const { DRACOLoader } = await import('three/examples/jsm/loaders/DRACOLoader.js');
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
@@ -500,7 +503,7 @@ export class HumanoidLoader {
         updatedAt: Date.now(),
         estimatedGPUMemory: 0,
         estimatedCPUMemory: 0,
-      } as AssetMetadata,
+      } as any as AssetMetadata,
       data: scene,
       lodLevel: 0,
       quality: 'high',

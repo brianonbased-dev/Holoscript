@@ -7,7 +7,7 @@
  * - Provides helpful error messages for invalid spreads
  */
 
-import type { SpreadExpression, ASTNode } from '../types';
+import type { SpreadExpression, ASTNode } from './types';
 
 export interface SpreadValidationContext {
   templateRefs: Map<string, any>;
@@ -110,7 +110,7 @@ export class SpreadOperatorValidator {
    * Resolve the type of a spread target
    * Returns: 'array' | 'object' | 'template' | 'unknown' | null
    */
-  private resolveSpreadTarget(argument: unknown): string | null {
+  private resolveSpreadTarget(argument: unknown): 'object' | 'array' | 'template' | 'unknown' | null {
     if (!argument) return null;
 
     // String identifier reference (most common)
@@ -145,7 +145,7 @@ export class SpreadOperatorValidator {
   /**
    * Resolve identifier to a type (template, variable, etc)
    */
-  private resolveIdentifier(identifier: string): string {
+  private resolveIdentifier(identifier: string): 'object' | 'array' | 'template' | 'unknown' {
     // Check if it's a known template
     if (this.context.templateRefs.has(identifier)) {
       return 'template';
@@ -164,7 +164,7 @@ export class SpreadOperatorValidator {
   /**
    * Resolve member expressions like 'obj.prop.nested'
    */
-  private resolveMemberExpression(memberPath: string): string {
+  private resolveMemberExpression(memberPath: string): 'object' | 'array' | 'template' | 'unknown' {
     const parts = memberPath.split('.');
     
     if (parts.length === 0) return 'unknown';
@@ -191,7 +191,7 @@ export class SpreadOperatorValidator {
   /**
    * Infer type from a value
    */
-  private inferType(value: any): string {
+  private inferType(value: any): 'object' | 'array' | 'template' | 'unknown' {
     if (Array.isArray(value)) {
       return 'array';
     }

@@ -228,6 +228,20 @@ export class PerformanceTracker {
   }
 
   /**
+   * Get all metrics grouped by name
+   */
+  getAllMetrics(): Map<string, number[]> {
+    const grouped = new Map<string, number[]>();
+    for (const metric of this.currentMetrics) {
+      if (!grouped.has(metric.name)) {
+        grouped.set(metric.name, []);
+      }
+      grouped.get(metric.name)!.push(metric.timing);
+    }
+    return grouped;
+  }
+
+  /**
    * Get summary statistics
    */
   getSummary(): {

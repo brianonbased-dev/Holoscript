@@ -45,7 +45,7 @@ export class PerformanceReportGenerator {
 
     return {
       timestamp: new Date().toISOString(),
-      totalMetrics: Array.from(metrics.values()).reduce((sum, values) => sum + values.length, 0),
+      totalMetrics: Array.from(metrics.values() as IterableIterator<number[]>).reduce((sum, values) => sum + values.length, 0),
       summary: {
         categories,
       },

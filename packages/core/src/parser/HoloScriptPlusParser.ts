@@ -2589,6 +2589,7 @@ export class HoloScriptPlusParser {
       return this.parseBlockContent();
     }
 
+    // @ts-expect-error - THIS token type may not be in the union
     if (token.type === 'THIS') {
         this.advance();
         let ref = 'this';

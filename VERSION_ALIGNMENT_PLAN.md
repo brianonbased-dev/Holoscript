@@ -9,7 +9,7 @@
 ## 📊 Current Status Matrix
 
 | Package | Local Version | NPM Published | Status |
-|---------|---------------|---------------|--------|
+| --------- | --------------- | --------------- | -------- |
 | @holoscript/core | 2.1.0 | ✅ Yes (2.1.0) | Aligned |
 | @holoscript/cli | 2.1.0 | ✅ Yes (2.1.0) | Aligned |
 | @holoscript/runtime | 2.1.0 | 🔴 No | Ready to publish |
@@ -26,7 +26,7 @@
 
 ## 🔄 Dependency Graph
 
-```
+```txt
 holoscript (root)
 ├── @holoscript/core ⚙️ (foundation - no dependencies on other @holoscript packages)
 │   └── (no @holoscript internal deps)
@@ -59,6 +59,7 @@ holoscript (root)
 **Strategy**: Update in dependency order to avoid version mismatches.
 
 ### Phase 1: Update Versions (No Publishing Yet)
+
 1. **@holoscript/core** (already 2.1.0) ✅ Skip
 2. **@holoscript/runtime** (2.1.0 - no changes needed) ✅ Skip
 3. **@holoscript/std** (1.0.0 → 2.1.0)
@@ -72,13 +73,15 @@ holoscript (root)
 11. **vscode-extension** (1.3.5 → 2.1.0) [should align with core version]
 
 ### Phase 2: Update Internal Dependencies
+
 - Update all package.json references to point to correct versions
 - Ensure formatter depends on updated runtime
 - Ensure lsp depends on updated linter
 - Ensure sdk aggregates all at 2.1.0
 
 ### Phase 3: Publish Order
-```
+
+```bash
 1. @holoscript/core (2.1.0) -- already published, skip
 2. @holoscript/std (2.1.0) -- no internal deps
 3. @holoscript/fs (2.1.0) -- no complicating deps
@@ -97,6 +100,7 @@ holoscript (root)
 ## 🔄 Version Bump Details
 
 ### Minor Version Bumps (→ 2.1.0)
+
 - **formatter**: 2.0.0 → 2.1.0
   - Rationale: Aligns with core, no breaking changes
   - Updated deps: core (2.1.0), runtime (2.1.0)
@@ -110,6 +114,7 @@ holoscript (root)
   - Updated deps: core (2.1.0), runtime (2.1.0), linter (2.1.0)
 
 ### Major Version Bumps (1.0.0 → 2.1.0)
+
 - **std**: 1.0.0 → 2.1.0
   - Rationale: Major upgrade for feature parity, new game constructs
   - Updated deps: core (2.1.0)
@@ -123,6 +128,7 @@ holoscript (root)
   - Updated deps: core (2.1.0)
 
 ### Special Cases
+
 - **@holoscript/sdk**: 0.0.1 → 2.1.0
   - ⚠️ Currently incomplete
   - Needs implementation completion first

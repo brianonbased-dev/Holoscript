@@ -20,6 +20,7 @@ import type {
   ExportNode,
   TypeGuardExpression,
   SpreadExpression,
+  NullCoalescingAssignment,
   TemplateNode,
   HoloScriptValue,
 } from './types';
@@ -283,10 +284,41 @@ export class HoloScriptTypeChecker {
       case 'spread':
         this.checkSpread(node as SpreadExpression);
         break;
+      case 'nullCoalescingAssignment':
+        this.checkNullCoalescingAssignment(node as NullCoalescingAssignment);
+        break;
     }
   }
 
+  private checkNullCoalescingAssignment(node: NullCoalescingAssignment): void {
+    if (!node.target) {
+      this.addDiagnostic('error', `Null coalescing assignment missing target`, 'E104');
+      return;
+    }
+
+    // Check if target is assignable (variable or member expression)
+    const targetStr = typeof node.target === 'string' 
+      ? node.target 
+      : (node.target as any).__ref || (node.target as any).name;
+    
+    if (!targetStr) {
+      this.addDiagnostic('error', `Null coalescing assignment to non-assignable expression`, 'E105');
+      return;
+    }
+
+    // Type of target should be nullable for ??= to make sense
+    const targetType = this.typeMap.get(targetStr);
+    const valueType = node.value ? this.inferType(node.value) : 'unknown';
+    
+    // Assign the union of target and value types
+    this.typeMap.set(targetStr, targetType || { type: valueType as any, nullable: false });
+  }
+
   private checkSpread(node: SpreadExpression): void {
+    if (!node.target) {
+      this.addDiagnostic('error', `Spread expression missing target`, 'E102');
+      return;
+    }
     if (!this.typeMap.has(node.target)) {
        this.addDiagnostic('error', `Unknown template or object '${node.target}' in spread`, 'E102');
     } else {
