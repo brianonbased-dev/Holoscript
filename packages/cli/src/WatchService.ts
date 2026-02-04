@@ -6,15 +6,21 @@ import { logger } from '@holoscript/core';
 export interface WatchOptions {
   input: string;
   onChanged: () => Promise<void>;
+  onChangedIncremental?: (filePath: string) => Promise<void>;
   verbose?: boolean;
+  useIncremental?: boolean;
+  debounceMs?: number;
 }
 
 export class WatchService {
   private watcher: chokidar.FSWatcher | null = null;
   private debounceTimer: NodeJS.Timeout | null = null;
-  private debounceMs: number = 200;
+  private debounceMs: number;
+  private fileContentCache: Map<string, string> = new Map();
 
-  constructor(private options: WatchOptions) {}
+  constructor(private options: WatchOptions) {
+    this.debounceMs = options.debounceMs || 200;
+  }
 
   /**
    * Starts watching the input file or directory
@@ -39,7 +45,7 @@ export class WatchService {
       if (this.options.verbose) {
         console.log(`\x1b[2m[WATCH] ${event}: ${path.relative(process.cwd(), filePath)}\x1b[0m`);
       }
-      this.triggerRebuild();
+      this.triggerRebuild(filePath);
     });
 
     // Handle initial run if needed (constructor or manual start)
@@ -56,7 +62,7 @@ export class WatchService {
     }
   }
 
-  private triggerRebuild(): void {
+  private triggerRebuild(changedFile: string): void {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
@@ -66,6 +72,21 @@ export class WatchService {
       console.log(`\x1b[2m[${timestamp}]\x1b[0m File changed, rebuilding...`);
       
       try {
+        // Try incremental build if available
+        if (this.options.useIncremental && this.options.onChangedIncremental) {
+          try {
+            await this.options.onChangedIncremental(changedFile);
+            console.log(`\x1b[2m[${timestamp}]\x1b[0m \x1b[32mBuild successful (incremental)\x1b[0m`);
+            return;
+          } catch (error) {
+            // Fall back to full rebuild on incremental error
+            if (this.options.verbose) {
+              console.warn(`\x1b[33mIncremental build failed, falling back to full rebuild\x1b[0m`);
+            }
+          }
+        }
+
+        // Fall back to full rebuild
         await this.options.onChanged();
         console.log(`\x1b[2m[${timestamp}]\x1b[0m \x1b[32mBuild successful\x1b[0m`);
       } catch (error) {
