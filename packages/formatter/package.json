@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "echo 'No tests yet' && exit 0",
+    "test": "vitest run",
     "lint": "eslint src/",
     "clean": "rimraf dist"
   },

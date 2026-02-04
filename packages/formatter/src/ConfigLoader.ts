@@ -35,9 +35,14 @@ export class ConfigLoader {
       return { ...DEFAULT_CONFIG };
     }
 
+    let options = rawConfig;
+    if (configPath.endsWith('holoscript.config.json') && rawConfig.formatOptions) {
+      options = rawConfig.formatOptions;
+    }
+
     const combinedConfig: FormatterConfig = {
       ...DEFAULT_CONFIG,
-      ...rawConfig
+      ...options
     };
 
     this.cache.set(configPath, combinedConfig);
@@ -50,6 +55,7 @@ export class ConfigLoader {
 
     while (currentDir !== root) {
       const candidates = [
+        'holoscript.config.json',
         '.holofmtrc',
         '.holofmtrc.json',
         '.holofmtrc.js',

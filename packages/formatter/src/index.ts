@@ -98,28 +98,31 @@ export class HoloScriptFormatter {
     let formatted = source;
 
     try {
+      // Step 0: Identify Raw Blocks (for .hsplus)
+      const rawRanges = fileType === 'hsplus' ? this.identifyRawBlocks(formatted) : [];
+
       // Step 1: Normalize line endings
       formatted = this.normalizeLineEndings(formatted);
 
       // Step 2: Normalize indentation
-      formatted = this.normalizeIndentation(formatted);
+      formatted = this.normalizeIndentation(formatted, rawRanges);
 
-      // Step 3: Handle blank lines
+      // Step 3: Handle blank lines (Blank lines are generally safe to normalize everywhere)
       formatted = this.normalizeBlankLines(formatted);
 
-      // Step 4: Format braces
-      formatted = this.formatBraces(formatted);
+      // Step 4: Format braces (SKIP in raw blocks)
+      formatted = this.formatBraces(formatted, rawRanges);
 
-      // Step 5: Handle trailing commas
-      formatted = this.handleTrailingCommas(formatted);
+      // Step 5: Handle trailing commas (SKIP in raw blocks)
+      formatted = this.handleTrailingCommas(formatted, rawRanges);
 
       // Step 6: Sort imports (if enabled)
       if (this.config.sortImports) {
         formatted = this.sortImports(formatted);
       }
 
-      // Step 7: Normalize whitespace
-      formatted = this.normalizeWhitespace(formatted);
+      // Step 7: Normalize whitespace (SKIP inside raw blocks if needed, but usually trailing is fine)
+      formatted = this.normalizeWhitespace(formatted, rawRanges);
 
       // Step 8: Ensure final newline
       formatted = this.ensureFinalNewline(formatted);
@@ -179,6 +182,53 @@ export class HoloScriptFormatter {
     return !result.changed;
   }
 
+  /**
+   * Identify ranges of "Raw Blocks" (e.g. inside logic { ... })
+   */
+  private identifyRawBlocks(source: string): Range[] {
+    const ranges: Range[] = [];
+    const lines = source.split('\n');
+    
+    // Look for lines that start a raw block: nodeType [name] {
+    // and find the matching closing brace.
+    const rawBlockStarters = [
+      'logic', 'module', 'script', 'struct', 'enum',
+      'class', 'interface', 'spatial_group', 'scene', 'group'
+    ];
+
+    let braceCount = 0;
+    let inRawBlock = false;
+    let startLine = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      if (!inRawBlock) {
+        const isStarter = rawBlockStarters.some(s => line.startsWith(s)) && line.includes('{');
+        if (isStarter) {
+          inRawBlock = true;
+          startLine = i;
+          braceCount = (line.match(/\{/g) || []).length - (line.match(/\}/g) || []).length;
+          if (braceCount === 0) {
+            // Block closed on same line, but we still count it as a range if it had content?
+            // Actually, if it's single line, we don't need special range handling for sub-lines.
+            inRawBlock = false;
+          }
+        }
+      } else {
+        braceCount += (line.match(/\{/g) || []).length;
+        braceCount -= (line.match(/\}/g) || []).length;
+        
+        if (braceCount <= 0) {
+          ranges.push({ startLine: startLine + 1, endLine: i - 1 });
+          inRawBlock = false;
+        }
+      }
+    }
+
+    return ranges;
+  }
+
   // ==========================================================================
   // PRIVATE FORMATTING METHODS
   // ==========================================================================
@@ -187,37 +237,47 @@ export class HoloScriptFormatter {
     return source.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   }
 
-  private normalizeIndentation(source: string): string {
+  private normalizeIndentation(source: string, rawRanges: Range[] = []): string {
     const indent = this.config.useTabs ? '\t' : ' '.repeat(this.config.indentSize);
     const lines = source.split('\n');
     const result: string[] = [];
+    let blockDepth = 0;
 
-    for (const line of lines) {
-      // Count leading whitespace
-      const leadingMatch = line.match(/^(\s*)/);
-      if (!leadingMatch) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const isInRaw = rawRanges.some(r => i >= r.startLine && i <= r.endLine);
+
+      if (isInRaw) {
         result.push(line);
         continue;
       }
 
-      const leading = leadingMatch[1];
-      const content = line.slice(leading.length);
-
-      // Calculate indentation level
-      let level = 0;
-      for (const char of leading) {
-        if (char === '\t') {
-          level += this.config.indentSize;
-        } else if (char === ' ') {
-          level += 1;
-        }
+      const content = line.trim();
+      
+      // Skip empty lines
+      if (content === '') {
+        result.push('');
+        continue;
       }
 
-      // Normalize to configured indent style
-      const normalizedLevel = Math.floor(level / this.config.indentSize);
-      const newIndent = indent.repeat(normalizedLevel);
+      // Count closing braces at the start of trimmed content to dedent before this line
+      let closingAtStart = 0;
+      for (const char of content) {
+        if (char === '}') closingAtStart++;
+        else break; // Stop at first non-}
+      }
+      
+      // Dedent before this line if it starts with closing braces
+      blockDepth = Math.max(0, blockDepth - closingAtStart);
 
+      // Apply indentation
+      const newIndent = indent.repeat(blockDepth);
       result.push(newIndent + content);
+
+      // Count all opening and closing braces to update depth for next line
+      const openingCount = (content.match(/\{/g) || []).length;
+      const closingCount = (content.match(/}/g) || []).length;
+      blockDepth = Math.max(0, blockDepth + openingCount - closingCount);
     }
 
     return result.join('\n');
@@ -229,19 +289,40 @@ export class HoloScriptFormatter {
     return source.replace(regex, '\n'.repeat(max + 1));
   }
 
-  private formatBraces(source: string): string {
+  private formatBraces(source: string, rawRanges: Range[] = []): string {
     // Simple brace formatting based on style
+    if (rawRanges.length > 0) {
+      // If we have raw ranges, we must be careful. 
+      // For now, if there are any raw ranges, we skip global regex replace 
+      // and do it more surgical or skip entirely.
+      // HSPlus files with heavy TS should probably maintain their brace style.
+      return source;
+    }
+    
     if (this.config.braceStyle === 'same-line') {
-      // Ensure opening braces are on same line
       return source.replace(/\n\s*\{/g, ' {');
     } else if (this.config.braceStyle === 'next-line') {
-      // Put opening braces on next line
-      return source.replace(/\s*\{$/gm, '\n{');
+      const lines = source.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        // If line ends with { and has other content
+        if (line.trim().length > 1 && line.trim().endsWith('{')) {
+          const match = line.match(/^(\s*)(.*)\s*\{$/);
+          if (match) {
+            const indent = match[1];
+            const content = match[2].trimEnd();
+            lines[i] = `${indent}${content}\n${indent}{`;
+          }
+        }
+      }
+      return lines.join('\n');
     }
     return source;
   }
 
-  private handleTrailingCommas(source: string): string {
+  private handleTrailingCommas(source: string, rawRanges: Range[] = []): string {
+    if (rawRanges.length > 0) return source; // Skip in hybrid files
+    
     if (this.config.trailingComma === 'none') {
       // Remove trailing commas
       return source.replace(/,(\s*[\]}])/g, '$1');
@@ -257,42 +338,61 @@ export class HoloScriptFormatter {
     const lines = source.split('\n');
     const importLines: string[] = [];
     const otherLines: string[] = [];
-    let inImportSection = true;
+    let foundImports = false;
+    let importSectionEnded = false;
+    let hasBlankLineAfterImports = false;
 
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
       const isImport = line.trim().startsWith('import ') || line.trim().startsWith('@import');
       const isEmpty = line.trim() === '';
 
-      if (inImportSection && (isImport || (isEmpty && importLines.length > 0))) {
-        if (isImport) {
-          importLines.push(line);
-        } else if (isEmpty && otherLines.length === 0) {
-          // Keep empty line in import section
-          importLines.push(line);
-        }
+      if (isImport) {
+        foundImports = true;
+        importLines.push(line);
+      } else if (foundImports && isEmpty && !importSectionEnded) {
+        // Blank line immediately after imports - mark it
+        hasBlankLineAfterImports = true;
+        importSectionEnded = true;
+        // Don't add to either list - we'll add it back if needed
+      } else if (!foundImports && isEmpty) {
+        // Skip blank lines before imports
+        continue;
       } else {
-        inImportSection = false;
+        // Any other content line
         otherLines.push(line);
+        if (foundImports && !importSectionEnded) {
+          importSectionEnded = true;
+        }
       }
     }
 
-    // Sort imports alphabetically
-    const sortedImports = importLines
-      .filter((l) => l.trim() !== '')
-      .sort((a, b) => a.localeCompare(b));
-
-    if (sortedImports.length === 0) {
+    // If no imports found, return as-is
+    if (importLines.length === 0) {
       return source;
     }
 
-    return [...sortedImports, '', ...otherLines].join('\n');
+    // Sort imports alphabetically
+    const sortedImports = importLines.sort((a, b) => a.localeCompare(b));
+    
+    // Reconstruct: imports, optional blank line, then other content
+    const result = [...sortedImports];
+    if (hasBlankLineAfterImports) {
+      result.push('');
+    }
+    result.push(...otherLines);
+    
+    return result.join('\n');
   }
 
-  private normalizeWhitespace(source: string): string {
+  private normalizeWhitespace(source: string, rawRanges: Range[] = []): string {
     // Remove trailing whitespace from lines
     return source
       .split('\n')
-      .map((line) => line.trimEnd())
+      .map((line, i) => {
+        const isInRaw = rawRanges.some(r => i >= r.startLine && i <= r.endLine);
+        return isInRaw ? line : line.trimEnd();
+      })
       .join('\n');
   }
 
@@ -326,6 +426,14 @@ export class HoloScriptFormatter {
 export function format(source: string, fileType: 'holo' | 'hsplus' = 'holo'): FormatResult {
   const formatter = new HoloScriptFormatter();
   return formatter.format(source, fileType);
+}
+
+/**
+ * Format a specific range of HoloScript code
+ */
+export function formatRange(source: string, range: Range, fileType: 'holo' | 'hsplus' = 'holo'): FormatResult {
+  const formatter = new HoloScriptFormatter();
+  return formatter.formatRange(source, range, fileType);
 }
 
 /**
