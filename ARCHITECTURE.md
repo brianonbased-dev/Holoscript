@@ -2,21 +2,21 @@
 
 ## Overview
 
-HoloScript is a declarative VR/AR scene description language with multi-target compilation. This document describes the package architecture and how components relate.
+HoloScript is a **full programming language** for spatial computing, not just a domain-specific language. It includes its own runtime, compiler, and can execute independently or compile to multiple targets.
 
 ## Repository Structure
 
 ```
-HoloScript/                     # This repo - language tooling
+HoloScript/                     # This repo - complete language system
 ├── packages/
 │   ├── core/                   # Parser, AST, validator, compiler
+│   ├── runtime/                # Native HoloScript runtime
 │   ├── cli/                    # Command-line tools
 │   ├── lsp/                    # Language Server Protocol
 │   ├── mcp-server/             # MCP for AI agent integration
 │   ├── vscode-extension/       # VS Code language support
 │   ├── formatter/              # Code formatting
 │   ├── linter/                 # Static analysis
-│   ├── runtime/                # Execution runtime (stub)
 │   ├── std/                    # Standard library
 │   ├── fs/                     # Filesystem utilities
 │   ├── benchmark/              # Performance benchmarks
@@ -24,41 +24,50 @@ HoloScript/                     # This repo - language tooling
 ├── services/
 │   └── render-service/         # Preview rendering (Render.com)
 └── docs/                       # Documentation
-
-Hololand/                       # Separate repo - runtime & platforms
-├── packages/
-│   ├── runtime/                # Full execution engine
-│   ├── adapters/               # Platform-specific code
-│   │   ├── web/               # Browser (Three.js)
-│   │   ├── unity/             # Unity SDK
-│   │   ├── unreal/            # Unreal SDK
-│   │   ├── godot/             # Godot SDK
-│   │   └── react-native/      # Mobile
-│   └── brittney/               # AI assistant
-│       └── mcp-server/         # Brittney's MCP tools
-└── examples/                   # Sample applications
 ```
 
-## Package Relationships
+## Execution Options
 
-### Core Packages (this repo)
+HoloScript can run in multiple ways:
+
+### 1. Native Runtime (this repo)
+```bash
+holoscript run scene.holo
+```
+Direct execution via `@holoscript/runtime`.
+
+### 2. Compile to JavaScript/TypeScript
+```bash
+holoscript compile scene.holo --target js
+```
+Generates standalone JS that runs in any browser.
+
+### 3. Compile to Platform SDKs
+```bash
+holoscript compile scene.holo --target unity
+holoscript compile scene.holo --target unreal
+holoscript compile scene.holo --target godot
+```
+Generates platform-native code.
+
+### 4. Hololand Integration
+Hololand is a **consumer** of HoloScript, providing:
+- Additional platform adapters
+- Brittney AI assistant
+- Hosting and deployment
+
+But HoloScript works without Hololand.
+
+## Package Relationships
 
 | Package | Purpose | npm |
 |---------|---------|-----|
 | `@holoscript/core` | Parser, AST, validator, compiler | ✅ v2.1.0 |
+| `@holoscript/runtime` | Native execution engine | ✅ |
 | `@holoscript/cli` | Command-line tools | ✅ |
 | `@holoscript/lsp` | Language Server Protocol | ✅ |
 | `@holoscript/mcp-server` | AI agent integration | ✅ v1.0.2 |
 | `@holoscript/vscode` | VS Code extension | Marketplace |
-
-### Platform Packages (Hololand repo)
-
-| Package | Purpose | Status |
-|---------|---------|--------|
-| `@hololand/runtime` | Execution engine | Active |
-| `@hololand/web` | Browser adapter | Active |
-| `@hololand/unity` | Unity SDK | In progress |
-| `@hololand/brittney` | AI assistant | Active |
 
 ## Data Flow
 
@@ -75,12 +84,12 @@ Hololand/                       # Separate repo - runtime & platforms
 │   Compiler      │  ← Multi-target code generation
 └────────┬────────┘
          │
-    ┌────┴────┬──────────┬──────────┐
-    ▼         ▼          ▼          ▼
-┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐
-│  Web  │ │ Unity │ │Unreal │ │ React │
-│(Three)│ │  SDK  │ │  SDK  │ │Native │
-└───────┘ └───────┘ └───────┘ └───────┘
+    ┌────┴────┬──────────┬──────────┬──────────┐
+    ▼         ▼          ▼          ▼          ▼
+┌────────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐
+│ Native │ │  Web  │ │ Unity │ │Unreal │ │ Godot │
+│Runtime │ │(Three)│ │  SDK  │ │  SDK  │ │  SDK  │
+└────────┘ └───────┘ └───────┘ └───────┘ └───────┘
 ```
 
 ## AI Integration
@@ -109,40 +118,31 @@ AI Agent (Grok/Claude/Copilot)
 - `list_traits`, `explain_trait`, `suggest_traits` - Trait docs
 - `render_preview`, `create_share_link` - Sharing
 
-## Why Two Repos?
+## Hololand Relationship
 
-**HoloScript** (this repo) contains:
-- Language specification
-- Parsing and compilation
-- Developer tooling (CLI, LSP, extensions)
-- AI integration (MCP)
+**Hololand** is one platform that uses HoloScript, but HoloScript is independent:
 
-**Hololand** contains:
-- Runtime execution
-- Platform adapters (Unity, Unreal, Web)
-- Sample applications
-- Brittney AI assistant
+| HoloScript (this repo) | Hololand |
+|------------------------|----------|
+| Full programming language | One deployment platform |
+| Native runtime | Extended platform adapters |
+| Compiler (9 targets) | Brittney AI assistant |
+| Developer tools | Hosting services |
+| AI integration (MCP) | Sample applications |
 
-This separation allows:
-1. Language tooling to be lightweight (~1MB)
-2. Runtime to include heavy dependencies (Three.js, etc.)
-3. Platform SDKs to have platform-specific builds
-4. Independent versioning and release cycles
+You can use HoloScript without Hololand. Hololand just provides additional convenience.
 
 ## Quick Start
 
 ```bash
-# Language tools
-npm install @holoscript/core @holoscript/cli
+# Full HoloScript (parse, compile, run)
+npm install @holoscript/core @holoscript/cli @holoscript/runtime
 
 # AI integration
 npm install @holoscript/mcp-server
 
 # Python bindings
 pip install holoscript
-
-# Full runtime (from Hololand)
-npm install @hololand/runtime @hololand/web
 ```
 
 ## File Formats
