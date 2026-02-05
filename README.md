@@ -7,6 +7,7 @@ A declarative, open-source language that compiles to 9 platforms from one source
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="MIT License"></a>
   <a href="https://www.npmjs.com/package/@holoscript/core"><img src="https://img.shields.io/npm/v/@holoscript/core?style=for-the-badge&label=core" alt="npm"></a>
+  <a href="https://pypi.org/project/holoscript/"><img src="https://img.shields.io/pypi/v/holoscript?style=for-the-badge&label=pypi" alt="PyPI"></a>
   <a href="#-vrchat-alpha"><img src="https://img.shields.io/badge/VRChat_Alpha-NOW_AVAILABLE-ff6600?style=for-the-badge" alt="VRChat Alpha"></a>
 </p>
 

@@ -11,14 +11,27 @@ ai-generation/
 │   ├── object-generator.md  # Object creation prompts
 │   └── trait-advisor.md     # Trait recommendation prompts
 ├── integrations/
-│   ├── xai-grok.ts         # xAI/Grok integration
-│   ├── ollama-local.ts     # Local Ollama testing
-│   └── mcp-client.ts       # MCP client example
+│   ├── xai-grok.ts          # xAI/Grok integration
+│   ├── anthropic-claude.ts  # Anthropic Claude integration
+│   ├── openai-gpt.ts        # OpenAI GPT-4 with function calling
+│   ├── google-gemini.ts     # Google Gemini multimodal
+│   ├── ollama-local.ts      # Local Ollama models
+│   └── mcp-client.ts        # MCP client example
 └── examples/
     ├── enchanted-forest.holo
     ├── sci-fi-station.holo
     └── multiplayer-arena.holo
 ```
+
+## AI Provider Integrations
+
+| Provider | File | Features |
+|----------|------|----------|
+| **xAI Grok** | `xai-grok.ts` | X platform native, tweet sharing |
+| **Anthropic Claude** | `anthropic-claude.ts` | Multi-turn, iterative refinement |
+| **OpenAI GPT-4** | `openai-gpt.ts` | Function calling, streaming, vision |
+| **Google Gemini** | `google-gemini.ts` | Multimodal, video, grounded search |
+| **Ollama** | `ollama-local.ts` | Local/offline, model comparison |
 
 ## Quick Start for AI Agents
 
