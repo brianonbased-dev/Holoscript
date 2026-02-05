@@ -380,14 +380,52 @@ impl<'a> Parser<'a> {
         let name = self.expect_string_or_identifier()?;
         self.expect(TokenType::LBrace)?;
 
-        let properties = self.parse_properties_only()?;
+        let mut properties = Vec::new();
+        let mut states = Vec::new();
+
+        // Parse properties and states
+        while !self.check(TokenType::RBrace) && !self.is_at_end() {
+            let key = self.expect_identifier()?;
+            self.expect(TokenType::Colon)?;
+
+            if key == "states" {
+                // Parse states block: { "idle": {...}, "running": {...} }
+                self.expect(TokenType::LBrace)?;
+                while !self.check(TokenType::RBrace) && !self.is_at_end() {
+                    let state_name = self.expect_string_or_identifier()?;
+                    self.expect(TokenType::Colon)?;
+                    self.expect(TokenType::LBrace)?;
+                    let state_props = self.parse_properties_only()?;
+                    self.expect(TokenType::RBrace)?;
+
+                    states.push(StateNode {
+                        name: state_name,
+                        properties: state_props,
+                    });
+
+                    // Optional comma between states
+                    if self.check(TokenType::Comma) {
+                        self.advance();
+                    }
+                }
+                self.expect(TokenType::RBrace)?;
+            } else {
+                // Regular property
+                let value = self.parse_expression()?;
+                properties.push(PropertyNode {
+                    key,
+                    value: Box::new(value),
+                    loc: None,
+                });
+            }
+        }
 
         self.expect(TokenType::RBrace)?;
 
         Ok(AstNode::StateMachine(StateMachineNode {
             name,
             properties,
-            states: Vec::new(), // TODO: parse states
+            states,
             loc: Some(self.location_from(start_loc)),
         }))
     }
@@ -417,14 +455,112 @@ impl<'a> Parser<'a> {
         let name = self.expect_string_or_identifier()?;
         self.expect(TokenType::LBrace)?;
 
-        let properties = self.parse_properties_only()?;
+        let mut properties = Vec::new();
+        let mut tiers = Vec::new();
+
+        // Parse properties and tiers/rows
+        while !self.check(TokenType::RBrace) && !self.is_at_end() {
+            let key = self.expect_identifier()?;
+            self.expect(TokenType::Colon)?;
+
+            if key == "rows" || key == "tiers" {
+                // Parse tiers array: [ { tier: 1, nodes: [...] }, ... ]
+                self.expect(TokenType::LBracket)?;
+                while !self.check(TokenType::RBracket) && !self.is_at_end() {
+                    self.expect(TokenType::LBrace)?;
+
+                    let mut level: i32 = 1;
+                    let mut nodes = Vec::new();
+
+                    // Parse tier properties
+                    while !self.check(TokenType::RBrace) && !self.is_at_end() {
+                        // Skip commas between properties
+                        if self.check(TokenType::Comma) {
+                            self.advance();
+                            continue;
+                        }
+
+                        let tier_key = self.expect_identifier()?;
+                        self.expect(TokenType::Colon)?;
+
+                        if tier_key == "tier" || tier_key == "level" {
+                            if let AstNode::Number(n) = self.parse_expression()? {
+                                level = n.value as i32;
+                            }
+                        } else if tier_key == "nodes" {
+                            // Parse nodes array: [ { name: "...", ... }, ... ]
+                            self.expect(TokenType::LBracket)?;
+                            while !self.check(TokenType::RBracket) && !self.is_at_end() {
+                                self.expect(TokenType::LBrace)?;
+
+                                let mut node_name = String::new();
+                                let mut node_props = Vec::new();
+
+                                while !self.check(TokenType::RBrace) && !self.is_at_end() {
+                                    // Skip commas between properties
+                                    if self.check(TokenType::Comma) {
+                                        self.advance();
+                                        continue;
+                                    }
+
+                                    let node_key = self.expect_identifier()?;
+                                    self.expect(TokenType::Colon)?;
+                                    let node_value = self.parse_expression()?;
+
+                                    if node_key == "name" || node_key == "id" {
+                                        if let AstNode::String(s) = &node_value {
+                                            node_name = s.value.clone();
+                                        }
+                                    }
+                                    node_props.push(PropertyNode {
+                                        key: node_key,
+                                        value: Box::new(node_value),
+                                        loc: None,
+                                    });
+                                }
+
+                                self.expect(TokenType::RBrace)?;
+                                nodes.push(TalentNode {
+                                    name: node_name,
+                                    properties: node_props,
+                                });
+
+                                if self.check(TokenType::Comma) {
+                                    self.advance();
+                                }
+                            }
+                            self.expect(TokenType::RBracket)?;
+                        } else {
+                            // Skip unknown tier property
+                            self.parse_expression()?;
+                        }
+                    }
+
+                    self.expect(TokenType::RBrace)?;
+                    tiers.push(TalentTierNode { level, nodes });
+
+                    if self.check(TokenType::Comma) {
+                        self.advance();
+                    }
+                }
+                self.expect(TokenType::RBracket)?;
+            } else {
+                // Regular property
+                let value = self.parse_expression()?;
+                properties.push(PropertyNode {
+                    key,
+                    value: Box::new(value),
+                    loc: None,
+                });
+            }
+        }
 
         self.expect(TokenType::RBrace)?;
 
         Ok(AstNode::TalentTree(TalentTreeNode {
             name,
             properties,
-            tiers: Vec::new(), // TODO: parse tiers
+            tiers,
             loc: Some(self.location_from(start_loc)),
         }))
     }
@@ -1251,5 +1387,81 @@ mod tests {
         let mut parser = Parser::new(source);
         let result = parser.parse();
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_state_machine() {
+        let source = r#"
+            state_machine "GameController" {
+                initialState: "idle"
+                states: {
+                    "idle": {
+                        entry: "init"
+                        timeout: 5000
+                    },
+                    "running": {
+                        entry: "start"
+                    }
+                }
+            }
+        "#;
+        let mut parser = Parser::new(source);
+        let result = parser.parse();
+        assert!(result.is_ok());
+        let program = result.unwrap();
+        assert_eq!(program.body.len(), 1);
+        
+        if let AstNode::StateMachine(sm) = &program.body[0] {
+            assert_eq!(sm.name, "GameController");
+            assert_eq!(sm.states.len(), 2);
+            assert_eq!(sm.states[0].name, "idle");
+            assert_eq!(sm.states[1].name, "running");
+        } else {
+            panic!("Expected StateMachine node");
+        }
+    }
+
+    #[test]
+    fn test_parse_talent_tree() {
+        let source = r#"
+            talent_tree "WarriorSkills" {
+                class: "warrior"
+                rows: [
+                    {
+                        tier: 1,
+                        nodes: [
+                            { id: "slash", name: "Power Slash", points: 1 },
+                            { id: "block", name: "Shield Block", points: 2 }
+                        ]
+                    },
+                    {
+                        tier: 2,
+                        nodes: [
+                            { id: "charge", name: "Battle Charge", points: 1 }
+                        ]
+                    }
+                ]
+            }
+        "#;
+        let mut parser = Parser::new(source);
+        let result = parser.parse();
+        assert!(result.is_ok(), "Parse error: {:?}", result.err());
+        let program = result.unwrap();
+        assert_eq!(program.body.len(), 1);
+        
+        if let AstNode::TalentTree(tt) = &program.body[0] {
+            assert_eq!(tt.name, "WarriorSkills");
+            assert_eq!(tt.tiers.len(), 2);
+            assert_eq!(tt.tiers[0].level, 1);
+            assert_eq!(tt.tiers[0].nodes.len(), 2);
+            // name takes precedence over id when both are present
+            assert_eq!(tt.tiers[0].nodes[0].name, "Power Slash");
+            assert_eq!(tt.tiers[0].nodes[1].name, "Shield Block");
+            assert_eq!(tt.tiers[1].level, 2);
+            assert_eq!(tt.tiers[1].nodes.len(), 1);
+            assert_eq!(tt.tiers[1].nodes[0].name, "Battle Charge");
+        } else {
+            panic!("Expected TalentTree node");
+        }
     }
 }
