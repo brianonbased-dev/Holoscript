@@ -111,3 +111,143 @@ jobs:
         
       - name: Build all packages
         run: pnpm build
+
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Restore benchmark baseline
+        uses: actions/cache@v3
+        id: benchmark-cache
+        with:
+          path: .benchmark-baseline.json
+          key: benchmark-baseline-${{ github.base_ref }}
+          restore-keys: |
+            benchmark-baseline-main
+            benchmark-baseline-
+
+      - name: Run benchmarks
+        run: pnpm bench:ci > benchmark-results.json
+
+      - name: Compare against baseline
+        if: steps.benchmark-cache.outputs.cache-hit == 'true'
+        run: |
+          node --experimental-vm-modules packages/benchmark/dist/index.js --ci --compare=.benchmark-baseline.json || {
+            echo "::warning::Performance regression detected. Check benchmark results."
+            exit 0
+          }
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results.json
+          retention-days: 30
+
+      - name: Comment PR with benchmark results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('benchmark-results.json', 'utf8'));
+
+            let body = '## 📊 Benchmark Results\n\n';
+
+            for (const suite of results.suites) {
+              body += `### ${suite.suite}\n\n`;
+              body += '| Benchmark | Ops/sec | Mean (ms) | ±% |\n';
+              body += '|-----------|---------|-----------|----|\n';
+
+              for (const result of suite.results) {
+                const ops = result.opsPerSecond.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                body += `| ${result.name} | ${ops} | ${result.meanMs.toFixed(3)} | ${result.marginOfError.toFixed(1)}% |\n`;
+              }
+              body += '\n';
+            }
+
+            body += `\n*Commit: ${results.commit || 'unknown'}*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  benchmark-baseline:
+    name: Update Benchmark Baseline
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Run benchmarks
+        run: pnpm bench:ci > .benchmark-baseline.json
+
+      - name: Save benchmark baseline
+        uses: actions/cache/save@v3
+        with:
+          path: .benchmark-baseline.json
+          key: benchmark-baseline-main

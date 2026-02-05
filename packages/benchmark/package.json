@@ -11,10 +11,12 @@
   "scripts": {
     "bench": "node --experimental-vm-modules dist/index.js",
     "bench:parser": "node --experimental-vm-modules dist/suites/parser.bench.js",
+    "bench:compiler": "node --experimental-vm-modules dist/suites/compiler.bench.js",
     "bench:typechecker": "node --experimental-vm-modules dist/suites/typechecker.bench.js",
     "bench:formatter": "node --experimental-vm-modules dist/suites/formatter.bench.js",
     "bench:lsp": "node --experimental-vm-modules dist/suites/lsp.bench.js",
     "bench:all": "node --experimental-vm-modules dist/index.js --all",
+    "bench:ci": "node --experimental-vm-modules dist/index.js --ci",
     "build": "tsc",
     "clean": "rm -rf dist"
   },

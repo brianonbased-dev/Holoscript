@@ -3,7 +3,7 @@
  */
 
 export interface CLIOptions {
-  command: 'parse' | 'validate' | 'run' | 'ast' | 'repl' | 'watch' | 'compile' | 'build' | 'add' | 'remove' | 'list' | 'traits' | 'suggest' | 'generate' | 'templates' | 'pack' | 'unpack' | 'inspect' | 'help' | 'version';
+  command: 'parse' | 'validate' | 'run' | 'ast' | 'repl' | 'watch' | 'compile' | 'build' | 'add' | 'remove' | 'list' | 'traits' | 'suggest' | 'generate' | 'templates' | 'pack' | 'unpack' | 'inspect' | 'diff' | 'help' | 'version';
   input?: string;
   output?: string;
   verbose: boolean;
@@ -43,7 +43,7 @@ export function parseArgs(args: string[]): CLIOptions {
 
     // Commands
     if (!arg.startsWith('-')) {
-      if (['parse', 'validate', 'run', 'ast', 'repl', 'watch', 'compile', 'build', 'add', 'remove', 'list', 'traits', 'suggest', 'generate', 'templates', 'pack', 'unpack', 'inspect', 'help', 'version'].includes(arg)) {
+      if (['parse', 'validate', 'run', 'ast', 'repl', 'watch', 'compile', 'build', 'add', 'remove', 'list', 'traits', 'suggest', 'generate', 'templates', 'pack', 'unpack', 'inspect', 'diff', 'help', 'version'].includes(arg)) {
         options.command = arg as CLIOptions['command'];
       } else if (['add', 'remove'].includes(options.command)) {
         // Collect package names for add/remove commands
@@ -141,6 +141,10 @@ Usage: holoscript <command> [options] [input]
   remove <pkg...>   Remove HoloScript packages from current project
   list              List installed HoloScript packages
 
+  \x1b[33mDiff & Analysis:\x1b[0m
+  diff <a> <b>      Compare two HoloScript files (semantic diff)
+                    Use --json for machine-readable output
+
   help              Show this help message
   version           Show version information
 
@@ -180,6 +184,10 @@ Usage: holoscript <command> [options] [input]
   holoscript add @holoscript/test --dev
   holoscript remove @holoscript/network
   holoscript list
+
+  \x1b[2m# Diff & Analysis\x1b[0m
+  holoscript diff old.holo new.holo       # Semantic diff
+  holoscript diff old.holo new.holo --json # Machine-readable output
 
 \x1b[1mAliases:\x1b[0m
   hs              Short alias for holoscript

@@ -20,6 +20,9 @@ export interface Range {
   endLine: number;   // 0-based, inclusive
 }
 
+export type ImportSortOrder = 'alphabetical' | 'grouped';
+export type ImportGroupOrder = 'builtin' | 'external' | 'internal' | 'relative';
+
 export interface FormatterConfig {
   // Indentation
   indentSize: number;
@@ -43,6 +46,9 @@ export interface FormatterConfig {
 
   // Imports
   sortImports: boolean;
+  importSortOrder: ImportSortOrder;
+  importGroupOrder: ImportGroupOrder[];
+  importGroupSeparator: boolean;
 
   // Blank lines
   maxBlankLines: number;
@@ -75,6 +81,9 @@ export const DEFAULT_CONFIG: FormatterConfig = {
   semicolons: false,
   singleQuote: false,
   sortImports: true,
+  importSortOrder: 'grouped',
+  importGroupOrder: ['builtin', 'external', 'internal', 'relative'],
+  importGroupSeparator: true,
   maxBlankLines: 1,
   blankLineBeforeComposition: true,
 };
@@ -351,15 +360,11 @@ export class HoloScriptFormatter {
         foundImports = true;
         importLines.push(line);
       } else if (foundImports && isEmpty && !importSectionEnded) {
-        // Blank line immediately after imports - mark it
         hasBlankLineAfterImports = true;
         importSectionEnded = true;
-        // Don't add to either list - we'll add it back if needed
       } else if (!foundImports && isEmpty) {
-        // Skip blank lines before imports
         continue;
       } else {
-        // Any other content line
         otherLines.push(line);
         if (foundImports && !importSectionEnded) {
           importSectionEnded = true;
@@ -367,22 +372,102 @@ export class HoloScriptFormatter {
       }
     }
 
-    // If no imports found, return as-is
     if (importLines.length === 0) {
       return source;
     }
 
-    // Sort imports alphabetically
-    const sortedImports = importLines.sort((a, b) => a.localeCompare(b));
-    
-    // Reconstruct: imports, optional blank line, then other content
+    let sortedImports: string[];
+
+    if (this.config.importSortOrder === 'grouped') {
+      sortedImports = this.sortImportsGrouped(importLines);
+    } else {
+      sortedImports = importLines.sort((a, b) => a.localeCompare(b));
+    }
+
     const result = [...sortedImports];
     if (hasBlankLineAfterImports) {
       result.push('');
     }
     result.push(...otherLines);
-    
+
     return result.join('\n');
+  }
+
+  /**
+   * Sort imports into groups: builtin, external, internal, relative
+   */
+  private sortImportsGrouped(imports: string[]): string[] {
+    // Categorize imports
+    const groups: Record<ImportGroupOrder, string[]> = {
+      builtin: [],
+      external: [],
+      internal: [],
+      relative: [],
+    };
+
+    for (const line of imports) {
+      const category = this.categorizeImport(line);
+      groups[category].push(line);
+    }
+
+    // Sort each group alphabetically
+    for (const key of Object.keys(groups) as ImportGroupOrder[]) {
+      groups[key].sort((a, b) => a.localeCompare(b));
+    }
+
+    // Assemble result in configured order
+    const result: string[] = [];
+    const order = this.config.importGroupOrder;
+
+    for (let i = 0; i < order.length; i++) {
+      const groupKey = order[i];
+      const groupImports = groups[groupKey];
+
+      if (groupImports.length > 0) {
+        if (result.length > 0 && this.config.importGroupSeparator) {
+          result.push('');
+        }
+        result.push(...groupImports);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Categorize an import line
+   */
+  private categorizeImport(line: string): ImportGroupOrder {
+    // Extract module path from import statement
+    const match = line.match(/from\s+["']([^"']+)["']/) ||
+                  line.match(/import\s+["']([^"']+)["']/) ||
+                  line.match(/@import\s+["']([^"']+)["']/);
+
+    if (!match) {
+      return 'external';
+    }
+
+    const modulePath = match[1];
+
+    // Relative imports (., ..)
+    if (modulePath.startsWith('.')) {
+      return 'relative';
+    }
+
+    // Internal imports (@holoscript/*, @hololand/*)
+    if (modulePath.startsWith('@holoscript/') || modulePath.startsWith('@hololand/')) {
+      return 'internal';
+    }
+
+    // Builtin/core imports
+    const builtins = ['fs', 'path', 'os', 'util', 'events', 'stream', 'http', 'https', 'crypto', 'buffer', 'url', 'querystring', 'zlib', 'child_process', 'cluster', 'dgram', 'dns', 'net', 'readline', 'tls', 'vm', 'assert', 'console', 'timers', 'worker_threads'];
+    const moduleBaseName = modulePath.split('/')[0];
+    if (builtins.includes(moduleBaseName) || modulePath.startsWith('node:')) {
+      return 'builtin';
+    }
+
+    // Everything else is external
+    return 'external';
   }
 
   private normalizeWhitespace(source: string, rawRanges: Range[] = []): string {
@@ -460,6 +545,151 @@ import { ConfigLoader } from './ConfigLoader';
 export function loadConfig(filePath: string): FormatterConfig {
   const loader = new ConfigLoader();
   return loader.loadConfig(filePath);
+}
+
+// =============================================================================
+// PARALLEL FORMATTER
+// =============================================================================
+
+export interface ParallelFormatOptions {
+  /** Maximum concurrent file operations */
+  concurrency: number;
+  /** Formatter configuration */
+  config: Partial<FormatterConfig>;
+  /** Whether to write changes to files */
+  write: boolean;
+  /** Progress callback */
+  onProgress?: (completed: number, total: number, file: string) => void;
+  /** Error callback */
+  onError?: (file: string, error: Error) => void;
+}
+
+export interface ParallelFormatResult {
+  /** Total files processed */
+  total: number;
+  /** Number of files changed */
+  changed: number;
+  /** Number of files with errors */
+  errors: number;
+  /** List of changed files */
+  changedFiles: string[];
+  /** List of files with errors */
+  errorFiles: string[];
+  /** Duration in milliseconds */
+  durationMs: number;
+}
+
+/**
+ * Format multiple files in parallel using async iterators
+ */
+export async function formatFilesParallel(
+  files: string[],
+  options: Partial<ParallelFormatOptions> = {}
+): Promise<ParallelFormatResult> {
+  const {
+    concurrency = 4,
+    config = {},
+    write = false,
+    onProgress,
+    onError,
+  } = options;
+
+  const fs = await import('fs/promises');
+  const formatter = new HoloScriptFormatter(config);
+  const startTime = Date.now();
+
+  const result: ParallelFormatResult = {
+    total: files.length,
+    changed: 0,
+    errors: 0,
+    changedFiles: [],
+    errorFiles: [],
+    durationMs: 0,
+  };
+
+  // Process files in batches for controlled concurrency
+  let completed = 0;
+
+  async function processFile(filePath: string): Promise<void> {
+    try {
+      const source = await fs.readFile(filePath, 'utf-8');
+      const fileType = filePath.endsWith('.hsplus') ? 'hsplus' : 'holo';
+      const formatted = formatter.format(source, fileType);
+
+      if (formatted.changed) {
+        if (write) {
+          await fs.writeFile(filePath, formatted.formatted, 'utf-8');
+        }
+        result.changed++;
+        result.changedFiles.push(filePath);
+      }
+
+      if (formatted.errors.length > 0) {
+        result.errors++;
+        result.errorFiles.push(filePath);
+        if (onError) {
+          onError(filePath, new Error(formatted.errors[0].message));
+        }
+      }
+    } catch (err) {
+      result.errors++;
+      result.errorFiles.push(filePath);
+      if (onError) {
+        onError(filePath, err instanceof Error ? err : new Error(String(err)));
+      }
+    } finally {
+      completed++;
+      if (onProgress) {
+        onProgress(completed, files.length, filePath);
+      }
+    }
+  }
+
+  // Process in batches
+  const batches: string[][] = [];
+  for (let i = 0; i < files.length; i += concurrency) {
+    batches.push(files.slice(i, i + concurrency));
+  }
+
+  for (const batch of batches) {
+    await Promise.all(batch.map(processFile));
+  }
+
+  result.durationMs = Date.now() - startTime;
+  return result;
+}
+
+/**
+ * Create an async generator for streaming file formatting
+ */
+export async function* formatFilesStream(
+  files: string[],
+  config: Partial<FormatterConfig> = {}
+): AsyncGenerator<{ file: string; result: FormatResult }, void, unknown> {
+  const fs = await import('fs/promises');
+  const formatter = new HoloScriptFormatter(config);
+
+  for (const filePath of files) {
+    try {
+      const source = await fs.readFile(filePath, 'utf-8');
+      const fileType = filePath.endsWith('.hsplus') ? 'hsplus' : 'holo';
+      const result = formatter.format(source, fileType);
+      yield { file: filePath, result };
+    } catch (err) {
+      yield {
+        file: filePath,
+        result: {
+          formatted: '',
+          changed: false,
+          errors: [{
+            message: err instanceof Error ? err.message : String(err),
+            line: 0,
+            column: 0,
+          }],
+        },
+      };
+    }
+  }
 }
 
 // Default export

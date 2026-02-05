@@ -371,5 +371,269 @@ describe('IncrementalCompiler', () => {
       expect(stats.objectsCached).toContain('Obj2');
       expect(stats.dependencyEdges).toBe(2);
     });
+
+    it('should include trait graph statistics', () => {
+      const composition = createComposition([
+        {
+          name: 'Cube',
+          properties: [{ key: 'mesh', value: 'cube' }],
+          traits: ['physics', 'grabbable'],
+        },
+      ]);
+      compiler.compile(composition, () => 'code');
+
+      const stats = compiler.getStats();
+
+      expect(stats.traitGraphStats).toBeDefined();
+      expect(stats.traitGraphStats.objectCount).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('trait config change detection', () => {
+    it('should detect trait config changes', () => {
+      // Object with trait that has config
+      const oldObj: HoloObject = {
+        name: 'Ball',
+        properties: [],
+        traits: [{ name: 'physics', mass: 1.0, restitution: 0.5 }],
+      };
+      const newObj: HoloObject = {
+        name: 'Ball',
+        properties: [],
+        traits: [{ name: 'physics', mass: 2.0, restitution: 0.5 }], // mass changed
+      };
+
+      const oldComposition = createComposition([oldObj]);
+      const newComposition = createComposition([newObj]);
+
+      const result = compiler.diff(oldComposition, newComposition);
+
+      expect(result.hasChanges).toBe(true);
+      expect(result.modifiedObjects).toContain('Ball');
+
+      // Should have a trait modification change
+      const traitChange = result.changes.find(
+        c => c.nodeName === 'physics' && c.type === 'modified'
+      );
+      expect(traitChange).toBeDefined();
+    });
+
+    it('should not detect changes when trait config is unchanged', () => {
+      const obj: HoloObject = {
+        name: 'Ball',
+        properties: [],
+        traits: [{ name: 'physics', mass: 1.0 }],
+      };
+
+      const oldComposition = createComposition([obj]);
+      const newComposition = createComposition([obj]);
+
+      const result = compiler.diff(oldComposition, newComposition);
+
+      // Same config should not produce changes
+      expect(result.hasChanges).toBe(false);
+      expect(result.unchangedObjects).toContain('Ball');
+    });
+
+    it('should handle mixed trait formats (string and object)', () => {
+      const oldObj: HoloObject = {
+        name: 'Cube',
+        properties: [],
+        traits: ['grabbable', { name: 'physics', mass: 1.0 }],
+      };
+      const newObj: HoloObject = {
+        name: 'Cube',
+        properties: [],
+        traits: ['grabbable', { name: 'physics', mass: 2.0 }],
+      };
+
+      const oldComposition = createComposition([oldObj]);
+      const newComposition = createComposition([newObj]);
+
+      const result = compiler.diff(oldComposition, newComposition);
+
+      expect(result.hasChanges).toBe(true);
+      // grabbable should be unchanged, physics config should be modified
+      const physicsChange = result.changes.find(c => c.nodeName === 'physics');
+      expect(physicsChange).toBeDefined();
+      expect(physicsChange!.type).toBe('modified');
+    });
+
+    it('should detect trait addition with config', () => {
+      const oldObj: HoloObject = {
+        name: 'Cube',
+        properties: [],
+        traits: ['grabbable'],
+      };
+      const newObj: HoloObject = {
+        name: 'Cube',
+        properties: [],
+        traits: ['grabbable', { name: 'physics', mass: 5.0 }],
+      };
+
+      const oldComposition = createComposition([oldObj]);
+      const newComposition = createComposition([newObj]);
+
+      const result = compiler.diff(oldComposition, newComposition);
+
+      expect(result.hasChanges).toBe(true);
+      const physicsChange = result.changes.find(c => c.nodeName === 'physics');
+      expect(physicsChange).toBeDefined();
+      expect(physicsChange!.type).toBe('added');
+    });
+
+    it('should detect trait removal with config', () => {
+      const oldObj: HoloObject = {
+        name: 'Cube',
+        properties: [],
+        traits: ['grabbable', { name: 'physics', mass: 5.0 }],
+      };
+      const newObj: HoloObject = {
+        name: 'Cube',
+        properties: [],
+        traits: ['grabbable'],
+      };
+
+      const oldComposition = createComposition([oldObj]);
+      const newComposition = createComposition([newObj]);
+
+      const result = compiler.diff(oldComposition, newComposition);
+
+      expect(result.hasChanges).toBe(true);
+      const physicsChange = result.changes.find(c => c.nodeName === 'physics');
+      expect(physicsChange).toBeDefined();
+      expect(physicsChange!.type).toBe('removed');
+    });
+
+    it('should handle trait config with nested objects', () => {
+      const oldObj: HoloObject = {
+        name: 'Cube',
+        properties: [],
+        traits: [{ name: 'audio', volume: 0.8, spatial: { maxDistance: 10 } }],
+      };
+      const newObj: HoloObject = {
+        name: 'Cube',
+        properties: [],
+        traits: [{ name: 'audio', volume: 0.8, spatial: { maxDistance: 20 } }],
+      };
+
+      const oldComposition = createComposition([oldObj]);
+      const newComposition = createComposition([newObj]);
+
+      const result = compiler.diff(oldComposition, newComposition);
+
+      expect(result.hasChanges).toBe(true);
+      const audioChange = result.changes.find(c => c.nodeName === 'audio');
+      expect(audioChange).toBeDefined();
+      expect(audioChange!.type).toBe('modified');
+    });
+  });
+
+  describe('trait graph access', () => {
+    it('should provide access to trait graph', () => {
+      const graph = compiler.getTraitGraph();
+      expect(graph).toBeDefined();
+      expect(typeof graph.getStats).toBe('function');
+    });
+
+    it('should register objects with trait graph during compile', () => {
+      const composition = createComposition([
+        {
+          name: 'Ball',
+          properties: [],
+          traits: ['physics', 'grabbable'],
+        },
+      ]);
+
+      compiler.compile(composition, () => 'code');
+      const stats = compiler.getTraitGraph().getStats();
+
+      expect(stats.objectCount).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('cache persistence', () => {
+    it('should serialize and deserialize compiler state', () => {
+      // Set up compiler with cache and dependencies
+      compiler.setCached('Cube', 'hash1', 'function Cube() {}', []);
+      compiler.setCached('Sphere', 'hash2', 'function Sphere() {}', ['Cube']);
+      compiler.updateDependencies('Sphere', ['Cube']);
+
+      // Serialize
+      const json = compiler.serialize();
+      expect(json).toBeDefined();
+
+      // Deserialize
+      const restored = IncrementalCompiler.deserialize(json);
+
+      // Verify cache was restored
+      const stats = restored.getStats();
+      expect(stats.cacheSize).toBe(2);
+      expect(stats.objectsCached).toContain('Cube');
+      expect(stats.objectsCached).toContain('Sphere');
+    });
+
+    it('should restore cache entries with correct data', () => {
+      const compiledCode = 'function MyComponent() { return <mesh />; }';
+      compiler.setCached('MyComponent', 'abc123', compiledCode, ['dep1']);
+
+      const json = compiler.serialize();
+      const restored = IncrementalCompiler.deserialize(json);
+
+      const cached = restored.getCached('MyComponent', 'abc123');
+      expect(cached).not.toBeNull();
+      expect(cached!.compiledCode).toBe(compiledCode);
+    });
+
+    it('should restore dependency graph', () => {
+      compiler.updateDependencies('Button', ['Theme', 'i18n']);
+      compiler.updateDependencies('Card', ['Theme']);
+
+      const json = compiler.serialize();
+      const restored = IncrementalCompiler.deserialize(json);
+
+      const dependents = restored.getDependents('Theme');
+      expect(dependents).toContain('Button');
+      expect(dependents).toContain('Card');
+    });
+
+    it('should restore trait graph', () => {
+      const composition = createComposition([
+        {
+          name: 'Ball',
+          properties: [],
+          traits: ['physics', 'grabbable'],
+        },
+      ]);
+      compiler.compile(composition, () => 'code');
+
+      const json = compiler.serialize();
+      const restored = IncrementalCompiler.deserialize(json);
+
+      // Trait graph should have data
+      const stats = restored.getTraitGraph().getStats();
+      expect(stats.objectCount).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should throw on unsupported cache version', () => {
+      const badJson = JSON.stringify({
+        version: 99,
+        entries: [],
+        dependencies: [],
+        traitGraph: '{"version":1,"traitDependencies":[],"traitConflicts":[],"objectTraits":[],"timestamp":0}',
+        timestamp: Date.now(),
+      });
+
+      expect(() => IncrementalCompiler.deserialize(badJson)).toThrow('Unsupported');
+    });
+
+    it('should handle empty cache serialization', () => {
+      const json = compiler.serialize();
+      const restored = IncrementalCompiler.deserialize(json);
+
+      const stats = restored.getStats();
+      expect(stats.cacheSize).toBe(0);
+      expect(stats.dependencyEdges).toBe(0);
+    });
   });
 });

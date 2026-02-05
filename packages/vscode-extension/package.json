@@ -140,6 +140,48 @@
         "path": "./syntaxes/holoscript.tmLanguage.json"
       }
     ],
+    "semanticTokenScopes": [
+      {
+        "language": "holoscript",
+        "scopes": {
+          "decorator": ["entity.name.tag.trait.holoscript"],
+          "decorator.defaultLibrary": ["entity.name.tag.trait.builtin.holoscript"],
+          "keyword": ["keyword.control.holoscript"],
+          "keyword.defaultLibrary": ["keyword.other.holoscript"],
+          "class": ["entity.name.type.class.holoscript"],
+          "class.declaration": ["entity.name.type.class.declaration.holoscript"],
+          "namespace": ["entity.name.namespace.holoscript"],
+          "property": ["variable.other.property.holoscript"],
+          "variable": ["variable.other.holoscript"],
+          "function": ["entity.name.function.holoscript"],
+          "function.defaultLibrary": ["support.function.builtin.holoscript"],
+          "string": ["string.quoted.double.holoscript"],
+          "number": ["constant.numeric.holoscript"],
+          "operator": ["keyword.operator.holoscript"],
+          "comment": ["comment.line.holoscript"]
+        }
+      },
+      {
+        "language": "holoscriptplus",
+        "scopes": {
+          "decorator": ["entity.name.tag.trait.holoscript"],
+          "decorator.defaultLibrary": ["entity.name.tag.trait.builtin.holoscript"],
+          "keyword": ["keyword.control.holoscript"],
+          "keyword.defaultLibrary": ["keyword.other.holoscript"],
+          "class": ["entity.name.type.class.holoscript"],
+          "class.declaration": ["entity.name.type.class.declaration.holoscript"],
+          "namespace": ["entity.name.namespace.holoscript"],
+          "property": ["variable.other.property.holoscript"],
+          "variable": ["variable.other.holoscript"],
+          "function": ["entity.name.function.holoscript"],
+          "function.defaultLibrary": ["support.function.builtin.holoscript"],
+          "string": ["string.quoted.double.holoscript"],
+          "number": ["constant.numeric.holoscript"],
+          "operator": ["keyword.operator.holoscript"],
+          "comment": ["comment.line.holoscript"]
+        }
+      }
+    ],
     "snippets": [
       {
         "language": "holoscript",

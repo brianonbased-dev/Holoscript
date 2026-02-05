@@ -257,6 +257,123 @@ async function main(): Promise<void> {
        break;
     }
 
+    case 'diff': {
+      // Get file arguments from original args array
+      const diffArgs = args.filter(a => !a.startsWith('-') && a !== 'diff');
+      if (diffArgs.length < 2) {
+        console.error('\x1b[31mError: Two files required for diff.\x1b[0m');
+        console.log('Usage: holoscript diff <file1> <file2> [--json]');
+        process.exit(1);
+      }
+
+      const fs = await import('fs');
+      const path = await import('path');
+      const { SemanticDiffEngine, formatDiffResult, HoloCompositionParser, HoloScriptCodeParser } = await import('@holoscript/core');
+
+      const file1 = path.resolve(diffArgs[0]);
+      const file2 = path.resolve(diffArgs[1]);
+
+      if (!fs.existsSync(file1)) {
+        console.error(`\x1b[31mError: File not found: ${file1}\x1b[0m`);
+        process.exit(1);
+      }
+      if (!fs.existsSync(file2)) {
+        console.error(`\x1b[31mError: File not found: ${file2}\x1b[0m`);
+        process.exit(1);
+      }
+
+      console.log(`\n\x1b[36mComparing ${diffArgs[0]} ↔ ${diffArgs[1]}...\x1b[0m\n`);
+
+      try {
+        const content1 = fs.readFileSync(file1, 'utf-8');
+        const content2 = fs.readFileSync(file2, 'utf-8');
+
+        // Parse both files
+        const isHolo1 = file1.endsWith('.holo');
+        const isHolo2 = file2.endsWith('.holo');
+
+        let ast1: any, ast2: any;
+
+        if (isHolo1) {
+          const parser = new HoloCompositionParser();
+          const result = parser.parse(content1);
+          if (!result.success) {
+            console.error(`\x1b[31mError parsing ${diffArgs[0]}:\x1b[0m`);
+            result.errors.forEach((e: any) => console.error(`  ${e.loc?.line}:${e.loc?.column}: ${e.message}`));
+            process.exit(1);
+          }
+          ast1 = result.ast;
+        } else {
+          const parser = new HoloScriptCodeParser();
+          const result = parser.parse(content1);
+          if (!result.success) {
+            console.error(`\x1b[31mError parsing ${diffArgs[0]}:\x1b[0m`);
+            result.errors.forEach((e: any) => console.error(`  ${e.line}:${e.column}: ${e.message}`));
+            process.exit(1);
+          }
+          ast1 = { type: 'Program', children: result.ast };
+        }
+
+        if (isHolo2) {
+          const parser = new HoloCompositionParser();
+          const result = parser.parse(content2);
+          if (!result.success) {
+            console.error(`\x1b[31mError parsing ${diffArgs[1]}:\x1b[0m`);
+            result.errors.forEach((e: any) => console.error(`  ${e.loc?.line}:${e.loc?.column}: ${e.message}`));
+            process.exit(1);
+          }
+          ast2 = result.ast;
+        } else {
+          const parser = new HoloScriptCodeParser();
+          const result = parser.parse(content2);
+          if (!result.success) {
+            console.error(`\x1b[31mError parsing ${diffArgs[1]}:\x1b[0m`);
+            result.errors.forEach((e: any) => console.error(`  ${e.line}:${e.column}: ${e.message}`));
+            process.exit(1);
+          }
+          ast2 = { type: 'Program', children: result.ast };
+        }
+
+        // Run semantic diff
+        const engine = new SemanticDiffEngine({
+          detectRenames: true,
+          detectMoves: true,
+          ignoreComments: true,
+          ignoreFormatting: true,
+        });
+        const result = engine.diff(ast1, ast2, diffArgs[0], diffArgs[1]);
+
+        if (options.json) {
+          console.log(JSON.stringify(result, null, 2));
+        } else {
+          console.log(formatDiffResult(result));
+
+          // Summary
+          const added = result.changes.filter((c: { type: string }) => c.type === 'added').length;
+          const removed = result.changes.filter((c: { type: string }) => c.type === 'removed').length;
+          const modified = result.changes.filter((c: { type: string }) => c.type === 'modified').length;
+          const renamed = result.changes.filter((c: { type: string }) => c.type === 'renamed').length;
+          const moved = result.changes.filter((c: { type: string }) => c.type === 'moved').length;
+
+          console.log(`\n\x1b[1mSummary:\x1b[0m`);
+          if (added > 0) console.log(`  \x1b[32m+ ${added} added\x1b[0m`);
+          if (removed > 0) console.log(`  \x1b[31m- ${removed} removed\x1b[0m`);
+          if (modified > 0) console.log(`  \x1b[33m~ ${modified} modified\x1b[0m`);
+          if (renamed > 0) console.log(`  \x1b[36m→ ${renamed} renamed\x1b[0m`);
+          if (moved > 0) console.log(`  \x1b[35m↔ ${moved} moved\x1b[0m`);
+
+          if (result.changes.length === 0) {
+            console.log(`  \x1b[32mNo semantic differences found.\x1b[0m`);
+          }
+        }
+
+        process.exit(0);
+      } catch (err: any) {
+        console.error(`\x1b[31mDiff error: ${err.message}\x1b[0m`);
+        process.exit(1);
+      }
+    }
+
     case 'traits': {
       if (options.input) {
         // Explain specific trait

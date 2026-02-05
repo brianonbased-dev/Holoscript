@@ -584,5 +584,300 @@
       " */"
     ],
     "description": "Multi-line comment block"
+  },
+
+  "Grabbable Trait": {
+    "prefix": ["@grabbable", "grabbable"],
+    "body": "@grabbable",
+    "description": "Make object grabbable in VR"
+  },
+
+  "Physics Trait": {
+    "prefix": ["@physics"],
+    "body": "@physics(mass: ${1:1.0}, restitution: ${2:0.3})",
+    "description": "Add physics simulation to object"
+  },
+
+  "Collidable Trait": {
+    "prefix": ["@collidable"],
+    "body": "@collidable",
+    "description": "Enable collision detection"
+  },
+
+  "Static Trait": {
+    "prefix": ["@static"],
+    "body": "@static",
+    "description": "Make object static (no physics movement)"
+  },
+
+  "Kinematic Trait": {
+    "prefix": ["@kinematic"],
+    "body": "@kinematic",
+    "description": "Make object kinematic (script-controlled movement)"
+  },
+
+  "Glowing Trait": {
+    "prefix": ["@glowing"],
+    "body": "@glowing(color: \"${1:#00ffff}\", intensity: ${2:1.0})",
+    "description": "Add glowing effect to object"
+  },
+
+  "Billboard Trait": {
+    "prefix": ["@billboard"],
+    "body": "@billboard",
+    "description": "Make object always face the camera"
+  },
+
+  "Throwable Trait": {
+    "prefix": ["@throwable"],
+    "body": "@throwable(force: ${1:10})",
+    "description": "Make object throwable"
+  },
+
+  "Climbable Trait": {
+    "prefix": ["@climbable"],
+    "body": "@climbable",
+    "description": "Make object climbable in VR"
+  },
+
+  "Hand Tracking": {
+    "prefix": ["handtracking", "hands"],
+    "body": [
+      "hand_tracking {",
+      "\tenabled: true",
+      "\tgestures: [\"${1|pinch,grab,point,open|}\"]",
+      "\ton_gesture(gesture, hand) {",
+      "\t\t${2:// Handle gesture}",
+      "\t}",
+      "}"
+    ],
+    "description": "Enable hand tracking"
+  },
+
+  "Portal": {
+    "prefix": ["portal", "teleportzone"],
+    "body": [
+      "object \"${1:Portal}\" {",
+      "\t@collidable",
+      "\tgeometry: \"cylinder\"",
+      "\tposition: [${2:0}, ${3:1}, ${4:0}]",
+      "\tscale: [1, 2, 1]",
+      "\tmaterial: {",
+      "\t\tshader: \"portal\"",
+      "\t\ttarget_scene: \"${5:TargetScene}\"",
+      "\t}",
+      "\t",
+      "\ton_enter(player) {",
+      "\t\tload_scene(\"${5:TargetScene}\")",
+      "\t}",
+      "}"
+    ],
+    "description": "Create a portal to another scene"
+  },
+
+  "Spatial Anchor": {
+    "prefix": ["anchor", "spatialanchor"],
+    "body": [
+      "spatial_anchor \"${1:AnchorName}\" {",
+      "\tposition: [${2:0}, ${3:0}, ${4:0}]",
+      "\tpersistent: ${5:true}",
+      "\ton_located {",
+      "\t\t${6:// Anchor found}",
+      "\t}",
+      "}"
+    ],
+    "description": "Create a spatial anchor for AR"
+  },
+
+  "Raycast": {
+    "prefix": ["raycast", "ray"],
+    "body": [
+      "raycast from ${1:origin} direction ${2:forward} {",
+      "\tmax_distance: ${3:100}",
+      "\tlayers: [\"${4:default}\"]",
+      "\ton_hit(target, point, normal) {",
+      "\t\t${5:// Handle hit}",
+      "\t}",
+      "}"
+    ],
+    "description": "Perform a raycast"
+  },
+
+  "Spatial Audio": {
+    "prefix": ["spatialaudio", "audio3d"],
+    "body": [
+      "audio \"${1:SoundSource}\" {",
+      "\tfile: \"${2:sound.mp3}\"",
+      "\tspatial: true",
+      "\tposition: [${3:0}, ${4:0}, ${5:0}]",
+      "\trolloff: ${6:1.0}",
+      "\tmax_distance: ${7:50}",
+      "}"
+    ],
+    "description": "Create spatial 3D audio source"
+  },
+
+  "VR Controller Input": {
+    "prefix": ["controller", "vrinput"],
+    "body": [
+      "on_controller_${1|trigger,grip,button_a,button_b,thumbstick|}(${2:hand}) {",
+      "\t${3:// Handle input}",
+      "}"
+    ],
+    "description": "Handle VR controller input"
+  },
+
+  "Particle System": {
+    "prefix": ["particles", "particle"],
+    "body": [
+      "particles \"${1:ParticleEffect}\" {",
+      "\tposition: [${2:0}, ${3:0}, ${4:0}]",
+      "\temission_rate: ${5:100}",
+      "\tlifetime: ${6:2.0}",
+      "\tcolor: [\"${7:#ff0000}\", \"${8:#ffff00}\"]",
+      "\tsize: [${9:0.1}, ${10:0.01}]",
+      "\tgravity: ${11:-0.5}",
+      "}"
+    ],
+    "description": "Create a particle system"
+  },
+
+  "Animation Clip": {
+    "prefix": ["animclip", "animation"],
+    "body": [
+      "animation \"${1:AnimName}\" {",
+      "\ttarget: ${2:object}",
+      "\tproperty: \"${3|position,rotation,scale,color,opacity|}\"",
+      "\tkeyframes: [",
+      "\t\t{ time: 0, value: ${4:[0, 0, 0]} },",
+      "\t\t{ time: ${5:1}, value: ${6:[0, 1, 0]} }",
+      "\t]",
+      "\tloop: ${7:true}",
+      "\teasing: \"${8|linear,ease-in,ease-out,ease-in-out|}\"",
+      "}"
+    ],
+    "description": "Define an animation clip"
+  },
+
+  "Material": {
+    "prefix": ["material", "mat"],
+    "body": [
+      "material {",
+      "\tcolor: \"${1:#ffffff}\"",
+      "\tmetallic: ${2:0.0}",
+      "\troughness: ${3:0.5}",
+      "\ttexture: \"${4:texture.png}\"",
+      "}"
+    ],
+    "description": "Define material properties"
+  },
+
+  "Inventory System": {
+    "prefix": ["inventory", "inv"],
+    "body": [
+      "inventory \"${1:PlayerInventory}\" {",
+      "\tslots: ${2:10}",
+      "\titems: []",
+      "\t",
+      "\taction add(item) {",
+      "\t\t${3:// Add item}",
+      "\t}",
+      "\t",
+      "\taction remove(item) {",
+      "\t\t${4:// Remove item}",
+      "\t}",
+      "}"
+    ],
+    "description": "Create an inventory system"
+  },
+
+  "Quest": {
+    "prefix": ["quest"],
+    "body": [
+      "quest \"${1:QuestName}\" {",
+      "\ttitle: \"${2:Quest Title}\"",
+      "\tdescription: \"${3:Complete the objective}\"",
+      "\t",
+      "\tobjective \"${4:main}\" {",
+      "\t\tdescription: \"${5:Do something}\"",
+      "\t\ttarget: ${6:1}",
+      "\t\ton_complete {",
+      "\t\t\t${7:// Objective completed}",
+      "\t\t}",
+      "\t}",
+      "}"
+    ],
+    "description": "Define a quest"
+  },
+
+  "Skybox": {
+    "prefix": ["skybox", "sky"],
+    "body": [
+      "skybox {",
+      "\ttype: \"${1|cubemap,gradient,procedural|}\"",
+      "\ttexture: \"${2:skybox.hdr}\"",
+      "\trotation: ${3:0}",
+      "}"
+    ],
+    "description": "Configure skybox"
+  },
+
+  "LOD Group": {
+    "prefix": ["lod", "levelofdetail"],
+    "body": [
+      "lod_group {",
+      "\tlevels: [",
+      "\t\t{ distance: ${1:0}, model: \"${2:high_detail}\" },",
+      "\t\t{ distance: ${3:10}, model: \"${4:medium_detail}\" },",
+      "\t\t{ distance: ${5:50}, model: \"${6:low_detail}\" }",
+      "\t]",
+      "}"
+    ],
+    "description": "Define LOD levels"
+  },
+
+  "Mirror": {
+    "prefix": ["mirror", "reflection"],
+    "body": [
+      "object \"${1:Mirror}\" {",
+      "\tgeometry: \"plane\"",
+      "\tposition: [${2:0}, ${3:1.5}, ${4:0}]",
+      "\trotation: [0, ${5:0}, 0]",
+      "\tmaterial: {",
+      "\t\treflective: true",
+      "\t\treflection_quality: ${6:1.0}",
+      "\t}",
+      "}"
+    ],
+    "description": "Create a reflective mirror"
+  },
+
+  "Spread Properties": {
+    "prefix": ["spread", "..."],
+    "body": "...${1:source}",
+    "description": "Spread operator for object/array"
+  },
+
+  "Arrow Function": {
+    "prefix": ["arrow", "=>"],
+    "body": "(${1:params}) => ${2:expression}",
+    "description": "Arrow function expression"
+  },
+
+  "Arrow Function Block": {
+    "prefix": ["arrowblock", "=>{}"],
+    "body": [
+      "(${1:params}) => {",
+      "\t${2:// body}",
+      "\treturn ${3:result}",
+      "}"
+    ],
+    "description": "Arrow function with block body"
+  },
+
+  "Rest Parameters": {
+    "prefix": ["rest", "...args"],
+    "body": "...${1:args}",
+    "description": "Rest parameters in function"
   }
 }

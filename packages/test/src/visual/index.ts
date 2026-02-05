@@ -10,6 +10,7 @@ export * from './renderer';
 export * from './capture';
 export * from './diff';
 export * from './report';
+export * from './DiffViewer';
 
 export interface VisualTestContext {
   renderer: HeadlessRenderer;

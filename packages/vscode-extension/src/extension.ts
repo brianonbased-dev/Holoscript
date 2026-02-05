@@ -14,6 +14,11 @@ import { SmartAssetEditorProvider } from './smartAssetEditor';
 import { agentAPI } from './agentApi';
 import { HoloScriptCompletionItemProvider } from './completionProvider';
 import { McpOrchestratorClient } from './services/McpOrchestratorClient';
+import {
+  HoloScriptSemanticTokensProvider,
+  HoloScriptSemanticTokensRangeProvider,
+  SEMANTIC_TOKENS_LEGEND,
+} from './semanticTokensProvider';
 
 let client: LanguageClient | undefined;
 
@@ -407,6 +412,26 @@ export function activate(context: ExtensionContext) {
         '@' // Trigger character
     )
   );
+
+  // Register Semantic Tokens Provider for trait-aware highlighting
+  context.subscriptions.push(
+    vscode.languages.registerDocumentSemanticTokensProvider(
+      ['holoscript', 'holoscriptplus'],
+      new HoloScriptSemanticTokensProvider(),
+      SEMANTIC_TOKENS_LEGEND
+    )
+  );
+
+  // Register Range Semantic Tokens Provider for large files
+  context.subscriptions.push(
+    vscode.languages.registerDocumentRangeSemanticTokensProvider(
+      ['holoscript', 'holoscriptplus'],
+      new HoloScriptSemanticTokensRangeProvider(),
+      SEMANTIC_TOKENS_LEGEND
+    )
+  );
+
+  console.log('HoloScript: Semantic tokens provider registered.');
 }
 
 function isHoloScriptFile(document: TextDocument): boolean {

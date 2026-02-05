@@ -243,6 +243,30 @@ export { BabylonCompiler, type BabylonCompilerOptions } from './compiler/Babylon
 export { AndroidXRCompiler, type AndroidXRCompilerOptions } from './compiler/AndroidXRCompiler';
 export { OpenXRCompiler, type OpenXRCompilerOptions } from './compiler/OpenXRCompiler';
 
+// Incremental Compiler (Sprint 2 - Hot Reload & Trait Detection)
+export {
+  IncrementalCompiler,
+  createIncrementalCompiler,
+  type ChangeType,
+  type ASTChange,
+  type DiffResult,
+  type CacheEntry,
+  type StateSnapshot,
+  type IncrementalCompileOptions,
+  type IncrementalCompileResult,
+  type SerializedCache,
+} from './compiler/IncrementalCompiler';
+
+export {
+  TraitDependencyGraph,
+  globalTraitGraph,
+  type TraitUsage,
+  type ObjectTraitInfo,
+  type TraitDefinition,
+  type TraitChangeInfo,
+  type AffectedSet,
+} from './compiler/TraitDependencyGraph';
+
 // HoloScript LSP Service (NEW - IDE integration)
 export {
   HoloScriptLSP,
@@ -1265,3 +1289,18 @@ export * from './semantics';
 // =============================================================================
 
 export * from './hololand';
+
+// =============================================================================
+// Semantic Diff Engine (Sprint 2 - Visual Diff Tools)
+// =============================================================================
+
+export {
+  SemanticDiffEngine,
+  semanticDiff,
+  formatDiffResult,
+  diffToJSON,
+  type ChangeType as DiffChangeType,
+  type DiffChange,
+  type SemanticDiffResult,
+  type DiffOptions,
+} from './diff';
