@@ -35,6 +35,11 @@
       "types": "./dist/debugger.d.ts",
       "import": "./dist/debugger.js",
       "require": "./dist/debugger.cjs"
+    },
+    "./wot": {
+      "types": "./dist/wot/index.d.ts",
+      "import": "./dist/wot/index.js",
+      "require": "./dist/wot/index.cjs"
     }
   },
   "scripts": {

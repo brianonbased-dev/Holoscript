@@ -3,7 +3,7 @@
  */
 
 export interface CLIOptions {
-  command: 'parse' | 'validate' | 'run' | 'ast' | 'repl' | 'watch' | 'compile' | 'build' | 'add' | 'remove' | 'list' | 'traits' | 'suggest' | 'generate' | 'templates' | 'pack' | 'unpack' | 'inspect' | 'diff' | 'help' | 'version';
+  command: 'parse' | 'validate' | 'run' | 'ast' | 'repl' | 'watch' | 'compile' | 'build' | 'add' | 'remove' | 'list' | 'traits' | 'suggest' | 'generate' | 'templates' | 'pack' | 'unpack' | 'inspect' | 'diff' | 'wot-export' | 'help' | 'version';
   input?: string;
   output?: string;
   verbose: boolean;
@@ -43,7 +43,7 @@ export function parseArgs(args: string[]): CLIOptions {
 
     // Commands
     if (!arg.startsWith('-')) {
-      if (['parse', 'validate', 'run', 'ast', 'repl', 'watch', 'compile', 'build', 'add', 'remove', 'list', 'traits', 'suggest', 'generate', 'templates', 'pack', 'unpack', 'inspect', 'diff', 'help', 'version'].includes(arg)) {
+      if (['parse', 'validate', 'run', 'ast', 'repl', 'watch', 'compile', 'build', 'add', 'remove', 'list', 'traits', 'suggest', 'generate', 'templates', 'pack', 'unpack', 'inspect', 'diff', 'wot-export', 'help', 'version'].includes(arg)) {
         options.command = arg as CLIOptions['command'];
       } else if (['add', 'remove'].includes(options.command)) {
         // Collect package names for add/remove commands
@@ -145,6 +145,10 @@ Usage: holoscript <command> [options] [input]
   diff <a> <b>      Compare two HoloScript files (semantic diff)
                     Use --json for machine-readable output
 
+  \x1b[33mIoT & Ecosystem:\x1b[0m
+  wot-export <file> Generate W3C Thing Description from @wot_thing objects
+                    Use --json for JSON output, -o for output file
+
   help              Show this help message
   version           Show version information
 
@@ -188,6 +192,10 @@ Usage: holoscript <command> [options] [input]
   \x1b[2m# Diff & Analysis\x1b[0m
   holoscript diff old.holo new.holo       # Semantic diff
   holoscript diff old.holo new.holo --json # Machine-readable output
+
+  \x1b[2m# IoT & WoT Integration\x1b[0m
+  holoscript wot-export scene.holo        # Generate W3C Thing Descriptions
+  holoscript wot-export scene.holo -o td/ # Output to directory
 
 \x1b[1mAliases:\x1b[0m
   hs              Short alias for holoscript

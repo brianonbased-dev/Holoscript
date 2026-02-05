@@ -374,6 +374,143 @@ async function main(): Promise<void> {
       }
     }
 
+    case 'wot-export': {
+      if (!options.input) {
+        console.error('\x1b[31mError: No input file specified.\x1b[0m');
+        console.log('Usage: holoscript wot-export <file.holo> [-o output]');
+        process.exit(1);
+      }
+
+      try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const { HoloCompositionParser } = await import('@holoscript/core');
+        const {
+          ThingDescriptionGenerator,
+          serializeThingDescription,
+          validateThingDescription,
+        } = await import('@holoscript/core/wot');
+
+        const filePath = path.resolve(options.input);
+        if (!fs.existsSync(filePath)) {
+          console.error(`\x1b[31mError: File not found: ${filePath}\x1b[0m`);
+          process.exit(1);
+        }
+
+        console.log(`\n\x1b[36mGenerating W3C Thing Descriptions from ${options.input}...\x1b[0m\n`);
+
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const parser = new HoloCompositionParser();
+        const parseResult = parser.parse(content);
+
+        if (!parseResult.success) {
+          console.error('\x1b[31mParse errors:\x1b[0m');
+          for (const error of parseResult.errors) {
+            console.error(`  Line ${error.loc?.line || '?'}: ${error.message}`);
+          }
+          process.exit(1);
+        }
+
+        // Extract objects from AST
+        const objects = parseResult.ast?.objects || [];
+        if (objects.length === 0) {
+          console.log('\x1b[33mNo objects found in composition.\x1b[0m');
+          process.exit(0);
+        }
+
+        // Generate Thing Descriptions
+        const generator = new ThingDescriptionGenerator({
+          baseUrl: 'http://localhost:8080',
+          defaultObservable: true,
+        });
+
+        const thingDescriptions = generator.generateAll(objects);
+
+        if (thingDescriptions.length === 0) {
+          console.log('\x1b[33mNo objects with @wot_thing trait found.\x1b[0m');
+          console.log('Add @wot_thing(title: "My Thing", security: "nosec") to objects you want to export.');
+          process.exit(0);
+        }
+
+        // Validate and output
+        const results: { name: string; valid: boolean; errors: string[]; td: any }[] = [];
+
+        for (const td of thingDescriptions) {
+          const validation = validateThingDescription(td);
+          results.push({
+            name: td.title,
+            valid: validation.valid,
+            errors: validation.errors,
+            td,
+          });
+        }
+
+        if (options.json) {
+          // JSON output
+          if (thingDescriptions.length === 1) {
+            console.log(serializeThingDescription(thingDescriptions[0], true));
+          } else {
+            console.log(JSON.stringify(thingDescriptions, null, 2));
+          }
+        } else if (options.output) {
+          // Write to file(s)
+          const outputPath = path.resolve(options.output);
+
+          if (thingDescriptions.length === 1) {
+            // Single TD - write directly to output path
+            const finalPath = outputPath.endsWith('.json') ? outputPath : `${outputPath}.json`;
+            fs.writeFileSync(finalPath, serializeThingDescription(thingDescriptions[0], true));
+            console.log(`\x1b[32m✓ Generated: ${finalPath}\x1b[0m`);
+          } else {
+            // Multiple TDs - create directory and write each
+            if (!fs.existsSync(outputPath)) {
+              fs.mkdirSync(outputPath, { recursive: true });
+            }
+
+            for (const td of thingDescriptions) {
+              const tdFileName = `${td.title.toLowerCase().replace(/\s+/g, '_')}.td.json`;
+              const tdPath = path.join(outputPath, tdFileName);
+              fs.writeFileSync(tdPath, serializeThingDescription(td, true));
+              console.log(`\x1b[32m✓ Generated: ${tdPath}\x1b[0m`);
+            }
+          }
+        } else {
+          // Console output
+          for (const result of results) {
+            console.log(`\x1b[1m${result.name}\x1b[0m`);
+
+            if (!result.valid) {
+              console.log(`  \x1b[31m✗ Validation failed:\x1b[0m`);
+              for (const error of result.errors) {
+                console.log(`    - ${error}`);
+              }
+            } else {
+              console.log(`  \x1b[32m✓ Valid Thing Description\x1b[0m`);
+            }
+
+            // Show summary
+            const propCount = Object.keys(result.td.properties || {}).length;
+            const actionCount = Object.keys(result.td.actions || {}).length;
+            const eventCount = Object.keys(result.td.events || {}).length;
+
+            console.log(`  Properties: ${propCount}, Actions: ${actionCount}, Events: ${eventCount}`);
+            console.log('');
+          }
+
+          console.log(`\x1b[36mGenerated ${thingDescriptions.length} Thing Description(s)\x1b[0m`);
+          console.log('\x1b[2mUse --json for full output or -o <path> to write files.\x1b[0m\n');
+        }
+
+        process.exit(0);
+      } catch (err: any) {
+        console.error(`\x1b[31mWoT export error: ${err.message}\x1b[0m`);
+        if (options.verbose) {
+          console.error(err.stack);
+        }
+        process.exit(1);
+      }
+    }
+
     case 'traits': {
       if (options.input) {
         // Explain specific trait

@@ -1304,3 +1304,36 @@ export {
   type SemanticDiffResult,
   type DiffOptions,
 } from './diff';
+
+// =============================================================================
+// W3C Web of Things Integration (Sprint 3 - Priority 1)
+// =============================================================================
+
+export {
+  ThingDescriptionGenerator,
+  generateThingDescription,
+  generateAllThingDescriptions,
+  serializeThingDescription,
+  validateThingDescription,
+  type ThingDescription,
+  type PropertyAffordance,
+  type ActionAffordance,
+  type EventAffordance,
+  type DataSchema,
+  type Form,
+  type Link,
+  type SecurityScheme,
+  type WoTThingConfig,
+  type ThingDescriptionGeneratorOptions,
+} from './wot';
+
+// WoT Thing Trait Handler
+export {
+  wotThingHandler,
+  hasWoTThingTrait,
+  getWoTThingState,
+  getCachedThingDescription,
+  invalidateThingDescription,
+  type WoTThingConfig as WoTThingTraitConfig,
+  type WoTThingState,
+} from './traits/WoTThingTrait';
