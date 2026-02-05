@@ -42,7 +42,7 @@
     "rimraf": "^5.0.5"
   },
   "peerDependencies": {
-    "@holoscript/std": "^1.0.0"
+    "@holoscript/std": "^2.1.0"
   },
   "keywords": [
     "holoscript",

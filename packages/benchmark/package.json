@@ -1,0 +1,40 @@
+{
+  "name": "@holoscript/benchmark",
+  "version": "2.1.0",
+  "description": "Performance benchmarking suite for HoloScript parser, type checker, formatter, and LSP",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "holoscript-benchmark": "./dist/cli.js"
+  },
+  "scripts": {
+    "bench": "node --experimental-vm-modules dist/index.js",
+    "bench:parser": "node --experimental-vm-modules dist/suites/parser.bench.js",
+    "bench:typechecker": "node --experimental-vm-modules dist/suites/typechecker.bench.js",
+    "bench:formatter": "node --experimental-vm-modules dist/suites/formatter.bench.js",
+    "bench:lsp": "node --experimental-vm-modules dist/suites/lsp.bench.js",
+    "bench:all": "node --experimental-vm-modules dist/index.js --all",
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@holoscript/core": "workspace:*",
+    "@holoscript/formatter": "workspace:*",
+    "@holoscript/lsp": "workspace:*",
+    "tinybench": "^2.5.0",
+    "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "holoscript",
+    "benchmark",
+    "performance",
+    "profiling"
+  ],
+  "author": "HoloScript Team",
+  "license": "MIT"
+}
