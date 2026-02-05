@@ -485,9 +485,13 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
   }
 
   private evaluateProperties(properties: Record<string, unknown>): Record<string, unknown> {
+    // First pass: expand spreads
+    const expandedProperties = this.expandPropertySpreads(properties);
+
+    // Second pass: evaluate expressions and references
     const result: Record<string, unknown> = {};
 
-    for (const [key, value] of Object.entries(properties)) {
+    for (const [key, value] of Object.entries(expandedProperties)) {
       if (value && typeof value === 'object' && '__expr' in value) {
         result[key] = this.evaluateExpression((value as unknown as { __raw: string }).__raw);
       } else if (value && typeof value === 'object' && '__ref' in value) {
@@ -503,6 +507,131 @@ class HoloScriptPlusRuntimeImpl implements HSPlusRuntime {
     }
 
     return result;
+  }
+
+  /**
+   * Expands spread expressions in a properties object.
+   * Spread keys are formatted as __spread_N with value { type: 'spread', argument: ... }
+   */
+  private expandPropertySpreads(properties: Record<string, unknown>): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    const spreadKeys: string[] = [];
+
+    // Collect spread keys and regular properties
+    for (const [key, value] of Object.entries(properties)) {
+      if (key.startsWith('__spread_')) {
+        spreadKeys.push(key);
+      } else if (value && typeof value === 'object' && (value as any).type === 'spread') {
+        spreadKeys.push(key);
+      } else {
+        // Recursively expand nested objects
+        if (value && typeof value === 'object' && !Array.isArray(value) &&
+            !('__ref' in value) && !('__expr' in value)) {
+          result[key] = this.expandPropertySpreads(value as Record<string, unknown>);
+        } else if (Array.isArray(value)) {
+          result[key] = this.expandArraySpreads(value);
+        } else {
+          result[key] = value;
+        }
+      }
+    }
+
+    // Expand spreads in order
+    for (const spreadKey of spreadKeys) {
+      const spreadValue = properties[spreadKey] as any;
+      if (spreadValue && spreadValue.type === 'spread') {
+        const resolved = this.resolveSpreadArgument(spreadValue.argument);
+        if (resolved && typeof resolved === 'object' && !Array.isArray(resolved)) {
+          Object.assign(result, this.expandPropertySpreads(resolved as Record<string, unknown>));
+        }
+      }
+    }
+
+    // Re-apply non-spread properties (they take precedence over spreads)
+    for (const [key, value] of Object.entries(properties)) {
+      if (!key.startsWith('__spread_') && !(value && typeof value === 'object' && (value as any).type === 'spread')) {
+        if (value && typeof value === 'object' && !Array.isArray(value) &&
+            !('__ref' in value) && !('__expr' in value)) {
+          result[key] = this.expandPropertySpreads(value as Record<string, unknown>);
+        } else if (Array.isArray(value)) {
+          result[key] = this.expandArraySpreads(value);
+        } else {
+          result[key] = value;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Expands spread expressions within an array.
+   */
+  private expandArraySpreads(arr: unknown[]): unknown[] {
+    const result: unknown[] = [];
+
+    for (const item of arr) {
+      if (item && typeof item === 'object' && (item as any).type === 'spread') {
+        const resolved = this.resolveSpreadArgument((item as any).argument);
+        if (Array.isArray(resolved)) {
+          result.push(...resolved);
+        } else if (resolved !== undefined && resolved !== null) {
+          result.push(resolved);
+        }
+      } else if (item && typeof item === 'object' && !Array.isArray(item)) {
+        result.push(this.expandPropertySpreads(item as Record<string, unknown>));
+      } else {
+        result.push(item);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Resolves a spread argument to its runtime value.
+   */
+  private resolveSpreadArgument(argument: unknown): unknown {
+    if (argument === null || argument === undefined) {
+      return undefined;
+    }
+
+    // Direct value
+    if (typeof argument === 'object' && !('__ref' in argument)) {
+      return argument;
+    }
+
+    // Reference
+    if (typeof argument === 'object' && '__ref' in argument) {
+      const ref = (argument as { __ref: string }).__ref;
+      // Try state
+      const stateValue = this.state.get(ref as keyof StateDeclaration);
+      if (stateValue !== undefined) {
+        return stateValue;
+      }
+      // Try dotted path
+      if (ref.includes('.')) {
+        const snapshot = this.state.getSnapshot();
+        const parts = ref.split('.');
+        let value: any = snapshot;
+        for (const part of parts) {
+          if (value && typeof value === 'object' && part in value) {
+            value = value[part];
+          } else {
+            return undefined;
+          }
+        }
+        return value;
+      }
+      return undefined;
+    }
+
+    // String reference
+    if (typeof argument === 'string') {
+      return this.state.get(argument as keyof StateDeclaration);
+    }
+
+    return argument;
   }
 
   // ==========================================================================

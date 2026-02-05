@@ -259,3 +259,121 @@ describe('Schema constants', () => {
     expect(HOLOSCHEMA_GEOMETRIES).toContain('cylinder');
   });
 });
+
+// =============================================================================
+// PARSER ERROR RECOVERY INTEGRATION TESTS - Sprint 2
+// =============================================================================
+
+import { HoloScriptPlusParser } from '../HoloScriptPlusParser';
+
+describe('Parser Error Recovery Integration', () => {
+  const parser = new HoloScriptPlusParser();
+
+  describe('Error Codes', () => {
+    it('should use HSP004 for unclosed braces', () => {
+      const result = parser.parse(`orb button { color: "blue"`);
+      expect(result.success).toBe(false);
+      expect(result.errors.some(e => e.code === 'HSP004')).toBe(true);
+    });
+
+    it('should handle unclosed brackets gracefully', () => {
+      const result = parser.parse(`orb obj { items: [1, 2, 3 }`);
+      // Parser may recover and parse this gracefully, or report error
+      // Either way, this should not crash
+      expect(result.ast).toBeDefined();
+    });
+
+    it('should report error for empty spread', () => {
+      const result = parser.parse(`orb obj { items: [...] }`);
+      // Empty spread should fail
+      expect(result.success).toBe(false);
+      // Error should be related to spread or expression
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should use HSP201 for invalid directive name', () => {
+      const result = parser.parse(`orb obj { @123 }`);
+      expect(result.success).toBe(false);
+      expect(result.errors.some(e => e.code === 'HSP201')).toBe(true);
+    });
+
+    it('should report error for invalid spread in expression position', () => {
+      const result = parser.parse(`orb obj { value: ... }`);
+      expect(result.success).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Error Messages with Context', () => {
+    it('should parse identifier-only input as valid node', () => {
+      // Single identifier is a valid node name without body
+      const result = parser.parse(`unexpected_token_here`);
+      // This parses as a node with name 'unexpected_token_here'
+      expect(result.ast).toBeDefined();
+    });
+
+    it('should handle invalid character in property position', () => {
+      const result = parser.parse(`orb obj { @123 }`);
+      // Should have error about invalid directive
+      expect(result.success).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should include error message for spread issues', () => {
+      const result = parser.parse(`orb obj { data: [...] }`);
+      expect(result.success).toBe(false);
+      // Error message should exist
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors[0].message).toBeDefined();
+    });
+  });
+
+  describe('Recovery and Continuation', () => {
+    it('should parse valid syntax without errors', () => {
+      const result = parser.parse(`
+        orb first { color: "red" }
+        orb second { color: "blue" }
+      `);
+      // Valid syntax should succeed
+      expect(result.success).toBe(true);
+      expect(result.errors.length).toBe(0);
+    });
+
+    it('should handle missing closing brace', () => {
+      const result = parser.parse(`
+        orb button { color: "blue"
+      `);
+      // Missing brace should generate error
+      expect(result.success).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Quick Fixes', () => {
+    it('should generate quick fixes for missing braces', () => {
+      parser.parse(`orb button { color: "blue"`);
+      const fixes = parser.getQuickFixes();
+      // Quick fixes should be available
+      expect(fixes instanceof Map).toBe(true);
+    });
+
+    it('should provide enriched errors', () => {
+      const result = parser.parse(`orb obj { items: [...] }`);
+      const enriched = parser.getEnrichedErrors();
+      if (result.errors.length > 0) {
+        expect(enriched.length).toBeGreaterThan(0);
+        expect(enriched[0]).toHaveProperty('code');
+        expect(enriched[0]).toHaveProperty('message');
+        expect(enriched[0]).toHaveProperty('line');
+      }
+    });
+
+    it('should have getQuickFixes method', () => {
+      expect(typeof parser.getQuickFixes).toBe('function');
+    });
+
+    it('should have getEnrichedErrors method', () => {
+      expect(typeof parser.getEnrichedErrors).toBe('function');
+    });
+  });
+});

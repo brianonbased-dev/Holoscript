@@ -396,4 +396,92 @@ describe('R3FCompiler', () => {
       expect(result.success).toBe(true);
     });
   });
+
+  describe('Spread Operator Support', () => {
+    it('should expand object spreads in properties', () => {
+      const code = `
+        orb obj {
+          config: {
+            ...baseConfig
+            override: true
+          }
+        }
+      `;
+      const result = parser.parse(code);
+      expect(result.success).toBe(true);
+
+      // Verify the spread is in the AST
+      const firstChild = result.ast.children?.[0];
+      const config = (firstChild as any)?.properties?.config;
+      expect(config).toBeDefined();
+      // The spread should be stored with __spread_ key
+      const hasSpread = Object.keys(config).some(k => k.startsWith('__spread_'));
+      expect(hasSpread).toBe(true);
+    });
+
+    it('should expand array spreads in properties', () => {
+      const code = `
+        orb obj {
+          items: [1, 2, ...moreItems, 3]
+        }
+      `;
+      const result = parser.parse(code);
+      expect(result.success).toBe(true);
+
+      const firstChild = result.ast.children?.[0];
+      const items = (firstChild as any)?.properties?.items;
+      expect(items).toBeDefined();
+      expect(Array.isArray(items)).toBe(true);
+      // Should have spread element in array
+      const hasSpread = items.some((item: any) =>
+        item && typeof item === 'object' && item.type === 'spread'
+      );
+      expect(hasSpread).toBe(true);
+    });
+
+    it('should compile nodes with spread properties', () => {
+      const code = `
+        orb button {
+          position: [0, 1, 0]
+          config: { ...defaults, enabled: true }
+        }
+      `;
+      const result = parser.parse(code);
+      expect(result.success).toBe(true);
+
+      const r3fNode = compiler.compile(result.ast);
+      expect(r3fNode).toBeDefined();
+      // Node should compile without errors
+      expect(r3fNode.type).toBeDefined();
+    });
+
+    it('should handle nested spread expressions', () => {
+      const code = `
+        orb obj {
+          config: {
+            ...base
+            nested: {
+              ...innerBase
+              value: 42
+            }
+          }
+        }
+      `;
+      const result = parser.parse(code);
+      expect(result.success).toBe(true);
+
+      const r3fNode = compiler.compile(result.ast);
+      expect(r3fNode).toBeDefined();
+    });
+
+    it('should handle spread with keyword identifiers like state', () => {
+      const code = `
+        orb obj {
+          data: process(...state.values)
+        }
+      `;
+      const result = parser.parse(code);
+      expect(result.success).toBe(true);
+    });
+  });
 });

@@ -259,7 +259,7 @@ exports[`Parser AST Visual Regression > AST Consistency Across Parsing > parsing
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 10,
       "context": "  1 | composition Consistency {
 > 2 |   color: "red"
@@ -269,12 +269,12 @@ exports[`Parser AST Visual Regression > AST Consistency Across Parsing > parsing
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  2 |   color: "red"
   3 |   position: { x: 0, y: 1, z: -2 }
@@ -283,12 +283,12 @@ exports[`Parser AST Visual Regression > AST Consistency Across Parsing > parsing
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  2 |   color: "red"
   3 |   position: { x: 0, y: 1, z: -2 }
@@ -297,9 +297,9 @@ exports[`Parser AST Visual Regression > AST Consistency Across Parsing > parsing
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -550,7 +550,7 @@ exports[`Parser AST Visual Regression > AST Node Properties > AST nodes should h
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 10,
       "context": "  1 | composition Test {
 > 2 |   prop1: "value1"
@@ -560,12 +560,12 @@ exports[`Parser AST Visual Regression > AST Node Properties > AST nodes should h
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  2 |   prop1: "value1"
   3 |   prop2: "value2"
@@ -574,12 +574,12 @@ exports[`Parser AST Visual Regression > AST Node Properties > AST nodes should h
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  2 |   prop1: "value1"
   3 |   prop2: "value2"
@@ -588,9 +588,9 @@ exports[`Parser AST Visual Regression > AST Node Properties > AST nodes should h
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -841,7 +841,7 @@ exports[`Parser AST Visual Regression > AST Node Properties > AST should preserv
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 13,
       "context": "  1 | composition PositionTest {
 > 2 |   geometry: "sphere"
@@ -851,12 +851,12 @@ exports[`Parser AST Visual Regression > AST Node Properties > AST should preserv
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  2 |   geometry: "sphere"
   3 |   color: "cyan"
@@ -865,12 +865,12 @@ exports[`Parser AST Visual Regression > AST Node Properties > AST should preserv
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  2 |   geometry: "sphere"
   3 |   color: "cyan"
@@ -879,9 +879,9 @@ exports[`Parser AST Visual Regression > AST Node Properties > AST should preserv
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -1168,7 +1168,7 @@ exports[`Parser AST Visual Regression > Basic AST Structures > array literal AST
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 12,
       "context": "  1 | composition ArrayTest {
 > 2 |   colors: ["red", "green", "blue"]
@@ -1178,12 +1178,12 @@ exports[`Parser AST Visual Regression > Basic AST Structures > array literal AST
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 19,
       "context": "  1 | composition ArrayTest {
 > 2 |   colors: ["red", "green", "blue"]
@@ -1193,12 +1193,12 @@ exports[`Parser AST Visual Regression > Basic AST Structures > array literal AST
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 28,
       "context": "  1 | composition ArrayTest {
 > 2 |   colors: ["red", "green", "blue"]
@@ -1208,12 +1208,12 @@ exports[`Parser AST Visual Regression > Basic AST Structures > array literal AST
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  2 |   colors: ["red", "green", "blue"]
   3 |   numbers: [1, 2, 3, 4, 5]
@@ -1222,12 +1222,12 @@ exports[`Parser AST Visual Regression > Basic AST Structures > array literal AST
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  2 |   colors: ["red", "green", "blue"]
   3 |   numbers: [1, 2, 3, 4, 5]
@@ -1236,9 +1236,9 @@ exports[`Parser AST Visual Regression > Basic AST Structures > array literal AST
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -1944,7 +1944,7 @@ exports[`Parser AST Visual Regression > Basic AST Structures > simple compositio
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 13,
       "context": "  1 | composition SimpleOrb {
 > 2 |   geometry: "sphere"
@@ -1954,12 +1954,12 @@ exports[`Parser AST Visual Regression > Basic AST Structures > simple compositio
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  3 |   color: "cyan"
   4 |   position: { x: 0, y: 1.5, z: -2 }
@@ -1968,12 +1968,12 @@ exports[`Parser AST Visual Regression > Basic AST Structures > simple compositio
       "endColumn": undefined,
       "endLine": undefined,
       "line": 5,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  3 |   color: "cyan"
   4 |   position: { x: 0, y: 1.5, z: -2 }
@@ -1982,9 +1982,9 @@ exports[`Parser AST Visual Regression > Basic AST Structures > simple compositio
       "endColumn": undefined,
       "endLine": undefined,
       "line": 5,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -3611,7 +3611,7 @@ exports[`Parser AST Visual Regression > Complex Real-World AST Examples > intera
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 11,
       "context": "  10 |     },
   11 |     {
@@ -3622,12 +3622,12 @@ exports[`Parser AST Visual Regression > Complex Real-World AST Examples > intera
       "endColumn": undefined,
       "endLine": undefined,
       "line": 12,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 25,
       "context": "  11 |     {
   12 |       id: "orb2",
@@ -3638,12 +3638,12 @@ exports[`Parser AST Visual Regression > Complex Real-World AST Examples > intera
       "endColumn": undefined,
       "endLine": undefined,
       "line": 13,
-      "message": "HSP001: Unexpected token in properties: COMMA",
+      "message": "HSP101: Unexpected token in properties: COMMA. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 20,
       "context": "  12 |       id: "orb2",
   13 |       geometry: "sphere",
@@ -3654,12 +3654,12 @@ exports[`Parser AST Visual Regression > Complex Real-World AST Examples > intera
       "endColumn": undefined,
       "endLine": undefined,
       "line": 14,
-      "message": "HSP001: Unexpected token in properties: COMMA",
+      "message": "HSP101: Unexpected token in properties: COMMA. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 38,
       "context": "  13 |       geometry: "sphere",
   14 |       color: "blue",
@@ -3670,12 +3670,12 @@ exports[`Parser AST Visual Regression > Complex Real-World AST Examples > intera
       "endColumn": undefined,
       "endLine": undefined,
       "line": 15,
-      "message": "HSP001: Unexpected token in properties: COMMA",
+      "message": "HSP101: Unexpected token in properties: COMMA. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 17,
       "context": "  14 |       color: "blue",
   15 |       position: { x: 1, y: 1, z: -2 },
@@ -3686,12 +3686,12 @@ exports[`Parser AST Visual Regression > Complex Real-World AST Examples > intera
       "endColumn": undefined,
       "endLine": undefined,
       "line": 16,
-      "message": "HSP001: Unexpected token in properties: COMMA",
+      "message": "HSP101: Unexpected token in properties: COMMA. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 5,
       "context": "  16 |       @grabbable,
   17 |       @throwable
@@ -3702,7 +3702,7 @@ exports[`Parser AST Visual Regression > Complex Real-World AST Examples > intera
       "endColumn": undefined,
       "endLine": undefined,
       "line": 18,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
@@ -4109,7 +4109,7 @@ exports[`Parser AST Visual Regression > Control Flow AST Nodes > conditional log
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  5 |     doOtherThing()
   6 |   }
@@ -4118,9 +4118,9 @@ exports[`Parser AST Visual Regression > Control Flow AST Nodes > conditional log
       "endColumn": undefined,
       "endLine": undefined,
       "line": 7,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -5094,7 +5094,7 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > multiple trait dir
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 13,
       "context": "  1 | composition InteractiveOrb {
 > 2 |   geometry: "sphere"
@@ -5104,12 +5104,12 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > multiple trait dir
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  4 |   @hoverable
   5 |   @throwable
@@ -5118,12 +5118,12 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > multiple trait dir
       "endColumn": undefined,
       "endLine": undefined,
       "line": 6,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  4 |   @hoverable
   5 |   @throwable
@@ -5132,9 +5132,9 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > multiple trait dir
       "endColumn": undefined,
       "endLine": undefined,
       "line": 6,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -5421,7 +5421,7 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > single trait direc
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 13,
       "context": "  1 | composition GrabbableOrb {
 > 2 |   geometry: "sphere"
@@ -5431,12 +5431,12 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > single trait direc
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  2 |   geometry: "sphere"
   3 |   @grabbable
@@ -5445,12 +5445,12 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > single trait direc
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  2 |   geometry: "sphere"
   3 |   @grabbable
@@ -5459,9 +5459,9 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > single trait direc
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -5784,7 +5784,7 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > trait with configu
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 13,
       "context": "  1 | composition ConfiguredOrb {
 > 2 |   geometry: "sphere"
@@ -5794,12 +5794,12 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > trait with configu
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  2 |   geometry: "sphere"
   3 |   @physics(mass: 1.5, friction: 0.8)
@@ -5808,12 +5808,12 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > trait with configu
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  2 |   geometry: "sphere"
   3 |   @physics(mass: 1.5, friction: 0.8)
@@ -5822,9 +5822,9 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > trait with configu
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -6465,40 +6465,40 @@ exports[`Parser AST Visual Regression > Edge Cases and Errors > minimal single p
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 30,
       "context": "> 1 | composition Minimal { color: "red" }
                                   ^",
       "endColumn": undefined,
       "endLine": undefined,
       "line": 1,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 36,
       "context": "> 1 | composition Minimal { color: "red" }
                                         ^",
       "endColumn": undefined,
       "endLine": undefined,
       "line": 1,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 37,
       "context": "> 1 | composition Minimal { color: "red" }
                                          ^",
       "endColumn": undefined,
       "endLine": undefined,
       "line": 1,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -6917,7 +6917,7 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > complex expressio
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 11,
       "context": "  1 | composition ComplexExpr {
 > 2 |   result: (a ?? b) ? c : (d ??= e)
@@ -6927,12 +6927,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > complex expressio
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: LPAREN",
+      "message": "HSP101: Unexpected token in properties: LPAREN. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 14,
       "context": "  1 | composition ComplexExpr {
 > 2 |   result: (a ?? b) ? c : (d ??= e)
@@ -6942,12 +6942,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > complex expressio
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: NULL_COALESCE",
+      "message": "HSP101: Unexpected token in properties: NULL_COALESCE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 18,
       "context": "  1 | composition ComplexExpr {
 > 2 |   result: (a ?? b) ? c : (d ??= e)
@@ -6957,12 +6957,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > complex expressio
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: RPAREN",
+      "message": "HSP101: Unexpected token in properties: RPAREN. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  2 |   result: (a ?? b) ? c : (d ??= e)
   3 |   spread: { ...base, override: x ?? y }
@@ -6971,12 +6971,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > complex expressio
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  2 |   result: (a ?? b) ? c : (d ??= e)
   3 |   spread: { ...base, override: x ?? y }
@@ -6985,9 +6985,9 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > complex expressio
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -7323,7 +7323,7 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > null coalescing a
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 16,
       "context": "  1 | logic AssignmentTest {
 > 2 |   function test() {
@@ -7333,7 +7333,7 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > null coalescing a
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: LPAREN",
+      "message": "HSP101: Unexpected token in properties: LPAREN. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
@@ -7660,7 +7660,7 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > null coalescing o
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 20,
       "context": "  1 | composition NullCoalesce {
 > 2 |   color: userColor ?? "white"
@@ -7670,12 +7670,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > null coalescing o
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: NULL_COALESCE",
+      "message": "HSP101: Unexpected token in properties: NULL_COALESCE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 23,
       "context": "  1 | composition NullCoalesce {
 > 2 |   color: userColor ?? "white"
@@ -7685,12 +7685,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > null coalescing o
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  2 |   color: userColor ?? "white"
   3 |   size: userSize ?? 1.0
@@ -7699,12 +7699,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > null coalescing o
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  2 |   color: userColor ?? "white"
   3 |   size: userSize ?? 1.0
@@ -7713,9 +7713,9 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > null coalescing o
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -8044,7 +8044,7 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > spread expression
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 22,
       "context": "  1 | composition ArraySpread {
 > 2 |   items: [...defaults, "extra"]
@@ -8053,12 +8053,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > spread expression
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: COMMA",
+      "message": "HSP101: Unexpected token in properties: COMMA. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 24,
       "context": "  1 | composition ArraySpread {
 > 2 |   items: [...defaults, "extra"]
@@ -8067,12 +8067,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > spread expression
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  1 | composition ArraySpread {
   2 |   items: [...defaults, "extra"]
@@ -8081,9 +8081,9 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > spread expression
       "endColumn": undefined,
       "endLine": undefined,
       "line": 3,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -8334,7 +8334,7 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > spread expression
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  2 |   ...BaseOrb
   3 |   color: "red"
@@ -8343,12 +8343,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > spread expression
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  2 |   ...BaseOrb
   3 |   color: "red"
@@ -8357,9 +8357,9 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > spread expression
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -8652,7 +8652,7 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > ternary operator 
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 19,
       "context": "  1 | composition TernaryTest {
 > 2 |   color: isActive ? "green" : "gray"
@@ -8662,12 +8662,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > ternary operator 
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: QUESTION",
+      "message": "HSP101: Unexpected token in properties: QUESTION. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 21,
       "context": "  1 | composition TernaryTest {
 > 2 |   color: isActive ? "green" : "gray"
@@ -8677,12 +8677,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > ternary operator 
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 31,
       "context": "  1 | composition TernaryTest {
 > 2 |   color: isActive ? "green" : "gray"
@@ -8692,12 +8692,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > ternary operator 
       "endColumn": undefined,
       "endLine": undefined,
       "line": 2,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  2 |   color: isActive ? "green" : "gray"
   3 |   opacity: isVisible ? 1.0 : 0.0
@@ -8706,12 +8706,12 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > ternary operator 
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  2 |   color: isActive ? "green" : "gray"
   3 |   opacity: isVisible ? 1.0 : 0.0
@@ -8720,9 +8720,9 @@ exports[`Parser AST Visual Regression > Expression AST Nodes > ternary operator 
       "endColumn": undefined,
       "endLine": undefined,
       "line": 4,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {
@@ -9456,14 +9456,14 @@ exports[`Parser AST Visual Regression > Import and Module System > using stateme
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 25,
       "context": "> 1 | using BaseTemplate from "./templates/Base.holo"
                              ^",
       "endColumn": undefined,
       "endLine": undefined,
       "line": 1,
-      "message": "HSP001: Unexpected token in properties: STRING",
+      "message": "HSP101: Unexpected token in properties: STRING. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
@@ -9981,7 +9981,7 @@ exports[`Parser AST Visual Regression > Template and Composition Inheritance > s
   "compiledExpressions": Map {},
   "errors": [
     {
-      "code": "HSP001",
+      "code": "HSP101",
       "column": 1,
       "context": "  3 |   color: "blue"
   4 |   glow: true
@@ -9990,12 +9990,12 @@ exports[`Parser AST Visual Regression > Template and Composition Inheritance > s
       "endColumn": undefined,
       "endLine": undefined,
       "line": 5,
-      "message": "HSP001: Unexpected token in properties: RBRACE",
+      "message": "HSP101: Unexpected token in properties: RBRACE. Expected property name, @directive, or spread (...)",
       "severity": "error",
       "suggestion": undefined,
     },
     {
-      "code": "HSP001",
+      "code": "HSP004",
       "column": 2,
       "context": "  3 |   color: "blue"
   4 |   glow: true
@@ -10004,9 +10004,9 @@ exports[`Parser AST Visual Regression > Template and Composition Inheritance > s
       "endColumn": undefined,
       "endLine": undefined,
       "line": 5,
-      "message": "HSP001: Expected }. Got EOF """,
+      "message": "HSP004: Expected }. Got EOF """,
       "severity": "error",
-      "suggestion": undefined,
+      "suggestion": "Check for matching opening brace { and ensure all blocks are properly closed",
     },
   ],
   "features": {

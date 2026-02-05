@@ -92,6 +92,13 @@ import {
   findSimilarKeyword,
   type ErrorCode,
 } from './RichErrors';
+import {
+  ErrorRecovery,
+  enrichErrorWithSuggestions,
+  generateQuickFixes,
+  type ParseError,
+  type QuickFix,
+} from './ErrorRecovery';
 
 // =============================================================================
 // LEXER
@@ -618,6 +625,7 @@ export class HoloScriptPlusParser {
   private hasVRTraits: boolean = false;
   private hasControlFlow: boolean = false;
   private compiledExpressions: Map<string, string> = new Map();
+  private errorRecovery: ErrorRecovery = new ErrorRecovery();
 
   constructor(options: HSPlusParserOptions = {}) {
     this.options = {
@@ -626,6 +634,48 @@ export class HoloScriptPlusParser {
       strict: false,
       ...options,
     };
+  }
+
+  /**
+   * Get quick fixes for all errors in the last parse
+   * Useful for IDE integrations and LSP
+   */
+  getQuickFixes(): Map<number, QuickFix[]> {
+    const fixes = new Map<number, QuickFix[]>();
+    for (const error of this.errors) {
+      const errorFixes = generateQuickFixes(
+        {
+          code: error.code as any,
+          message: error.message,
+          line: error.line,
+          column: error.column,
+          source: this.source,
+        },
+        this.source
+      );
+      if (errorFixes.length > 0) {
+        fixes.set(error.line, errorFixes);
+      }
+    }
+    return fixes;
+  }
+
+  /**
+   * Get enriched errors with additional suggestions from ErrorRecovery
+   */
+  getEnrichedErrors(): ParseError[] {
+    return this.errors.map(error =>
+      enrichErrorWithSuggestions(
+        {
+          code: error.code as any,
+          message: error.message,
+          line: error.line,
+          column: error.column,
+          source: this.source,
+        },
+        this.source
+      )
+    );
   }
 
   parse(source: string): HSPlusCompileResult {
@@ -639,6 +689,7 @@ export class HoloScriptPlusParser {
     this.hasControlFlow = false;
     this.compiledExpressions = new Map();
     this.pos = 0;
+    this.errorRecovery.clear();
 
     // Tokenize
     const lexer = new Lexer(source);
@@ -808,13 +859,13 @@ export class HoloScriptPlusParser {
               globalDirectives.push(...currentDirectives);
             } else {
               // Unexpected token after directives, report and sync
-              this.error(`Expected node after directives, got ${this.current().type}`);
+              this.error(`Expected node after directives, got ${this.current().type}. Valid nodes: orb, template, logic, object, composition, scene, group`, 'HSP003');
               globalDirectives.push(...currentDirectives);
               // Not strictly needing full sync here as we handle it, but good practice if error throws
             }
           } else if (!this.check('EOF')) {
             // No directives, no node, but not EOF
-            this.error(`Unexpected token ${this.current().type} "${this.current().value}" at top level`);
+            this.error(`Unexpected token ${this.current().type} "${this.current().value}" at top level. Expected: composition, object, template, logic, or @directive`, 'HSP001');
             // error() pushes to array, but does NOT throw by default yet.
             // We need to throw to trigger recovery.
             throw new Error('ParseError'); 
@@ -1084,7 +1135,7 @@ export class HoloScriptPlusParser {
             } else if (typeof targetExpr === 'string') {
                 target = targetExpr;
             } else {
-                this.error('Expected identifier or member expression after ...');
+                this.error('Expected identifier or member expression after spread operator (...)', 'HSP002');
                 target = 'unknown';
             }
             children.push({
@@ -1112,7 +1163,7 @@ export class HoloScriptPlusParser {
             // If unexpected token:
             if (!this.check('LBRACE')) {
                  // Error and recover
-                 this.error(`Unexpected token in properties: ${this.current().type}`);
+                 this.error(`Unexpected token in properties: ${this.current().type}. Expected property name, @directive, or spread (...)`, 'HSP101');
                  this.synchronizeProperty(); 
             }
         }
@@ -1151,7 +1202,7 @@ export class HoloScriptPlusParser {
             } else if (typeof targetExpr === 'string') {
                 target = targetExpr;
             } else {
-                this.error('Expected identifier or member expression after ...');
+                this.error('Expected identifier or member expression after spread operator (...)', 'HSP002');
                 target = 'unknown';
             }
             const spreadNode = {
@@ -1239,7 +1290,7 @@ export class HoloScriptPlusParser {
     // Accept both IDENTIFIER and keyword tokens (like STATE) as directive names
     const nameToken = this.current();
     if (nameToken.type !== 'IDENTIFIER' && nameToken.type !== 'STATE') {
-      this.error(`Expected directive name, got ${nameToken.type}`);
+      this.error(`Expected directive name, got ${nameToken.type}. Directives start with @ followed by name (e.g., @grabbable)`, 'HSP201');
       return null;
     }
     this.advance();
@@ -2210,7 +2261,7 @@ export class HoloScriptPlusParser {
           this.advance(); // consume ...
           const spreadArg = this.parseValue();
           if (spreadArg === null) {
-            this.error('Expected expression after ... in state spread');
+            this.error('Expected expression after spread operator (...) in state block', 'HSP300');
           } else {
             const spreadKey = `__spread_${Object.keys(state).length}`;
             state[spreadKey] = { type: 'spread', argument: spreadArg };
@@ -2643,21 +2694,43 @@ export class HoloScriptPlusParser {
       return this.parseParenExpression(); 
     }
 
-    if (token.type === 'IDENTIFIER') {
+    // Handle IDENTIFIER and keyword tokens that can be used as identifiers in expressions
+    // STATE, INITIAL, etc. are keywords but can also be valid identifiers in expressions
+    const isIdentifierLike = token.type === 'IDENTIFIER' ||
+                             token.type === 'STATE' ||
+                             token.type === 'INITIAL' ||
+                             token.type === 'STATE_MACHINE' ||
+                             token.type === 'TRANSITION' ||
+                             token.type === 'ON_ENTRY' ||
+                             token.type === 'ON_EXIT';
+
+    if (isIdentifierLike) {
       if (this.peek(1).type === 'ARROW') {
           return this.parseArrowFunction();
       }
-      
+
       this.advance();
       let ref = token.value;
-      
+
       // Support dotted access: obj.prop.sub
       while (this.check('DOT')) {
           this.advance();
-          const part = this.expect('IDENTIFIER', 'Expected property name').value;
-          ref += '.' + part;
+          // Allow keywords as property names too
+          const nextToken = this.current();
+          const isPropertyName = nextToken.type === 'IDENTIFIER' ||
+                                 nextToken.type === 'STATE' ||
+                                 nextToken.type === 'INITIAL' ||
+                                 nextToken.type === 'STATE_MACHINE' ||
+                                 nextToken.type === 'TRANSITION' ||
+                                 nextToken.type === 'ON_ENTRY' ||
+                                 nextToken.type === 'ON_EXIT';
+          if (isPropertyName) {
+              ref += '.' + this.advance().value;
+          } else {
+              this.error('Expected property name after dot (.)', 'HSP002');
+          }
       }
-      
+
       // Support call expression: ref(args)
       if (this.check('LPAREN')) {
           const args = this.parseParenExpression();
@@ -2666,14 +2739,14 @@ export class HoloScriptPlusParser {
 
       return { __ref: ref };
     }
-    
+
     if (this.check('AT')) {
         const dir = this.parseDirective();
         return dir;
     }
 
     // CRITICAL: Advance to prevent infinite loop
-    this.error(`Unexpected token in expression: ${token.type} "${token.value}"`);
+    this.error(`Unexpected token in expression: ${token.type} "${token.value}". Expected value, identifier, or expression`, 'HSP300');
     const err = new Error('ParseError');
     err.message = 'ParseError';
     throw err;
@@ -2693,11 +2766,26 @@ export class HoloScriptPlusParser {
 
   private parseArrowFunction(): any {
       const params: any[] = [];
-      
+
       // Parse params
       if (this.check('LPAREN')) {
           this.advance();
           while (!this.check('RPAREN') && !this.check('EOF')) {
+              // Support rest parameters: (...args)
+              if (this.check('SPREAD')) {
+                  this.advance(); // consume ...
+                  const name = this.expect('IDENTIFIER', 'Expected parameter name after ...').value;
+                  let type = null;
+                  if (this.check('COLON')) {
+                      this.advance();
+                      type = this.expect('IDENTIFIER', 'Expected type').value;
+                  }
+                  params.push({ name, type, rest: true });
+                  // Rest parameter must be last, skip to end
+                  if (this.check('COMMA')) this.advance();
+                  break;
+              }
+
               const name = this.expect('IDENTIFIER', 'Expected parameter name').value;
               let type = null;
               if (this.check('COLON')) {
@@ -2709,9 +2797,15 @@ export class HoloScriptPlusParser {
           }
           this.expect('RPAREN', 'Expected )');
       } else {
-          // Single arg
-          const name = this.expect('IDENTIFIER', 'Expected parameter name').value;
-          params.push({ name, type: null });
+          // Single arg (could also be rest: ...args => ...)
+          if (this.check('SPREAD')) {
+              this.advance();
+              const name = this.expect('IDENTIFIER', 'Expected parameter name after ...').value;
+              params.push({ name, type: null, rest: true });
+          } else {
+              const name = this.expect('IDENTIFIER', 'Expected parameter name').value;
+              params.push({ name, type: null });
+          }
       }
 
       // Parse Return Type (optional)
@@ -2753,7 +2847,7 @@ export class HoloScriptPlusParser {
         this.advance(); // consume ...
         const spreadArg = this.parseValue();
         if (spreadArg === null) {
-          this.error('Expected expression after ... in array spread');
+          this.error('Expected expression after spread operator (...) in array. Example: [...items]', 'HSP300');
         } else {
           arr.push({ type: 'spread', argument: spreadArg });
         }
@@ -2791,7 +2885,7 @@ export class HoloScriptPlusParser {
         this.advance(); // consume ...
         const spreadArg = this.parseValue();
         if (spreadArg === null) {
-          this.error('Expected expression after ... in object spread');
+          this.error('Expected expression after spread operator (...) in object. Example: {...template}', 'HSP300');
         } else {
           const spreadKey = `__spread_${Object.keys(obj).length}`;
           obj[spreadKey] = { type: 'spread', argument: spreadArg };
@@ -2851,16 +2945,49 @@ export class HoloScriptPlusParser {
       const current = this.current();
       const fullMessage = `${message}. Got ${current.type} "${current.value}"`;
 
-      // Try to provide a suggestion if the token looks like a typo
-      if (current.type === 'IDENTIFIER' && type === 'IDENTIFIER') {
-        const similar = findSimilarKeyword(current.value);
-        if (similar) {
-          this.errorWithSuggestion(fullMessage, `Did you mean '${similar}'?`, 'HSP002');
-        } else {
-          this.error(fullMessage, 'HSP002');
-        }
+      // Use specific error codes based on expected token type
+      let errorCode: ErrorCode = 'HSP001';
+      let suggestion: string | undefined;
+
+      switch (type) {
+        case 'RBRACE':
+          errorCode = 'HSP004'; // Unclosed brace
+          suggestion = 'Check for matching opening brace { and ensure all blocks are properly closed';
+          break;
+        case 'RBRACKET':
+          errorCode = 'HSP005'; // Unclosed bracket
+          suggestion = 'Check for matching opening bracket [ and ensure all arrays are properly closed';
+          break;
+        case 'RPAREN':
+          errorCode = 'HSP006'; // Unclosed parenthesis
+          suggestion = 'Check for matching opening parenthesis ( and ensure all expressions are properly closed';
+          break;
+        case 'COLON':
+          errorCode = 'HSP009'; // Missing colon
+          suggestion = 'Properties use colon syntax: propertyName: value';
+          break;
+        case 'IDENTIFIER':
+          errorCode = 'HSP002';
+          // Try to provide a suggestion if the token looks like a typo
+          if (current.type === 'IDENTIFIER') {
+            const similar = findSimilarKeyword(current.value);
+            if (similar) {
+              suggestion = `Did you mean '${similar}'?`;
+            }
+          }
+          break;
+        case 'LBRACE':
+          errorCode = 'HSP100'; // Invalid structure
+          suggestion = 'Expected opening brace { to start block';
+          break;
+        default:
+          errorCode = 'HSP001';
+      }
+
+      if (suggestion) {
+        this.errorWithSuggestion(fullMessage, suggestion, errorCode);
       } else {
-        this.error(fullMessage, 'HSP001');
+        this.error(fullMessage, errorCode);
       }
 
       // If it's a major structure failure, synchronize
@@ -2933,6 +3060,88 @@ export class HoloScriptPlusParser {
   }
 
   /**
+   * Detect common mistakes and provide context-aware error messages
+   */
+  private detectCommonMistake(): { message: string; suggestion: string; code: ErrorCode } | null {
+    const current = this.current();
+    const prev = this.pos > 0 ? this.tokens[this.pos - 1] : null;
+    const next = this.pos + 1 < this.tokens.length ? this.tokens[this.pos + 1] : null;
+
+    // Common mistake: Using = instead of : for property assignment
+    if (current.type === 'EQUALS' && prev?.type === 'IDENTIFIER') {
+      return {
+        message: `Unexpected '=' after property name '${prev.value}'`,
+        suggestion: "Use ':' instead of '=' for property assignment. Example: propertyName: value",
+        code: 'HSP009'
+      };
+    }
+
+    // Common mistake: Using semicolon (JavaScript habit)
+    if (current.type === 'SEMICOLON' || current.value === ';') {
+      return {
+        message: 'Unexpected semicolon',
+        suggestion: 'HoloScript does not require semicolons. Remove the semicolon to continue.',
+        code: 'HSP001'
+      };
+    }
+
+    // Common mistake: Missing @ before trait
+    if (current.type === 'IDENTIFIER' && (VR_TRAITS as readonly string[]).includes(current.value)) {
+      if (prev?.type !== 'AT') {
+        return {
+          message: `'${current.value}' is a trait and requires '@' prefix`,
+          suggestion: `Use '@${current.value}' to apply this trait`,
+          code: 'HSP200'
+        };
+      }
+    }
+
+    // Common mistake: Quoted property names (JSON habit)
+    if (current.type === 'STRING' && next?.type === 'COLON') {
+      return {
+        message: 'Property names should not be quoted in HoloScript',
+        suggestion: `Remove quotes: use ${current.value.replace(/['"]/g, '')}: instead of "${current.value}":`,
+        code: 'HSP101'
+      };
+    }
+
+    // Common mistake: Using 'function' keyword instead of arrow function
+    if (current.type === 'FUNCTION' && prev?.type === 'COLON') {
+      return {
+        message: "Unexpected 'function' keyword",
+        suggestion: 'Use arrow function syntax: handler: (args) => { ... }',
+        code: 'HSP300'
+      };
+    }
+
+    // Common mistake: Triple dots without target
+    if (current.type === 'SPREAD' && next && (next.type === 'RBRACE' || next.type === 'RBRACKET' || next.type === 'COMMA' || next.type === 'NEWLINE')) {
+      return {
+        message: 'Spread operator (...) requires a target expression',
+        suggestion: 'Provide an expression to spread: ...targetObject or ...targetArray',
+        code: 'HSP002'
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Enhanced error reporting with common mistake detection
+   */
+  private errorWithContext(message: string, code: ErrorCode = 'HSP001'): void {
+    // First check for common mistakes
+    const commonMistake = this.detectCommonMistake();
+    if (commonMistake) {
+      this.errorWithSuggestion(commonMistake.message, commonMistake.suggestion, commonMistake.code);
+      return;
+    }
+
+    // Fall back to standard error
+    this.error(message, code);
+  }
+
+  /**
    * Synchronize parser state after an error
    * Skips tokens until a potential recovery point (newline followed by keyword/directive)
    */
@@ -2999,11 +3208,100 @@ export class HoloScriptPlusParser {
   }
 
   /**
+   * Synchronize for array context: skip to next valid array element or closing bracket
+   */
+  private synchronizeArray(): void {
+    while (!this.check('EOF')) {
+      // Stop at array boundary
+      if (this.check('RBRACKET')) {
+        return;
+      }
+
+      // Stop at comma (next element)
+      if (this.check('COMMA')) {
+        this.advance();
+        this.skipNewlines();
+        return;
+      }
+
+      // Stop at newline followed by likely array element
+      if (this.check('NEWLINE')) {
+        this.advance();
+        this.skipNewlines();
+        if (this.check('RBRACKET') || this.isLikelyValue(this.current()) || this.check('SPREAD')) {
+          return;
+        }
+      }
+
+      this.advance();
+    }
+  }
+
+  /**
+   * Synchronize for expression context: skip to end of expression
+   */
+  private synchronizeExpression(): void {
+    let parenDepth = 0;
+    let braceDepth = 0;
+    let bracketDepth = 0;
+
+    while (!this.check('EOF')) {
+      const token = this.current();
+
+      // Track nesting
+      if (token.type === 'LPAREN') parenDepth++;
+      else if (token.type === 'RPAREN') {
+        if (parenDepth === 0) return; // Expression boundary
+        parenDepth--;
+      }
+      else if (token.type === 'LBRACE') braceDepth++;
+      else if (token.type === 'RBRACE') {
+        if (braceDepth === 0) return; // Expression boundary
+        braceDepth--;
+      }
+      else if (token.type === 'LBRACKET') bracketDepth++;
+      else if (token.type === 'RBRACKET') {
+        if (bracketDepth === 0) return; // Expression boundary
+        bracketDepth--;
+      }
+
+      // Stop at natural expression boundaries (when balanced)
+      if (parenDepth === 0 && braceDepth === 0 && bracketDepth === 0) {
+        if (this.check('NEWLINE') || this.check('COMMA')) {
+          return;
+        }
+      }
+
+      this.advance();
+    }
+  }
+
+  /**
+   * Attempt to recover from missing colon by looking ahead
+   * Returns true if recovery was successful
+   */
+  private tryRecoverMissingColon(): boolean {
+    // If current is IDENTIFIER and next looks like a value, insert implicit colon
+    if (this.check('IDENTIFIER')) {
+      const nextPos = this.pos + 1;
+      if (nextPos < this.tokens.length) {
+        const nextToken = this.tokens[nextPos];
+        if (this.isLikelyValue(nextToken) || nextToken.type === 'IDENTIFIER') {
+          // Report warning about missing colon
+          this.warn(`Missing colon after property "${this.current().value}". Consider adding ':' between property name and value`, 'HSP009');
+          return true; // Continue parsing as if colon was there
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Helper to check if current token is a natural boundary after a value
    */
   private isValueBoundary(): boolean {
-    return this.check('NEWLINE') || 
-           this.check('RBRACE') || 
+    return this.check('NEWLINE') ||
+           this.check('RBRACE') ||
            this.check('COMMA') ||
            this.check('IDENTIFIER') ||
            this.check('SPREAD') ||

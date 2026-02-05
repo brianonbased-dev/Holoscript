@@ -193,6 +193,172 @@ export const UI_COMPONENT_PRESETS: Record<string, { component: string; defaultPr
  */
 export class R3FCompiler {
 
+  // ─── Spread Expansion Utility ─────────────────────────────────────────
+
+  /**
+   * Expands spread expressions in a properties object.
+   * Spreads are stored with keys like `__spread_0`, `__spread_1` and have
+   * the structure: { type: 'spread', argument: <value> }
+   *
+   * @param props - The properties object potentially containing spreads
+   * @param context - Optional context for resolving references (templates, state)
+   * @returns A new object with spreads expanded and merged
+   */
+  private expandSpreads(
+    props: Record<string, any>,
+    context?: { templates?: Map<string, any>; state?: Record<string, any> }
+  ): Record<string, any> {
+    const result: Record<string, any> = {};
+    const spreadKeys: string[] = [];
+
+    // First pass: collect spread keys and non-spread properties
+    for (const [key, value] of Object.entries(props)) {
+      if (key.startsWith('__spread_')) {
+        spreadKeys.push(key);
+      } else if (value && typeof value === 'object' && value.type === 'spread') {
+        // Handle spread stored as a regular property value
+        spreadKeys.push(key);
+      } else {
+        // Recursively expand spreads in nested objects
+        if (value && typeof value === 'object' && !Array.isArray(value) && !('__ref' in value) && !('__expr' in value)) {
+          result[key] = this.expandSpreads(value, context);
+        } else if (Array.isArray(value)) {
+          // Handle arrays - expand spreads within array items
+          result[key] = this.expandArraySpreads(value, context);
+        } else {
+          result[key] = value;
+        }
+      }
+    }
+
+    // Second pass: expand and merge spreads in order
+    for (const spreadKey of spreadKeys) {
+      const spreadValue = props[spreadKey];
+      if (spreadValue && typeof spreadValue === 'object' && spreadValue.type === 'spread') {
+        const resolved = this.resolveSpreadArgument(spreadValue.argument, context);
+        if (resolved && typeof resolved === 'object' && !Array.isArray(resolved)) {
+          // Merge spread properties - spread comes first, explicit props override
+          Object.assign(result, this.expandSpreads(resolved, context));
+        }
+      }
+    }
+
+    // Re-apply non-spread properties to ensure they override spread values
+    for (const [key, value] of Object.entries(props)) {
+      if (!key.startsWith('__spread_') && !(value && typeof value === 'object' && value.type === 'spread')) {
+        if (value && typeof value === 'object' && !Array.isArray(value) && !('__ref' in value) && !('__expr' in value)) {
+          result[key] = this.expandSpreads(value, context);
+        } else if (Array.isArray(value)) {
+          result[key] = this.expandArraySpreads(value, context);
+        } else {
+          result[key] = value;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Expands spread expressions within an array.
+   * Spread elements have { type: 'spread', argument: <value> }
+   */
+  private expandArraySpreads(
+    arr: any[],
+    context?: { templates?: Map<string, any>; state?: Record<string, any> }
+  ): any[] {
+    const result: any[] = [];
+
+    for (const item of arr) {
+      if (item && typeof item === 'object' && item.type === 'spread') {
+        const resolved = this.resolveSpreadArgument(item.argument, context);
+        if (Array.isArray(resolved)) {
+          result.push(...resolved);
+        } else if (resolved !== undefined && resolved !== null) {
+          // If spread target isn't an array, just include it as-is
+          result.push(resolved);
+        }
+      } else if (item && typeof item === 'object' && !Array.isArray(item)) {
+        // Recursively expand spreads in nested objects
+        result.push(this.expandSpreads(item, context));
+      } else {
+        result.push(item);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Resolves a spread argument to its value.
+   * Handles: direct values, __ref references, template references
+   */
+  private resolveSpreadArgument(
+    argument: any,
+    context?: { templates?: Map<string, any>; state?: Record<string, any> }
+  ): any {
+    if (argument === null || argument === undefined) {
+      return undefined;
+    }
+
+    // Direct object/array value
+    if (typeof argument === 'object' && !('__ref' in argument)) {
+      return argument;
+    }
+
+    // Reference: { __ref: 'path.to.value' }
+    if (typeof argument === 'object' && '__ref' in argument) {
+      const ref = argument.__ref as string;
+
+      // Try to resolve from templates
+      if (context?.templates) {
+        const template = context.templates.get(ref);
+        if (template) {
+          return template.properties || template;
+        }
+      }
+
+      // Try to resolve from state
+      if (context?.state && ref in context.state) {
+        return context.state[ref];
+      }
+
+      // Try dotted path resolution in state
+      if (context?.state && ref.includes('.')) {
+        const parts = ref.split('.');
+        let value: any = context.state;
+        for (const part of parts) {
+          if (value && typeof value === 'object' && part in value) {
+            value = value[part];
+          } else {
+            value = undefined;
+            break;
+          }
+        }
+        if (value !== undefined) {
+          return value;
+        }
+      }
+
+      // Return the reference as-is for runtime resolution
+      return argument;
+    }
+
+    // String reference (template name)
+    if (typeof argument === 'string') {
+      if (context?.templates) {
+        const template = context.templates.get(argument);
+        if (template) {
+          return template.properties || template;
+        }
+      }
+      // Return as reference for runtime resolution
+      return { __ref: argument };
+    }
+
+    return argument;
+  }
+
   // ─── HSPlusAST Compilation ────────────────────────────────────────────
 
   public compile(ast: HSPlusAST): R3FNode {
@@ -490,6 +656,32 @@ export class R3FCompiler {
           obj.properties = [...mergedProps, ...(obj.properties || [])];
         }
       }
+    }
+
+    // Expand spread expressions in properties (for HoloComposition format)
+    if (obj.properties && Array.isArray(obj.properties)) {
+      const expandedProperties: any[] = [];
+      for (const prop of obj.properties) {
+        // Handle spread properties: { type: 'spread', target: 'TemplateName' }
+        if (prop && prop.type === 'spread') {
+          const resolved = this.resolveSpreadArgument(
+            prop.target || prop.argument,
+            { templates: templateMap }
+          );
+          if (resolved && typeof resolved === 'object' && !Array.isArray(resolved)) {
+            // Convert resolved object to property array format
+            for (const [key, value] of Object.entries(resolved)) {
+              expandedProperties.push({ key, value });
+            }
+          } else if (Array.isArray(resolved)) {
+            // If it's already a property array
+            expandedProperties.push(...resolved);
+          }
+        } else {
+          expandedProperties.push(prop);
+        }
+      }
+      obj.properties = expandedProperties;
     }
 
     if (obj.properties) {
@@ -1063,7 +1255,9 @@ export class R3FCompiler {
   }
 
   private compileProperties(node: ASTNode, rawProps: Record<string, any>): Record<string, any> {
-    const props: Record<string, any> = { ...rawProps };
+    // Expand spread expressions first
+    const expandedProps = this.expandSpreads(rawProps);
+    const props: Record<string, any> = { ...expandedProps };
 
     if (node.position) {
       props.position = [node.position.x, node.position.y, node.position.z];

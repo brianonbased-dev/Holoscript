@@ -403,9 +403,205 @@ describe('Spread Operator (...) - Sprint 1', () => {
   });
 
   // =========================================================================
+  // SPRINT 2: FUNCTION CALL SPREADS
+  // =========================================================================
+
+  describe('Function Call Spreads - Sprint 2', () => {
+    test('should parse spread in function call arguments', () => {
+      const source = `
+        logic {
+          function callHandler(args) {
+            let result = handler(...args)
+            return result
+          }
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+
+    test('should parse spread mixed with regular arguments', () => {
+      const source = `
+        orb obj {
+          action: myFunc(1, ...items, "end")
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+
+    test('should parse multiple spreads in function call', () => {
+      const source = `
+        orb obj {
+          combined: merge(...arr1, ...arr2, ...arr3)
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+
+    test('should parse spread with member expression in function call', () => {
+      const source = `
+        orb obj {
+          result: process(...config.items, ...state.values)
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+
+    test('should create proper AST for function call spread', () => {
+      const source = `orb obj { data: fn(...args) }`;
+      const result = parser.parse(source);
+
+      expect(result.success).toBe(true);
+      const firstChild = result.ast.children?.[0];
+      const data = (firstChild as any)?.properties?.data;
+
+      // Should be a call expression with spread arguments
+      expect(data).toBeDefined();
+      expect(data.type).toBe('call');
+      expect(data.callee).toBe('fn');
+
+      // parseParenExpression unwraps single arguments, so check both cases
+      const args = Array.isArray(data.args) ? data.args : [data.args];
+      const hasSpread = args.some((arg: any) =>
+        arg && typeof arg === 'object' && arg.type === 'spread'
+      );
+      expect(hasSpread).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // SPRINT 2: REST PARAMETERS IN ARROW FUNCTIONS
+  // =========================================================================
+
+  describe('Rest Parameters - Sprint 2', () => {
+    test('should parse rest parameter in arrow function with block body', () => {
+      const source = `
+        orb obj {
+          handler: (...args) => { return args }
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+
+    test('should parse rest parameter in arrow function with inline expression', () => {
+      const source = `
+        orb obj {
+          handler: (...args) => args
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+
+    test('should parse rest parameter with preceding params', () => {
+      const source = `
+        orb obj {
+          handler: (first, second, ...rest) => { return rest }
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+
+    test('should create proper AST for rest parameter', () => {
+      const source = `orb obj {
+        handler: (...args) => args
+      }`;
+      const result = parser.parse(source);
+
+      expect(result.success).toBe(true);
+      const firstChild = result.ast.children?.[0];
+      const handler = (firstChild as any)?.properties?.handler;
+
+      expect(handler.type).toBe('arrow_function');
+      expect(handler.params).toHaveLength(1);
+      expect(handler.params[0].name).toBe('args');
+      expect(handler.params[0].rest).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // SPRINT 2: DEEPLY NESTED SPREADS
+  // =========================================================================
+
+  describe('Deeply Nested Spreads - Sprint 2', () => {
+    test('should parse spread within inline object spread', () => {
+      const source = `
+        orb obj {
+          config: { ...{ ...innerConfig } }
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+
+    test('should parse multiple levels of nested spreads', () => {
+      const source = `
+        orb obj {
+          config: {
+            ...baseConfig
+            nested: {
+              ...level1
+              deeper: {
+                ...level2
+                value: true
+              }
+            }
+          }
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+
+    test('should parse spread in nested array within object', () => {
+      const source = `
+        orb obj {
+          config: {
+            items: [...baseItems, { ...itemConfig }]
+          }
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+
+    test('should handle spread chain: obj -> array -> obj -> spread', () => {
+      const source = `
+        orb container {
+          levels: [
+            {
+              sublevel: [
+                { ...deepConfig }
+              ]
+            }
+          ]
+        }
+      `;
+
+      const result = parser.parse(source);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // =========================================================================
   // BACKWARD COMPATIBILITY
   // =========================================================================
-  
+
   describe('Backward Compatibility', () => {
     test('should still support old __spread_ keying in objects', () => {
       // Internal format should continue to work
