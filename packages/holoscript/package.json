@@ -1,6 +1,6 @@
 {
   "name": "@holoscript/sdk",
-  "version": "2.1.0",
+  "version": "2.5.0",
   "description": "HoloScript SDK: Smart Assets, Runtime, and Tools",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

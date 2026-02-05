@@ -23,8 +23,12 @@ import type {
   NullCoalescingAssignment,
   TemplateNode,
   HoloScriptValue,
+  MatchExpression,
+  MatchCase,
+  MatchPattern,
 } from './types';
 import { BUILTIN_CONSTRAINTS } from './traits/traitConstraints';
+import { ExhaustivenessChecker, UnionType, LiteralType } from './types/AdvancedTypeSystem';
 
 // Type system types
 export type HoloScriptType =
@@ -108,12 +112,19 @@ export class HoloScriptTypeChecker {
   private diagnostics: TypeDiagnostic[] = [];
   private currentLine: number = 0;
   private currentColumn: number = 0;
+  /** Registry for user-defined union types (e.g., type State = "idle" | "loading" | "error") */
+  private unionTypes: Map<string, UnionType> = new Map();
+  /** Exhaustiveness checker for match expressions */
+  private exhaustivenessChecker: ExhaustivenessChecker;
 
   constructor() {
     // Initialize with built-in functions
     BUILTIN_FUNCTIONS.forEach((type, name) => {
       this.typeMap.set(name, type);
     });
+
+    // Initialize exhaustiveness checker
+    this.exhaustivenessChecker = new ExhaustivenessChecker();
   }
 
   /**
@@ -287,6 +298,9 @@ export class HoloScriptTypeChecker {
       case 'nullCoalescingAssignment':
         this.checkNullCoalescingAssignment(node as NullCoalescingAssignment);
         break;
+      case 'match':
+        this.checkMatchExpression(node as unknown as MatchExpression);
+        break;
     }
   }
 
@@ -327,6 +341,136 @@ export class HoloScriptTypeChecker {
           this.addDiagnostic('error', `Cannot spread '${node.target}' type '${type.type}', must be object or template`, 'E103');
        }
     }
+  }
+
+  /**
+   * Check a match expression for:
+   * 1. Valid subject expression
+   * 2. Exhaustiveness - all union cases are covered
+   * 3. Unreachable patterns (after wildcard)
+   * 4. Type consistency in case bodies
+   */
+  private checkMatchExpression(node: MatchExpression): void {
+    if (!node.subject) {
+      this.addDiagnostic('error', 'Match expression missing subject', 'E200');
+      return;
+    }
+
+    if (!node.cases || node.cases.length === 0) {
+      this.addDiagnostic('error', 'Match expression has no cases', 'E201');
+      return;
+    }
+
+    // Extract the subject identifier for type lookup
+    const subjectId = typeof node.subject === 'string'
+      ? node.subject
+      : (node.subject as any)?.__ref || (node.subject as any)?.name;
+
+    // Try to find a registered union type for the subject
+    let unionType: UnionType | undefined;
+    if (subjectId && this.unionTypes.has(subjectId)) {
+      unionType = this.unionTypes.get(subjectId);
+    }
+
+    // Collect all case patterns
+    const casePatterns: string[] = [];
+    let hasWildcard = false;
+    let wildcardIndex = -1;
+
+    for (let i = 0; i < node.cases.length; i++) {
+      const matchCase = node.cases[i];
+      const pattern = matchCase.pattern;
+
+      if (!pattern) {
+        this.addDiagnostic('error', `Match case ${i + 1} has no pattern`, 'E202');
+        continue;
+      }
+
+      // Check for wildcard pattern
+      if (pattern.type === 'wildcard-pattern') {
+        if (hasWildcard) {
+          this.addDiagnostic('warning',
+            `Duplicate wildcard pattern at case ${i + 1} - only the first wildcard will be reached`,
+            'W200'
+          );
+        } else {
+          hasWildcard = true;
+          wildcardIndex = i;
+        }
+        casePatterns.push('_');
+      } else if (pattern.type === 'literal-pattern') {
+        const value = String((pattern as any).value);
+
+        // Check for duplicate patterns
+        if (casePatterns.includes(value)) {
+          this.addDiagnostic('warning',
+            `Duplicate pattern "${value}" at case ${i + 1} - this case will never be reached`,
+            'W201'
+          );
+        }
+        casePatterns.push(value);
+      } else if (pattern.type === 'binding-pattern') {
+        // Binding patterns match anything, similar to wildcard but with capture
+        casePatterns.push((pattern as any).name);
+      }
+
+      // Check for unreachable patterns after wildcard
+      if (hasWildcard && i > wildcardIndex) {
+        this.addDiagnostic('warning',
+          `Unreachable pattern at case ${i + 1} - previous wildcard (_) matches all remaining cases`,
+          'W202',
+          ['Remove this case or reorder patterns']
+        );
+      }
+
+      // Check case body
+      if (Array.isArray(matchCase.body)) {
+        this.checkBlock(matchCase.body as ASTNode[]);
+      }
+    }
+
+    // Perform exhaustiveness check if we have a known union type
+    if (unionType) {
+      const result = this.exhaustivenessChecker.checkMatch(unionType, casePatterns);
+
+      if (!result.isExhaustive && !hasWildcard) {
+        const missingCases = result.uncoveredCases.map(c => `"${c}"`).join(', ');
+        this.addDiagnostic('error',
+          `Non-exhaustive match. Missing cases: ${missingCases}`,
+          'E203',
+          result.uncoveredCases.map(c => `Add case: "${c}" => ...`)
+        );
+      }
+    } else if (!hasWildcard && subjectId) {
+      // No known union type and no wildcard - warn about potential non-exhaustiveness
+      this.addDiagnostic('info',
+        `Match expression on '${subjectId}' may be non-exhaustive. Consider adding a wildcard (_) case.`,
+        'I200'
+      );
+    }
+  }
+
+  /**
+   * Register a union type for exhaustiveness checking
+   * Example: type State = "idle" | "loading" | "success" | "error"
+   */
+  public registerUnionType(name: string, members: (string | number | boolean)[]): void {
+    const unionMembers = members.map(m => ({
+      kind: 'literal' as const,
+      value: m,
+    }));
+
+    this.unionTypes.set(name, {
+      kind: 'union',
+      members: unionMembers,
+    });
+  }
+
+  /**
+   * Get the union type for a registered name
+   */
+  public getUnionType(name: string): UnionType | undefined {
+    return this.unionTypes.get(name);
   }
 
   private checkBlock(nodes: ASTNode[]): void {
@@ -758,11 +902,19 @@ export class HoloScriptTypeChecker {
   reset(): void {
     this.typeMap.clear();
     this.diagnostics = [];
+    this.unionTypes.clear();
 
     // Re-add built-ins
     BUILTIN_FUNCTIONS.forEach((type, name) => {
       this.typeMap.set(name, type);
     });
+  }
+
+  /**
+   * Get all registered union types
+   */
+  getAllUnionTypes(): Map<string, UnionType> {
+    return new Map(this.unionTypes);
   }
 }
 

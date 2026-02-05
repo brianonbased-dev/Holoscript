@@ -119,13 +119,50 @@ export class SDFCompiler {
     return this.lines.join('\n');
   }
 
+  // ===== Property extraction helpers =====
+
+  private getEnvProp(env: HoloEnvironment | undefined, key: string): HoloValue | undefined {
+    if (!env) return undefined;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const envAny = env as any;
+    // Handle both array format (properties: [{key, value}]) and object format ({skybox: 'value'})
+    if (Array.isArray(envAny.properties)) {
+      const prop = envAny.properties.find((p: { key: string }) => p.key === key);
+      return prop?.value as HoloValue | undefined;
+    } else {
+      // Plain object format
+      return envAny[key] as HoloValue | undefined;
+    }
+  }
+
+  private getLightProp<T extends HoloValue>(light: HoloLight, key: string, fallback: T): T {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lightAny = light as any;
+    // Handle both array format and object format
+    if (Array.isArray(lightAny.properties)) {
+      const prop = lightAny.properties.find((p: { key: string }) => p.key === key);
+      return (prop?.value as T) ?? fallback;
+    } else if (lightAny[key] !== undefined) {
+      return lightAny[key] as T;
+    }
+    return fallback;
+  }
+
+  private getTraitName(trait: string | { name: string }): string {
+    return typeof trait === 'string' ? trait : trait.name;
+  }
+
+  private hasTrait(obj: HoloObjectDecl, traitName: string): boolean {
+    return obj.traits?.some((t) => this.getTraitName(t) === traitName) ?? false;
+  }
+
   private emitPhysics(): void {
     this.emit(`<physics name="default_physics" type="${this.options.physicsEngine}">`);
     this.indentLevel++;
     this.emit('<max_step_size>0.001</max_step_size>');
-    this.emit(`<real_time_factor>${this.options.realTimeFactor}</real_time_factor>');
+    this.emit(`<real_time_factor>${this.options.realTimeFactor}</real_time_factor>`);
     this.emit('<real_time_update_rate>1000</real_time_update_rate>');
-    
+
     if (this.options.physicsEngine === 'ode') {
       this.emit('<ode>');
       this.indentLevel++;
@@ -145,7 +182,7 @@ export class SDFCompiler {
       this.indentLevel--;
       this.emit('</ode>');
     }
-    
+
     this.indentLevel--;
     this.emit('</physics>');
     this.emit('');
@@ -154,13 +191,14 @@ export class SDFCompiler {
   private emitScene(environment?: HoloEnvironment): void {
     this.emit('<scene>');
     this.indentLevel++;
-    
+
     // Ambient light
-    const ambientLevel = environment?.ambient_light ?? 0.4;
+    const ambientLevel = (this.getEnvProp(environment, 'ambient_light') as number) ?? 0.4;
     this.emit(`<ambient>${ambientLevel} ${ambientLevel} ${ambientLevel} 1</ambient>`);
-    
+
     // Background (sky color)
-    if (environment?.skybox) {
+    const skybox = this.getEnvProp(environment, 'skybox') as string | undefined;
+    if (skybox) {
       const skyColors: Record<string, string> = {
         sunset: '0.9 0.5 0.3 1',
         night: '0.05 0.05 0.1 1',
@@ -168,13 +206,13 @@ export class SDFCompiler {
         day: '0.3 0.5 0.9 1',
         overcast: '0.5 0.5 0.5 1',
       };
-      this.emit(`<background>${skyColors[environment.skybox] || '0.7 0.7 0.7 1'}</background>`);
+      this.emit(`<background>${skyColors[skybox] || '0.7 0.7 0.7 1'}</background>`);
     } else {
       this.emit('<background>0.7 0.7 0.7 1</background>');
     }
-    
+
     this.emit('<shadows>true</shadows>');
-    
+
     this.indentLevel--;
     this.emit('</scene>');
     this.emit('');
@@ -186,7 +224,7 @@ export class SDFCompiler {
     this.emit('<static>true</static>');
     this.emit('<link name="link">');
     this.indentLevel++;
-    
+
     this.emit('<collision name="collision">');
     this.indentLevel++;
     this.emit('<geometry>');
@@ -201,7 +239,7 @@ export class SDFCompiler {
     this.emit('</geometry>');
     this.indentLevel--;
     this.emit('</collision>');
-    
+
     this.emit('<visual name="visual">');
     this.indentLevel++;
     this.emit('<geometry>');
@@ -222,7 +260,7 @@ export class SDFCompiler {
     this.emit('</material>');
     this.indentLevel--;
     this.emit('</visual>');
-    
+
     this.indentLevel--;
     this.emit('</link>');
     this.indentLevel--;
@@ -245,42 +283,61 @@ export class SDFCompiler {
 
   private emitLight(light: HoloLight): void {
     const name = this.sanitizeName(light.name || 'light');
-    const type = this.mapLightType(light.type);
-    
+    // Handle both light.lightType (canonical) and light.type (test data) if type is a light kind
+    const lightTypeValue =
+      light.lightType ||
+      (typeof (light as { type?: string }).type === 'string' &&
+      ['point', 'directional', 'spot', 'hemisphere', 'ambient', 'area'].includes(
+        (light as { type?: string }).type!
+      )
+        ? ((light as { type?: string }).type as string)
+        : undefined);
+    const type = this.mapLightType(lightTypeValue);
+
     this.emit(`<light name="${name}" type="${type}">`);
     this.indentLevel++;
-    
-    this.emit(`<cast_shadows>${light.castShadow ?? true}</cast_shadows>`);
-    
-    const pos = light.position || [0, 0, 5];
+
+    // Check both keys, respecting false values properly
+    let castShadow = this.getLightProp(light, 'cast_shadow', undefined as unknown as boolean);
+    if (castShadow === undefined) {
+      castShadow = this.getLightProp(light, 'castShadow', true);
+    }
+    this.emit(`<cast_shadows>${castShadow}</cast_shadows>`);
+
+    const pos = this.getLightProp(light, 'position', [0, 0, 5]);
     this.emit(`<pose>${pos[0]} ${pos[1]} ${pos[2]} 0 0 0</pose>`);
-    
-    const color = this.parseColor(light.color || '#ffffff');
-    const intensity = light.intensity ?? 1.0;
-    this.emit(`<diffuse>${color.r * intensity} ${color.g * intensity} ${color.b * intensity} 1</diffuse>`);
+
+    const colorVal = this.getLightProp(light, 'color', '#ffffff');
+    const color = this.parseColor(typeof colorVal === 'string' ? colorVal : '#ffffff');
+    const intensity = this.getLightProp(light, 'intensity', 1.0);
+    this.emit(
+      `<diffuse>${color.r * intensity} ${color.g * intensity} ${color.b * intensity} 1</diffuse>`
+    );
     this.emit(`<specular>${color.r * 0.3} ${color.g * 0.3} ${color.b * 0.3} 1</specular>`);
-    
+
     if (type === 'spot') {
+      const angle = this.getLightProp(light, 'angle', 45) as number;
       this.emit('<spot>');
       this.indentLevel++;
-      this.emit(`<inner_angle>${(light.angle || 45) * 0.8 * Math.PI / 180}</inner_angle>`);
-      this.emit(`<outer_angle>${(light.angle || 45) * Math.PI / 180}</outer_angle>`);
+      this.emit(`<inner_angle>${(angle * 0.8 * Math.PI) / 180}</inner_angle>`);
+      this.emit(`<outer_angle>${(angle * Math.PI) / 180}</outer_angle>`);
       this.emit('<falloff>1</falloff>');
       this.indentLevel--;
       this.emit('</spot>');
     }
-    
-    if (light.range) {
+
+    const range = this.getLightProp(light, 'range', 0) as number;
+    if (range > 0) {
       this.emit('<attenuation>');
       this.indentLevel++;
-      this.emit(`<range>${light.range}</range>`);
+      this.emit(`<range>${range}</range>`);
       this.emit('<constant>0.5</constant>');
       this.emit('<linear>0.01</linear>');
       this.emit('<quadratic>0.001</quadratic>');
       this.indentLevel--;
       this.emit('</attenuation>');
     }
-    
+
     this.indentLevel--;
     this.emit('</light>');
     this.emit('');
@@ -288,25 +345,24 @@ export class SDFCompiler {
 
   private emitModel(obj: HoloObjectDecl): void {
     const name = this.sanitizeName(obj.name);
-    const traits = obj.traits || [];
-    const isStatic = !traits.includes('physics') && !traits.includes('rigid');
-    
+    const isStatic = !this.hasTrait(obj, 'physics') && !this.hasTrait(obj, 'rigid');
+
     this.emit(`<model name="${name}">`);
     this.indentLevel++;
-    
+
     if (isStatic) {
       this.emit('<static>true</static>');
     }
-    
+
     // Pose
     const pos = this.extractPosition(obj);
     const rot = this.extractRotation(obj);
     this.emit(`<pose>${pos[0]} ${pos[1]} ${pos[2]} ${rot[0]} ${rot[1]} ${rot[2]}</pose>`);
-    
+
     // Link
     this.emit(`<link name="${name}_link">`);
     this.indentLevel++;
-    
+
     // Inertial (for dynamic objects)
     if (!isStatic) {
       const mass = this.extractMass(obj) || 1.0;
@@ -323,16 +379,20 @@ export class SDFCompiler {
       this.indentLevel--;
       this.emit('</inertial>');
     }
-    
+
     // Collision
-    if (traits.includes('collidable') || traits.includes('physics') || traits.includes('rigid')) {
+    if (
+      this.hasTrait(obj, 'collidable') ||
+      this.hasTrait(obj, 'physics') ||
+      this.hasTrait(obj, 'rigid')
+    ) {
       this.emit('<collision name="collision">');
       this.indentLevel++;
       this.emitGeometry(obj);
       this.indentLevel--;
       this.emit('</collision>');
     }
-    
+
     // Visual
     this.emit('<visual name="visual">');
     this.indentLevel++;
@@ -340,10 +400,10 @@ export class SDFCompiler {
     this.emitMaterial(obj);
     this.indentLevel--;
     this.emit('</visual>');
-    
+
     this.indentLevel--;
     this.emit('</link>');
-    
+
     this.indentLevel--;
     this.emit('</model>');
     this.emit('');
@@ -359,13 +419,13 @@ export class SDFCompiler {
   }
 
   private emitGeometry(obj: HoloObjectDecl): void {
-    const geometryProp = obj.properties.find(p => p.key === 'geometry');
+    const geometryProp = obj.properties.find((p) => p.key === 'geometry');
     const geometryValue = geometryProp ? this.getStringValue(geometryProp.value) : 'box';
     const scale = this.extractScale(obj);
-    
+
     this.emit('<geometry>');
     this.indentLevel++;
-    
+
     switch (geometryValue) {
       case 'cube':
       case 'box':
@@ -391,38 +451,37 @@ export class SDFCompiler {
           this.emit(`<box><size>${scale} ${scale} ${scale}</size></box>`);
         }
     }
-    
+
     this.indentLevel--;
     this.emit('</geometry>');
   }
 
   private emitMaterial(obj: HoloObjectDecl): void {
     const color = this.extractColor(obj);
-    const traits = obj.traits || [];
-    
+
     this.emit('<material>');
     this.indentLevel++;
-    
+
     if (color) {
       const rgb = this.parseColor(color);
       this.emit(`<ambient>${rgb.r} ${rgb.g} ${rgb.b} 1</ambient>`);
       this.emit(`<diffuse>${rgb.r} ${rgb.g} ${rgb.b} 1</diffuse>`);
       this.emit(`<specular>0.1 0.1 0.1 1</specular>`);
-      
-      if (traits.includes('glowing') || traits.includes('emissive')) {
+
+      if (this.hasTrait(obj, 'glowing') || this.hasTrait(obj, 'emissive')) {
         this.emit(`<emissive>${rgb.r * 0.5} ${rgb.g * 0.5} ${rgb.b * 0.5} 1</emissive>`);
       }
     } else {
       this.emit('<ambient>0.7 0.7 0.7 1</ambient>');
       this.emit('<diffuse>0.7 0.7 0.7 1</diffuse>');
     }
-    
+
     this.indentLevel--;
     this.emit('</material>');
   }
 
   private extractPosition(obj: HoloObjectDecl): [number, number, number] {
-    const posProp = obj.properties.find(p => p.key === 'position');
+    const posProp = obj.properties.find((p) => p.key === 'position');
     if (posProp && Array.isArray(posProp.value)) {
       return [
         Number(posProp.value[0]) || 0,
@@ -434,19 +493,19 @@ export class SDFCompiler {
   }
 
   private extractRotation(obj: HoloObjectDecl): [number, number, number] {
-    const rotProp = obj.properties.find(p => p.key === 'rotation');
+    const rotProp = obj.properties.find((p) => p.key === 'rotation');
     if (rotProp && Array.isArray(rotProp.value)) {
       return [
-        (Number(rotProp.value[0]) || 0) * Math.PI / 180,
-        (Number(rotProp.value[1]) || 0) * Math.PI / 180,
-        (Number(rotProp.value[2]) || 0) * Math.PI / 180,
+        ((Number(rotProp.value[0]) || 0) * Math.PI) / 180,
+        ((Number(rotProp.value[1]) || 0) * Math.PI) / 180,
+        ((Number(rotProp.value[2]) || 0) * Math.PI) / 180,
       ];
     }
     return [0, 0, 0];
   }
 
   private extractScale(obj: HoloObjectDecl): number {
-    const scaleProp = obj.properties.find(p => p.key === 'scale');
+    const scaleProp = obj.properties.find((p) => p.key === 'scale');
     if (scaleProp) {
       if (typeof scaleProp.value === 'number') return scaleProp.value;
       if (Array.isArray(scaleProp.value)) return Number(scaleProp.value[0]) || 1;
@@ -455,12 +514,12 @@ export class SDFCompiler {
   }
 
   private extractColor(obj: HoloObjectDecl): string | undefined {
-    const colorProp = obj.properties.find(p => p.key === 'color');
+    const colorProp = obj.properties.find((p) => p.key === 'color');
     return colorProp ? this.getStringValue(colorProp.value) : undefined;
   }
 
   private extractMass(obj: HoloObjectDecl): number | undefined {
-    const physicsProp = obj.properties.find(p => p.key === 'physics');
+    const physicsProp = obj.properties.find((p) => p.key === 'physics');
     if (physicsProp && typeof physicsProp.value === 'object' && !Array.isArray(physicsProp.value)) {
       const massEntry = (physicsProp.value as Record<string, unknown>).mass;
       if (typeof massEntry === 'number') return massEntry;
@@ -470,10 +529,14 @@ export class SDFCompiler {
 
   private mapLightType(type?: string): string {
     switch (type) {
-      case 'point': return 'point';
-      case 'directional': return 'directional';
-      case 'spot': return 'spot';
-      default: return 'point';
+      case 'point':
+        return 'point';
+      case 'directional':
+        return 'directional';
+      case 'spot':
+        return 'spot';
+      default:
+        return 'point';
     }
   }
 

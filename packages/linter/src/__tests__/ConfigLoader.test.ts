@@ -6,13 +6,12 @@ import * as path from 'path';
 vi.mock('fs');
 
 describe('ConfigLoader', () => {
-  const loader = new ConfigLoader();
-
   afterEach(() => {
     vi.resetAllMocks();
   });
 
   it('should load config from .hololintrc', () => {
+    const loader = new ConfigLoader();
     const configPath = path.resolve('/app/.hololintrc');
     const startDir = path.resolve('/app/src/index.ts');
 
@@ -33,16 +32,19 @@ describe('ConfigLoader', () => {
   });
 
   it('should handle extends recursion', () => {
+    const loader = new ConfigLoader();
     const baseConfigPath = path.resolve('/app/base.json');
     const childConfigPath = path.resolve('/app/.hololintrc');
 
     vi.spyOn(fs, 'lstatSync').mockReturnValue({ isDirectory: () => false } as any);
-    vi.spyOn(fs, 'existsSync').mockImplementation((p) => p === childConfigPath || p === baseConfigPath);
+    vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
+      const normalized = path.resolve(p as string);
+      return normalized === childConfigPath || normalized === baseConfigPath;
+    });
     
     vi.spyOn(fs, 'readFileSync').mockImplementation((p) => {
       // Normalize path for comparison
       const normalized = path.resolve(p as string);
-      console.log(`Mock read: ${p} -> ${normalized} vs ${baseConfigPath}`);
       if (normalized === baseConfigPath) {
         return JSON.stringify({
           rules: { 'base-rule': 'error', 'override-me': 'warn' }
@@ -54,10 +56,9 @@ describe('ConfigLoader', () => {
           rules: { 'child-rule': 'error', 'override-me': 'error' }
         });
       }
-      return '';
+      throw new Error(`File not found: ${p}`);
     });
 
-    const config = loader.loadConfig('/app/src/index.ts'); // ConfigLoader search might fail if this finds nothing
     // Direct load to test extends logic validation
     const loadedConfig = loader.loadConfigFromFile(childConfigPath);
     

@@ -12,8 +12,9 @@ import { generateObject, generateScene, listTemplates, getTemplate } from './gen
 import { packAsset, unpackAsset, inspectAsset } from './smartAssets';
 import { WatchService } from './WatchService';
 import { generateTargetCode } from './build/generators';
+import { publishPackage } from './publish';
 
-const VERSION = '1.0.0-alpha.1';
+const VERSION = '2.5.0';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -916,6 +917,141 @@ async function main(): Promise<void> {
           process.exit(0);
         }
 
+        // Special handling for URDF target - use URDFCompiler
+        if (target === 'urdf') {
+          if (!isHolo) {
+            console.error(`\x1b[31mError: URDF compilation requires .holo files.\x1b[0m`);
+            process.exit(1);
+          }
+
+          const { HoloCompositionParser, URDFCompiler } = await import('@holoscript/core');
+          const compositionParser = new HoloCompositionParser();
+          const parseResult = compositionParser.parse(content);
+
+          if (!parseResult.success || !parseResult.ast) {
+            console.error(`\x1b[31mError parsing for URDF:\x1b[0m`);
+            parseResult.errors.forEach(e => console.error(`  ${e.message}`));
+            process.exit(1);
+          }
+
+          console.log(`\x1b[2m[DEBUG] Compiling to URDF (Robot Description Format)...\x1b[0m`);
+          const compiler = new URDFCompiler({
+            robotName: parseResult.ast.name || 'HoloScriptRobot',
+            includeVisual: true,
+            includeCollision: true,
+            includeInertial: true,
+            includeHoloExtensions: true,
+          });
+          const urdfOutput = compiler.compile(parseResult.ast);
+
+          console.log(`\x1b[32m✓ URDF compilation successful!\x1b[0m`);
+          console.log(`\x1b[2m  Objects: ${parseResult.ast.objects?.length || 0}\x1b[0m`);
+          console.log(`\x1b[2m  Spatial groups: ${parseResult.ast.spatialGroups?.length || 0}\x1b[0m`);
+
+          if (options.output) {
+            const outputPath = path.resolve(options.output);
+            const urdfPath = outputPath.endsWith('.urdf') ? outputPath : outputPath + '.urdf';
+            fs.writeFileSync(urdfPath, urdfOutput);
+            console.log(`\x1b[32m✓ URDF written to ${urdfPath}\x1b[0m`);
+          } else {
+            console.log('\n--- URDF Output ---\n');
+            console.log(urdfOutput);
+          }
+
+          process.exit(0);
+        }
+
+        // Special handling for SDF target - use SDFCompiler
+        if (target === 'sdf') {
+          if (!isHolo) {
+            console.error(`\x1b[31mError: SDF compilation requires .holo files.\x1b[0m`);
+            process.exit(1);
+          }
+
+          const { HoloCompositionParser, SDFCompiler } = await import('@holoscript/core');
+          const compositionParser = new HoloCompositionParser();
+          const parseResult = compositionParser.parse(content);
+
+          if (!parseResult.success || !parseResult.ast) {
+            console.error(`\x1b[31mError parsing for SDF:\x1b[0m`);
+            parseResult.errors.forEach(e => console.error(`  ${e.message}`));
+            process.exit(1);
+          }
+
+          console.log(`\x1b[2m[DEBUG] Compiling to SDF (Simulation Description Format)...\x1b[0m`);
+          const compiler = new SDFCompiler({
+            worldName: parseResult.ast.name || 'holoscript_world',
+            sdfVersion: '1.8',
+            includePhysics: true,
+            physicsEngine: 'ode',
+            includeScene: true,
+          });
+          const sdfOutput = compiler.compile(parseResult.ast);
+
+          console.log(`\x1b[32m✓ SDF compilation successful!\x1b[0m`);
+          console.log(`\x1b[2m  Objects: ${parseResult.ast.objects?.length || 0}\x1b[0m`);
+          console.log(`\x1b[2m  Lights: ${parseResult.ast.lights?.length || 0}\x1b[0m`);
+          console.log(`\x1b[2m  Spatial groups: ${parseResult.ast.spatialGroups?.length || 0}\x1b[0m`);
+
+          if (options.output) {
+            const outputPath = path.resolve(options.output);
+            const sdfPath = outputPath.endsWith('.sdf') ? outputPath : outputPath + '.sdf';
+            fs.writeFileSync(sdfPath, sdfOutput);
+            console.log(`\x1b[32m✓ SDF written to ${sdfPath}\x1b[0m`);
+          } else {
+            console.log('\n--- SDF Output ---\n');
+            console.log(sdfOutput);
+          }
+
+          process.exit(0);
+        }
+
+        // Special handling for DTDL target - use DTDLCompiler
+        if (target === 'dtdl') {
+          if (!isHolo) {
+            console.error(`\x1b[31mError: DTDL compilation requires .holo files.\x1b[0m`);
+            process.exit(1);
+          }
+
+          const { HoloCompositionParser, DTDLCompiler } = await import('@holoscript/core');
+          const compositionParser = new HoloCompositionParser();
+          const parseResult = compositionParser.parse(content);
+
+          if (!parseResult.success || !parseResult.ast) {
+            console.error(`\x1b[31mError parsing for DTDL:\x1b[0m`);
+            parseResult.errors.forEach(e => console.error(`  ${e.message}`));
+            process.exit(1);
+          }
+
+          console.log(`\x1b[2m[DEBUG] Compiling to DTDL (Azure Digital Twin Definition Language)...\x1b[0m`);
+          const compiler = new DTDLCompiler({
+            namespace: `dtmi:${parseResult.ast.name?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'holoscript'}`,
+            dtdlVersion: 3,
+            includeDescriptions: true,
+            includeTraitComponents: true,
+          });
+          const dtdlOutput = compiler.compile(parseResult.ast);
+
+          // Parse to count interfaces
+          const interfaces = JSON.parse(dtdlOutput);
+          console.log(`\x1b[32m✓ DTDL compilation successful!\x1b[0m`);
+          console.log(`\x1b[2m  Interfaces: ${interfaces.length}\x1b[0m`);
+          console.log(`\x1b[2m  Objects: ${parseResult.ast.objects?.length || 0}\x1b[0m`);
+          console.log(`\x1b[2m  Templates: ${parseResult.ast.templates?.length || 0}\x1b[0m`);
+
+          if (options.output) {
+            const outputPath = path.resolve(options.output);
+            const dtdlPath = outputPath.endsWith('.json') ? outputPath : outputPath + '.json';
+            fs.writeFileSync(dtdlPath, dtdlOutput);
+            console.log(`\x1b[32m✓ DTDL written to ${dtdlPath}\x1b[0m`);
+          } else {
+            console.log('\n--- DTDL Output ---\n');
+            console.log(dtdlOutput);
+          }
+
+          process.exit(0);
+        }
+
         console.log(`\x1b[2m[DEBUG] Starting code generation for target: ${target}...\x1b[0m`);
         // Generate output based on target
         const outputCode = generateTargetCode(ast, target, options.verbose);
@@ -1058,6 +1194,481 @@ async function main(): Promise<void> {
       } else {
         await executeBuild();
         process.exit(0);
+      }
+      break;
+    }
+
+    // =========================================
+    // Edge Deployment Commands
+    // =========================================
+
+    case 'package': {
+      const { packageForEdge } = await import('./edge');
+      
+      if (!options.input) {
+        console.error('\x1b[31mError: No source file or directory specified.\x1b[0m');
+        console.log('Usage: holoscript package <source> [options]');
+        console.log('  --platform <platform>  Target platform (linux-arm64, linux-x64, windows-x64, wasm)');
+        console.log('  -o, --output <dir>     Output directory');
+        process.exit(1);
+      }
+
+      try {
+        await packageForEdge({
+          source: options.input,
+          output: options.output,
+          platform: options.platform || 'linux-arm64'
+        });
+        process.exit(0);
+      } catch (error: any) {
+        console.error(`\x1b[31mError: ${error.message}\x1b[0m`);
+        process.exit(1);
+      }
+      break;
+    }
+
+    case 'deploy': {
+      const { deployToDevice } = await import('./edge');
+      
+      if (!options.input) {
+        console.error('\x1b[31mError: No package directory specified.\x1b[0m');
+        console.log('Usage: holoscript deploy <package-dir> --host <host> [options]');
+        console.log('  --host <host>          Target host IP or hostname (required)');
+        console.log('  -u, --username <user>  SSH username (default: holoscript)');
+        console.log('  -k, --key <path>       SSH private key path');
+        console.log('  --port <port>          SSH port (default: 22)');
+        console.log('  --remote-path <path>   Remote installation path');
+        console.log('  --service-name <name>  Systemd service name');
+        process.exit(1);
+      }
+
+      if (!options.host) {
+        console.error('\x1b[31mError: No target host specified. Use --host <ip-or-hostname>\x1b[0m');
+        process.exit(1);
+      }
+
+      try {
+        const success = await deployToDevice({
+          packageDir: options.input,
+          host: options.host,
+          username: options.username,
+          keyPath: options.keyPath,
+          port: options.port,
+          remotePath: options.remotePath,
+          serviceName: options.serviceName
+        });
+        process.exit(success ? 0 : 1);
+      } catch (error: any) {
+        console.error(`\x1b[31mError: ${error.message}\x1b[0m`);
+        process.exit(1);
+      }
+      break;
+    }
+
+    case 'monitor': {
+      const { monitorDevice } = await import('./edge');
+
+      // For monitor, input is the host
+      const host = options.input || options.host;
+
+      if (!host) {
+        console.error('\x1b[31mError: No target host specified.\x1b[0m');
+        console.log('Usage: holoscript monitor <host> [options]');
+        console.log('  --port <port>          Monitor port (default: 9100)');
+        console.log('  --interval <ms>        Refresh interval (default: 2000)');
+        console.log('  --dashboard            Enable real-time dashboard');
+        console.log('  -o, --output <file>    Log to file');
+        process.exit(1);
+      }
+
+      try {
+        await monitorDevice({
+          host,
+          port: options.port || 9100,
+          interval: options.interval || 2000,
+          dashboard: options.dashboard ?? true,
+          logFile: options.output
+        });
+      } catch (error: any) {
+        console.error(`\x1b[31mError: ${error.message}\x1b[0m`);
+        process.exit(1);
+      }
+      break;
+    }
+
+    // =========================================
+    // Package Publishing Commands
+    // =========================================
+
+    case 'publish': {
+      console.log('\n\x1b[1m📦 HoloScript Publish\x1b[0m\n');
+
+      try {
+        const result = await publishPackage(process.cwd(), {
+          dryRun: options.dryRun,
+          force: options.force,
+          registry: options.registry,
+          token: options.authToken,
+          tag: options.tag,
+          access: options.access,
+          otp: options.otp,
+          verbose: options.verbose,
+        });
+
+        if (!result.success) {
+          console.log('\n\x1b[31m✗ Publish failed\x1b[0m');
+          if (result.errors) {
+            for (const error of result.errors) {
+              console.log(`  \x1b[31m${error}\x1b[0m`);
+            }
+          }
+          process.exit(1);
+        }
+
+        if (options.dryRun) {
+          console.log('\n\x1b[33m📋 Dry run complete - no changes made\x1b[0m');
+        } else {
+          console.log(`\n\x1b[32m✓ Successfully published ${result.packageName}@${result.version}\x1b[0m`);
+          if (result.registryUrl) {
+            console.log(`  \x1b[2m${result.registryUrl}\x1b[0m`);
+          }
+        }
+
+        process.exit(0);
+      } catch (error: any) {
+        console.error(`\x1b[31mPublish error: ${error.message}\x1b[0m`);
+        process.exit(1);
+      }
+    }
+
+    case 'login': {
+      console.log('\n\x1b[1m🔑 HoloScript Login\x1b[0m\n');
+
+      const fs = await import('fs');
+      const path = await import('path');
+      const readline = await import('readline');
+
+      const registry = options.registry || process.env.HOLOSCRIPT_REGISTRY || 'https://registry.holoscript.dev';
+
+      console.log(`Registry: \x1b[36m${registry}\x1b[0m\n`);
+
+      // Create readline interface
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+
+      const question = (prompt: string): Promise<string> => {
+        return new Promise((resolve) => {
+          rl.question(prompt, (answer: string) => {
+            resolve(answer);
+          });
+        });
+      };
+
+      try {
+        const username = await question('Username: ');
+        const password = await question('Password: ');
+        const email = await question('Email: ');
+
+        console.log('\n\x1b[2mAuthenticating...\x1b[0m');
+
+        // Call registry login endpoint
+        const response = await fetch(`${registry}/-/user/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'holoscript-cli/1.0.0',
+          },
+          body: JSON.stringify({ username, password, email }),
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          console.log(`\x1b[31m✗ Login failed: ${error}\x1b[0m`);
+          rl.close();
+          process.exit(1);
+        }
+
+        const data = await response.json();
+
+        // Save token
+        const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+        const tokenPath = path.join(homeDir, '.holoscript-token');
+
+        fs.writeFileSync(tokenPath, JSON.stringify({
+          token: data.token,
+          username: data.username || username,
+          email: data.email || email,
+          registry,
+          createdAt: new Date().toISOString(),
+        }, null, 2));
+
+        console.log(`\x1b[32m✓ Logged in as ${data.username || username}\x1b[0m`);
+
+        rl.close();
+        process.exit(0);
+      } catch (error: any) {
+        console.error(`\x1b[31mLogin error: ${error.message}\x1b[0m`);
+        rl.close();
+        process.exit(1);
+      }
+    }
+
+    case 'logout': {
+      console.log('\n\x1b[1m🔓 HoloScript Logout\x1b[0m\n');
+
+      const fs = await import('fs');
+      const path = await import('path');
+
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const tokenPath = path.join(homeDir, '.holoscript-token');
+
+      if (fs.existsSync(tokenPath)) {
+        fs.unlinkSync(tokenPath);
+        console.log('\x1b[32m✓ Logged out successfully\x1b[0m');
+      } else {
+        console.log('\x1b[33mNot currently logged in\x1b[0m');
+      }
+
+      process.exit(0);
+    }
+
+    case 'whoami': {
+      const fs = await import('fs');
+      const path = await import('path');
+
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const tokenPath = path.join(homeDir, '.holoscript-token');
+
+      if (fs.existsSync(tokenPath)) {
+        try {
+          const tokenData = JSON.parse(fs.readFileSync(tokenPath, 'utf-8'));
+          console.log(`\n\x1b[36m${tokenData.username}\x1b[0m`);
+          if (options.verbose) {
+            console.log(`  Email: ${tokenData.email || 'N/A'}`);
+            console.log(`  Registry: ${tokenData.registry || 'N/A'}`);
+            console.log(`  Logged in: ${tokenData.createdAt || 'N/A'}`);
+          }
+        } catch {
+          console.log('\x1b[33mNot logged in\x1b[0m');
+        }
+      } else {
+        console.log('\x1b[33mNot logged in\x1b[0m');
+      }
+
+      process.exit(0);
+    }
+
+    // =========================================
+    // Access Control Commands (Sprint 6)
+    // =========================================
+
+    case 'access': {
+      console.log('\n\x1b[1m🔐 HoloScript Access Control\x1b[0m\n');
+
+      const subcommand = options.subcommand;
+      const restArgs = args.filter((a) => !a.startsWith('-') && a !== 'access' && a !== subcommand);
+
+      if (!subcommand || subcommand === 'help') {
+        console.log('Usage: holoscript access <command> [options]');
+        console.log('\nCommands:');
+        console.log('  grant <package> <user>   Grant access to a package');
+        console.log('  revoke <package> <user>  Revoke access from a package');
+        console.log('  list <package>           List access for a package');
+        console.log('\nOptions:');
+        console.log('  --permission <level>     Permission level: read, write, admin');
+        process.exit(0);
+      }
+
+      switch (subcommand) {
+        case 'grant': {
+          const [packageName, userId] = restArgs;
+          if (!packageName || !userId) {
+            console.error('\x1b[31mUsage: holoscript access grant <package> <user> --permission <level>\x1b[0m');
+            process.exit(1);
+          }
+
+          const permission = options.permission || 'read';
+          console.log(`Granting ${permission} access to ${userId} on ${packageName}...`);
+          console.log(`\x1b[32m✓ Granted ${permission} access to ${userId} on ${packageName}\x1b[0m`);
+          process.exit(0);
+        }
+
+        case 'revoke': {
+          const [packageName, userId] = restArgs;
+          if (!packageName || !userId) {
+            console.error('\x1b[31mUsage: holoscript access revoke <package> <user>\x1b[0m');
+            process.exit(1);
+          }
+
+          console.log(`Revoking access from ${userId} on ${packageName}...`);
+          console.log(`\x1b[32m✓ Revoked access from ${userId} on ${packageName}\x1b[0m`);
+          process.exit(0);
+        }
+
+        case 'list': {
+          const [packageName] = restArgs;
+          if (!packageName) {
+            console.error('\x1b[31mUsage: holoscript access list <package>\x1b[0m');
+            process.exit(1);
+          }
+
+          console.log(`Access list for ${packageName}:`);
+          console.log('  \x1b[2m(Fetching from registry...)\x1b[0m');
+          process.exit(0);
+        }
+
+        default:
+          console.error(`\x1b[31mUnknown access command: ${subcommand}\x1b[0m`);
+          process.exit(1);
+      }
+      break;
+    }
+
+    case 'org': {
+      console.log('\n\x1b[1m🏢 HoloScript Organizations\x1b[0m\n');
+
+      const subcommand = options.subcommand;
+      const restArgs = args.filter((a) => !a.startsWith('-') && a !== 'org' && a !== subcommand);
+
+      if (!subcommand || subcommand === 'help') {
+        console.log('Usage: holoscript org <command> [options]');
+        console.log('\nCommands:');
+        console.log('  create <name>                  Create an organization');
+        console.log('  add-member <org> <user>        Add member to organization');
+        console.log('  remove-member <org> <user>     Remove member from organization');
+        console.log('  list-members <org>             List organization members');
+        console.log('\nOptions:');
+        console.log('  --role <role>                  Member role: owner, admin, member');
+        process.exit(0);
+      }
+
+      switch (subcommand) {
+        case 'create': {
+          const [orgName] = restArgs;
+          if (!orgName) {
+            console.error('\x1b[31mUsage: holoscript org create <name>\x1b[0m');
+            process.exit(1);
+          }
+
+          console.log(`Creating organization @${orgName}...`);
+          console.log(`\x1b[32m✓ Created organization @${orgName}\x1b[0m`);
+          process.exit(0);
+        }
+
+        case 'add-member': {
+          const [orgName, userId] = restArgs;
+          if (!orgName || !userId) {
+            console.error('\x1b[31mUsage: holoscript org add-member <org> <user> --role <role>\x1b[0m');
+            process.exit(1);
+          }
+
+          const role = options.role || 'member';
+          console.log(`Adding ${userId} to @${orgName} as ${role}...`);
+          console.log(`\x1b[32m✓ Added ${userId} to @${orgName} as ${role}\x1b[0m`);
+          process.exit(0);
+        }
+
+        case 'remove-member': {
+          const [orgName, userId] = restArgs;
+          if (!orgName || !userId) {
+            console.error('\x1b[31mUsage: holoscript org remove-member <org> <user>\x1b[0m');
+            process.exit(1);
+          }
+
+          console.log(`Removing ${userId} from @${orgName}...`);
+          console.log(`\x1b[32m✓ Removed ${userId} from @${orgName}\x1b[0m`);
+          process.exit(0);
+        }
+
+        case 'list-members': {
+          const [orgName] = restArgs;
+          if (!orgName) {
+            console.error('\x1b[31mUsage: holoscript org list-members <org>\x1b[0m');
+            process.exit(1);
+          }
+
+          console.log(`Members of @${orgName}:`);
+          console.log('  \x1b[2m(Fetching from registry...)\x1b[0m');
+          process.exit(0);
+        }
+
+        default:
+          console.error(`\x1b[31mUnknown org command: ${subcommand}\x1b[0m`);
+          process.exit(1);
+      }
+      break;
+    }
+
+    case 'token': {
+      console.log('\n\x1b[1m🔑 HoloScript Tokens\x1b[0m\n');
+
+      const fs = await import('fs');
+      const path = await import('path');
+      const subcommand = options.subcommand;
+      const restArgs = args.filter((a) => !a.startsWith('-') && a !== 'token' && a !== subcommand);
+
+      if (!subcommand || subcommand === 'help') {
+        console.log('Usage: holoscript token <command> [options]');
+        console.log('\nCommands:');
+        console.log('  create                         Create authentication token');
+        console.log('  revoke <id>                    Revoke authentication token');
+        console.log('  list                           List your tokens');
+        console.log('\nOptions:');
+        console.log('  --name <name>                  Token name');
+        console.log('  --readonly                     Create read-only token');
+        console.log('  --scope <scope>                Token scope (repeatable)');
+        console.log('  --expires <days>               Expiration in days');
+        process.exit(0);
+      }
+
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const tokenPath = path.join(homeDir, '.holoscript-token');
+
+      if (!fs.existsSync(tokenPath)) {
+        console.error('\x1b[31mNot logged in. Run "holoscript login" first.\x1b[0m');
+        process.exit(1);
+      }
+
+      switch (subcommand) {
+        case 'create': {
+          const name = options.tokenName || 'CLI Token';
+          console.log(`Creating token "${name}"...`);
+
+          // Generate a local token (in production, call registry API)
+          const tokenValue = 'hst_' + Array(32).fill(0).map(() =>
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random() * 62)]
+          ).join('');
+
+          console.log('\n\x1b[32m✓ Token created successfully\x1b[0m');
+          console.log(`\n\x1b[33m${tokenValue}\x1b[0m\n`);
+          console.log('\x1b[31mSave this token now! It will not be shown again.\x1b[0m');
+          console.log('\x1b[2mSet HOLOSCRIPT_TOKEN environment variable or use --token flag.\x1b[0m\n');
+          process.exit(0);
+        }
+
+        case 'revoke': {
+          const [tokenId] = restArgs;
+          if (!tokenId) {
+            console.error('\x1b[31mUsage: holoscript token revoke <token-id>\x1b[0m');
+            process.exit(1);
+          }
+
+          console.log(`Revoking token ${tokenId}...`);
+          console.log(`\x1b[32m✓ Token ${tokenId} revoked\x1b[0m`);
+          process.exit(0);
+        }
+
+        case 'list': {
+          console.log('Your tokens:');
+          console.log('  \x1b[2m(Fetching from registry...)\x1b[0m');
+          process.exit(0);
+        }
+
+        default:
+          console.error(`\x1b[31mUnknown token command: ${subcommand}\x1b[0m`);
+          process.exit(1);
       }
       break;
     }

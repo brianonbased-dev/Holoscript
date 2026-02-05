@@ -68,6 +68,8 @@ type TokenType =
   | 'NULL_COALESCE'
   | 'NULL_COALESCE_ASSIGN'
   | 'QUESTION'
+  | 'MATCH'
+  | 'UNDERSCORE'
   | 'EOF';
 
 interface Token {
@@ -586,6 +588,12 @@ class Lexer {
         break;
       case 'transition':
         token.type = 'TRANSITION';
+        break;
+      case 'match':
+        token.type = 'MATCH';
+        break;
+      case '_':
+        token.type = 'UNDERSCORE';
         break;
     }
 
@@ -2694,8 +2702,14 @@ export class HoloScriptPlusParser {
       return this.parseParenExpression(); 
     }
 
+    // Handle match expression: match subject { pattern => body, ... }
+    if (token.type === 'MATCH') {
+      return this.parseMatchExpression();
+    }
+
     // Handle IDENTIFIER and keyword tokens that can be used as identifiers in expressions
     // STATE, INITIAL, etc. are keywords but can also be valid identifiers in expressions
+    // Note: MATCH is already handled above via parseMatchExpression()
     const isIdentifierLike = token.type === 'IDENTIFIER' ||
                              token.type === 'STATE' ||
                              token.type === 'INITIAL' ||
@@ -2909,6 +2923,172 @@ export class HoloScriptPlusParser {
 
     this.expect('RBRACE', 'Expected }');
     return obj;
+  }
+
+  /**
+   * Parse a match expression: match subject { pattern => body, ... }
+   * Supports:
+   * - Literal patterns: "idle", 42, true
+   * - Wildcard pattern: _
+   * - Binding patterns: x (captures value)
+   * - Guard clauses: pattern if condition => body
+   */
+  private parseMatchExpression(): any {
+    const startToken = this.current();
+    this.expect('MATCH', 'Expected match keyword');
+
+    // Parse the subject being matched
+    const subject = this.parseValue();
+    if (subject === null) {
+      this.error('Expected expression after match keyword', 'HSP300');
+      return null;
+    }
+
+    this.expect('LBRACE', 'Expected { after match subject');
+    this.skipNewlines();
+
+    const cases: any[] = [];
+    let hasWildcard = false;
+
+    while (!this.check('RBRACE') && !this.check('EOF')) {
+      this.skipNewlines();
+      if (this.check('RBRACE')) break;
+
+      const caseNode = this.parseMatchCase();
+      if (caseNode) {
+        cases.push(caseNode);
+
+        // Check if this case has a wildcard pattern
+        if (caseNode.pattern && caseNode.pattern.type === 'wildcard-pattern') {
+          hasWildcard = true;
+        }
+      }
+
+      // Handle comma or newline separators
+      if (this.check('COMMA')) this.advance();
+      this.skipNewlines();
+    }
+
+    this.expect('RBRACE', 'Expected } to close match expression');
+
+    return {
+      type: 'match',
+      subject,
+      cases,
+      hasWildcard,
+      sourceLocation: {
+        line: startToken.line,
+        column: startToken.column,
+      },
+    };
+  }
+
+  /**
+   * Parse a single match case: pattern [if guard] => body
+   */
+  private parseMatchCase(): any {
+    const pattern = this.parseMatchPattern();
+    if (!pattern) {
+      return null;
+    }
+
+    // Optional guard clause: pattern if condition => body
+    let guard: string | undefined;
+    if (this.check('IDENTIFIER') && this.current().value === 'if') {
+      this.advance(); // consume 'if'
+
+      // Parse guard expression until we hit =>
+      let guardExpr = '';
+      while (!this.check('ARROW') && !this.check('EOF') && !this.check('RBRACE')) {
+        guardExpr += this.current().value + ' ';
+        this.advance();
+      }
+      guard = guardExpr.trim();
+    }
+
+    this.expect('ARROW', 'Expected => after match pattern');
+
+    // Parse the body - can be a single expression or a block
+    let body: any;
+    if (this.check('LBRACE')) {
+      body = this.parseBlockContent();
+    } else {
+      body = this.parseValue();
+    }
+
+    return {
+      type: 'match-case',
+      pattern,
+      body,
+      guard,
+    };
+  }
+
+  /**
+   * Parse a match pattern:
+   * - Literal: "string", 42, true
+   * - Wildcard: _
+   * - Binding: identifier
+   */
+  private parseMatchPattern(): any {
+    const token = this.current();
+
+    // Wildcard pattern: _
+    if (token.type === 'UNDERSCORE' || (token.type === 'IDENTIFIER' && token.value === '_')) {
+      this.advance();
+      return {
+        type: 'wildcard-pattern',
+        symbol: '_',
+      };
+    }
+
+    // String literal pattern
+    if (token.type === 'STRING') {
+      this.advance();
+      return {
+        type: 'literal-pattern',
+        value: token.value,
+      };
+    }
+
+    // Number literal pattern
+    if (token.type === 'NUMBER') {
+      this.advance();
+      return {
+        type: 'literal-pattern',
+        value: parseFloat(token.value),
+      };
+    }
+
+    // Boolean literal pattern
+    if (token.type === 'BOOLEAN') {
+      this.advance();
+      return {
+        type: 'literal-pattern',
+        value: token.value === 'true',
+      };
+    }
+
+    // Binding pattern (identifier captures the value)
+    if (token.type === 'IDENTIFIER') {
+      this.advance();
+      return {
+        type: 'binding-pattern',
+        name: token.value,
+      };
+    }
+
+    // NULL pattern
+    if (token.type === 'NULL') {
+      this.advance();
+      return {
+        type: 'literal-pattern',
+        value: null,
+      };
+    }
+
+    this.error(`Expected match pattern (literal, identifier, or _), got ${token.type}`, 'HSP300');
+    return null;
   }
 
   private current(): Token {

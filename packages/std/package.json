@@ -1,6 +1,6 @@
 {
   "name": "@holoscript/std",
-  "version": "2.1.0",
+  "version": "2.5.0",
   "description": "HoloScript Standard Library - Core types and utilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

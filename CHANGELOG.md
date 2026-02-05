@@ -1,3 +1,167 @@
+## [3.0.0] - 2026-02-05
+
+### 🎉 HoloScript 3.0 - Major Release
+
+This is a major release bringing WASM compilation, certified packages, partner SDK, and comprehensive ecosystem tooling.
+
+### Added
+
+#### WASM Compilation (Sprint 3)
+- **WebAssembly Target** - Compile HoloScript to WAT format
+- JavaScript bindings generation with TypeScript types
+- Memory layout management (state, objects, events, strings)
+- Optional SIMD and thread support
+- CLI: `holoscript compile --target wasm`
+
+#### Certified Packages Program (Sprint 9-10)
+- **CertificationChecker** - Automated package quality verification
+- Checks across 4 categories: code quality, documentation, security, maintenance
+- Letter grades (A-F) based on comprehensive scoring
+- **BadgeGenerator** - Create certification badges (SVG, Markdown, HTML, JSON)
+- One-year certification validity with certificate IDs
+
+#### Partner SDK (Sprint 9-10)
+- **@holoscript/partner-sdk** - Full ecosystem integration SDK
+- **RegistryClient** - Programmatic registry access
+- **WebhookHandler** - Event processing for package/version/certification events
+- **PartnerAnalytics** - Download stats, engagement metrics, health scores
+- Express/Koa middleware support
+- Rate limiting and retry handling
+
+#### Team Workspaces (Sprint 8)
+- **WorkspaceManager** - Collaborative environments
+- Role-based access control (Owner, Admin, Developer, Viewer)
+- Shared secrets management
+- Activity logging and audit trail
+- CLI commands: `holoscript workspace create/invite/secret`
+
+#### HoloScript Academy (Sprint 8)
+- 30 lessons across 3 levels
+- Level 1: Fundamentals (10 lessons)
+- Level 2: Intermediate (10 lessons)
+- Level 3: Advanced (10 lessons)
+- Hands-on exercises and projects
+
+#### Visual Scripting (Sprint 7)
+- Node-based visual programming
+- 95+ node types
+- Real-time preview
+- Export to HoloScript code
+
+#### AI-Powered Autocomplete (Sprint 7)
+- Context-aware code completion
+- Multi-line suggestions
+- Trait and property inference
+
+#### IntelliJ Plugin (Sprint 7)
+- Full JetBrains IDE support
+- Syntax highlighting
+- Code completion
+- Error checking
+
+#### VS Code Extension Enhancements (Sprint 2)
+- Semantic token highlighting
+- 72 code snippets
+- Inline error diagnostics
+- Quick fixes
+
+#### Dead Code Detection (Sprint 5)
+- Find unused functions, variables, imports
+- Configurable detection rules
+
+#### Deprecation Warnings (Sprint 5)
+- Linter rules for deprecated APIs
+- Migration suggestions
+
+#### Migration Assistant (Sprint 5)
+- Automated version migration
+- Code transformation rules
+- Detailed migration reports
+
+#### Complexity Metrics (Sprint 5)
+- Cyclomatic complexity
+- Cognitive complexity
+- Maintainability index
+
+#### Package Registry MVP (Sprint 5)
+- Scoped packages (@org/name)
+- Semantic versioning
+- Dependency resolution
+
+### Changed
+- Minimum Node.js version: 18.0.0
+- TypeScript 5.0+ required
+- `parse()` now returns `HSPlusAST` format
+- `@networked` trait config restructured
+- Improved error messages with suggestions
+
+### Deprecated
+- `@legacy_physics` trait - use `@physics` instead
+- `compile({ format: 'cjs' })` - CommonJS output
+- `HoloScriptParser` class - use `HoloScriptPlusParser`
+
+### Performance
+- 50% faster parsing with incremental parsing
+- 3x faster rebuilds with compilation caching
+- Reduced memory usage in large projects
+- Parallel compilation for multi-file projects
+
+### Fixed
+- Spread operator in nested objects
+- Trait dependency resolution cycles
+- Source map generation for complex expressions
+- LSP crash on malformed input
+- MQTT reconnection handling
+- Workspace permission inheritance
+
+---
+
+## [2.5.0] - 2026-02-05
+
+### 🚀 Package Publishing & Access Control (Sprint 6)
+
+Full package publishing and registry integration with access control.
+
+### Added
+
+#### Package Publishing
+- **`holoscript publish`** - Publish packages to HoloScript registry
+  - Pre-publish validations (package.json, README, LICENSE, semver)
+  - Tarball packaging with USTAR format and gzip compression
+  - `--dry-run` - Preview without uploading
+  - `--tag <tag>` - Version tag (default: "latest")
+  - `--access <level>` - public or restricted
+  - `--force` - Publish with warnings
+  - `--otp <code>` - 2FA one-time password
+
+#### Authentication
+- **`holoscript login`** - Log in to HoloScript registry
+- **`holoscript logout`** - Log out from registry
+- **`holoscript whoami`** - Display current logged-in user
+
+#### Access Control
+- **`holoscript access grant <pkg> <user>`** - Grant access to a package
+- **`holoscript access revoke <pkg> <user>`** - Revoke access
+- **`holoscript access list <pkg>`** - List package access
+
+#### Organization Management
+- **`holoscript org create <name>`** - Create an organization
+- **`holoscript org add-member <org> <user>`** - Add member with role
+- **`holoscript org remove-member <org> <user>`** - Remove member
+- **`holoscript org list-members <org>`** - List organization members
+
+#### Token Management
+- **`holoscript token create`** - Create API token for CI/CD
+- **`holoscript token revoke <id>`** - Revoke a token
+- **`holoscript token list`** - List your tokens
+- Token options: `--name`, `--readonly`, `--scope`, `--expires`
+
+### Changed
+- Updated all package versions to 2.5.0
+- Unified CLI help text with comprehensive examples for all commands
+
+---
+
 ## [2.2.1] - 2026-02-05
 
 ### 🤖 Grok/X Integration

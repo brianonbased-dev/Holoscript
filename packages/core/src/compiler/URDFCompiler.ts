@@ -107,6 +107,16 @@ export class URDFCompiler {
     };
   }
 
+  // Helper to get trait name from either string or { name: string } format
+  private getTraitName(trait: string | { name: string }): string {
+    return typeof trait === 'string' ? trait : trait.name;
+  }
+
+  // Helper to check if object has a specific trait
+  private hasTrait(obj: HoloObjectDecl, traitName: string): boolean {
+    return obj.traits?.some((t) => this.getTraitName(t) === traitName) ?? false;
+  }
+
   compile(composition: HoloComposition): string {
     this.lines = [];
     this.links = [];
@@ -177,9 +187,8 @@ export class URDFCompiler {
 
   private processObject(obj: HoloObjectDecl, parentLink: string): void {
     const linkName = this.sanitizeName(obj.name);
-    const traits = obj.traits || [];
-    const hasPhysics = traits.includes('physics') || traits.includes('rigid');
-    const hasCollider = traits.includes('collidable') || traits.includes('trigger');
+    const hasPhysics = this.hasTrait(obj, 'physics') || this.hasTrait(obj, 'rigid');
+    const hasCollider = this.hasTrait(obj, 'collidable') || this.hasTrait(obj, 'trigger');
 
     // Get geometry
     const geometry = this.extractGeometry(obj);
@@ -253,7 +262,7 @@ export class URDFCompiler {
   }
 
   private extractGeometry(obj: HoloObjectDecl): URDFGeometry | undefined {
-    const geometryProp = obj.properties.find(p => p.key === 'geometry');
+    const geometryProp = obj.properties.find((p) => p.key === 'geometry');
     if (!geometryProp) return undefined;
 
     const geometryValue = this.getStringValue(geometryProp.value);
@@ -274,11 +283,15 @@ export class URDFCompiler {
         return { type: 'box', size: [scale, 0.01, scale] };
       default:
         // Custom mesh
-        if (geometryValue.endsWith('.glb') || geometryValue.endsWith('.dae') || geometryValue.endsWith('.stl')) {
+        if (
+          geometryValue.endsWith('.glb') ||
+          geometryValue.endsWith('.dae') ||
+          geometryValue.endsWith('.stl')
+        ) {
           const filename = geometryValue.replace('.glb', '.stl').replace('.dae', '.stl');
-          return { 
-            type: 'mesh', 
-            filename: `${this.options.meshPathPrefix}${filename}` 
+          return {
+            type: 'mesh',
+            filename: `${this.options.meshPathPrefix}${filename}`,
           };
         }
         return { type: 'box', size: [scale, scale, scale] };
@@ -286,7 +299,7 @@ export class URDFCompiler {
   }
 
   private extractPosition(obj: HoloObjectDecl): [number, number, number] {
-    const posProp = obj.properties.find(p => p.key === 'position');
+    const posProp = obj.properties.find((p) => p.key === 'position');
     if (posProp && Array.isArray(posProp.value)) {
       return [
         Number(posProp.value[0]) || 0,
@@ -298,20 +311,20 @@ export class URDFCompiler {
   }
 
   private extractRotation(obj: HoloObjectDecl): [number, number, number] {
-    const rotProp = obj.properties.find(p => p.key === 'rotation');
+    const rotProp = obj.properties.find((p) => p.key === 'rotation');
     if (rotProp && Array.isArray(rotProp.value)) {
       // Convert degrees to radians
       return [
-        (Number(rotProp.value[0]) || 0) * Math.PI / 180,
-        (Number(rotProp.value[1]) || 0) * Math.PI / 180,
-        (Number(rotProp.value[2]) || 0) * Math.PI / 180,
+        ((Number(rotProp.value[0]) || 0) * Math.PI) / 180,
+        ((Number(rotProp.value[1]) || 0) * Math.PI) / 180,
+        ((Number(rotProp.value[2]) || 0) * Math.PI) / 180,
       ];
     }
     return [0, 0, 0];
   }
 
   private extractScale(obj: HoloObjectDecl): number {
-    const scaleProp = obj.properties.find(p => p.key === 'scale');
+    const scaleProp = obj.properties.find((p) => p.key === 'scale');
     if (scaleProp) {
       if (typeof scaleProp.value === 'number') {
         return scaleProp.value;
@@ -324,12 +337,12 @@ export class URDFCompiler {
   }
 
   private extractColor(obj: HoloObjectDecl): string | undefined {
-    const colorProp = obj.properties.find(p => p.key === 'color');
+    const colorProp = obj.properties.find((p) => p.key === 'color');
     return colorProp ? this.getStringValue(colorProp.value) : undefined;
   }
 
   private extractMass(obj: HoloObjectDecl): number | undefined {
-    const physicsProp = obj.properties.find(p => p.key === 'physics');
+    const physicsProp = obj.properties.find((p) => p.key === 'physics');
     if (physicsProp && typeof physicsProp.value === 'object' && !Array.isArray(physicsProp.value)) {
       const massEntry = (physicsProp.value as Record<string, unknown>).mass;
       if (typeof massEntry === 'number') return massEntry;
@@ -339,17 +352,17 @@ export class URDFCompiler {
 
   private calculateInertia(geometry: URDFGeometry | undefined, mass: number): URDFInertial {
     // Default inertia for a 1m cube with given mass
-    let ixx = mass * (1 + 1) / 12; // (w² + h²) / 12
-    let iyy = mass * (1 + 1) / 12;
-    let izz = mass * (1 + 1) / 12;
+    let ixx = (mass * (1 + 1)) / 12; // (w² + h²) / 12
+    let iyy = (mass * (1 + 1)) / 12;
+    let izz = (mass * (1 + 1)) / 12;
 
     if (geometry) {
       switch (geometry.type) {
         case 'box': {
           const [w, h, d] = geometry.size || [1, 1, 1];
-          ixx = mass * (h * h + d * d) / 12;
-          iyy = mass * (w * w + d * d) / 12;
-          izz = mass * (w * w + h * h) / 12;
+          ixx = (mass * (h * h + d * d)) / 12;
+          iyy = (mass * (w * w + d * d)) / 12;
+          izz = (mass * (w * w + h * h)) / 12;
           break;
         }
         case 'sphere': {
@@ -360,8 +373,8 @@ export class URDFCompiler {
         case 'cylinder': {
           const r = geometry.radius || 0.5;
           const l = geometry.length || 1;
-          ixx = iyy = mass * (3 * r * r + l * l) / 12;
-          izz = mass * r * r / 2;
+          ixx = iyy = (mass * (3 * r * r + l * l)) / 12;
+          izz = (mass * r * r) / 2;
           break;
         }
       }
@@ -418,7 +431,9 @@ export class URDFCompiler {
       this.indentLevel++;
       this.emit(`<mass value="${link.inertial.mass}"/>`);
       const i = link.inertial.inertia;
-      this.emit(`<inertia ixx="${i.ixx.toFixed(6)}" ixy="${i.ixy}" ixz="${i.ixz}" iyy="${i.iyy.toFixed(6)}" iyz="${i.iyz}" izz="${i.izz.toFixed(6)}"/>`);
+      this.emit(
+        `<inertia ixx="${i.ixx.toFixed(6)}" ixy="${i.ixy}" ixz="${i.ixz}" iyy="${i.iyy.toFixed(6)}" iyz="${i.iyz}" izz="${i.izz.toFixed(6)}"/>`
+      );
       this.indentLevel--;
       this.emit('</inertial>');
     }
@@ -431,22 +446,24 @@ export class URDFCompiler {
   private emitJoint(joint: URDFJoint): void {
     this.emit(`<joint name="${joint.name}" type="${joint.type}">`);
     this.indentLevel++;
-    
+
     this.emit(`<parent link="${joint.parent}"/>`);
     this.emit(`<child link="${joint.child}"/>`);
-    
+
     if (joint.origin) {
       this.emitOrigin(joint.origin);
     }
-    
+
     if (joint.axis) {
       this.emit(`<axis xyz="${joint.axis.join(' ')}"/>`);
     }
-    
+
     if (joint.limits) {
-      this.emit(`<limit lower="${joint.limits.lower}" upper="${joint.limits.upper}" effort="${joint.limits.effort}" velocity="${joint.limits.velocity}"/>`);
+      this.emit(
+        `<limit lower="${joint.limits.lower}" upper="${joint.limits.upper}" effort="${joint.limits.effort}" velocity="${joint.limits.velocity}"/>`
+      );
     }
-    
+
     this.indentLevel--;
     this.emit('</joint>');
     this.emit('');
@@ -455,7 +472,7 @@ export class URDFCompiler {
   private emitGeometry(geom: URDFGeometry): void {
     this.emit('<geometry>');
     this.indentLevel++;
-    
+
     switch (geom.type) {
       case 'box':
         this.emit(`<box size="${(geom.size || [1, 1, 1]).join(' ')}"/>`);
@@ -470,25 +487,59 @@ export class URDFCompiler {
         this.emit(`<mesh filename="${geom.filename}"/>`);
         break;
     }
-    
+
     this.indentLevel--;
     this.emit('</geometry>');
   }
 
   private emitOrigin(origin: URDFOrigin): void {
-    this.emit(`<origin xyz="${origin.xyz.join(' ')}" rpy="${origin.rpy.map(v => v.toFixed(6)).join(' ')}"/>`);
+    this.emit(
+      `<origin xyz="${origin.xyz.join(' ')}" rpy="${origin.rpy.map((v) => v.toFixed(6)).join(' ')}"/>`
+    );
   }
 
   private emitHoloExtensions(composition: HoloComposition): void {
     this.emit('');
     this.emit('<!-- HoloScript Extensions -->');
     this.emit(`<!-- Original composition: "${composition.name}" -->`);
-    if (composition.environment?.skybox) {
-      this.emit(`<!-- Environment skybox: ${composition.environment.skybox} -->`);
+    // Access skybox from environment properties - handle both array and object formats
+    const skybox = this.getEnvProp(composition, 'skybox');
+    if (skybox && typeof skybox === 'string') {
+      this.emit(`<!-- Environment skybox: ${skybox} -->`);
     }
     if (composition.templates && composition.templates.length > 0) {
-      this.emit(`<!-- Templates: ${composition.templates.map(t => t.name).join(', ')} -->`);
+      this.emit(`<!-- Templates: ${composition.templates.map((t) => t.name).join(', ')} -->`);
     }
+  }
+
+  // Helper to get environment property from either array or object format
+  private getEnvProp(
+    composition: HoloComposition,
+    key: string
+  ): string | number | boolean | null | undefined {
+    const env = composition.environment;
+    if (!env) return undefined;
+
+    // Try array format: properties: [{ key: 'skybox', value: 'night' }]
+    if (Array.isArray(env.properties)) {
+      const prop = env.properties.find((p: { key: string; value: unknown }) => p.key === key);
+      if (prop) return prop.value as string | number | boolean | null;
+    }
+
+    // Try object format: { skybox: 'night' } directly on environment
+    if (key in env) {
+      return (env as unknown as Record<string, unknown>)[key] as string | number | boolean | null;
+    }
+
+    // Try object inside properties: properties: { skybox: 'night' }
+    if (env.properties && typeof env.properties === 'object' && !Array.isArray(env.properties)) {
+      const props = env.properties as Record<string, unknown>;
+      if (key in props) {
+        return props[key] as string | number | boolean | null;
+      }
+    }
+
+    return undefined;
   }
 
   private emit(line: string): void {

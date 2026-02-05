@@ -285,6 +285,126 @@ export {
   type AffectedSet,
 } from './compiler/TraitDependencyGraph';
 
+// Build Cache (Sprint 4 - Persistent disk-based caching)
+export {
+  BuildCache,
+  createBuildCache,
+  getDefaultCacheDir,
+  ContentAddressableStore,
+  createBuildManifest,
+  validateBuildManifest,
+  type CacheEntryType,
+  type CacheEntryMeta,
+  type CacheEntry as BuildCacheEntry,
+  type CacheLookupResult,
+  type BuildCacheOptions,
+  type CacheStats,
+  type BuildArtifact,
+  type BuildManifest,
+} from './compiler/BuildCache';
+
+// Source Maps v2 (Sprint 4 - Enhanced source mapping)
+export {
+  SourceMapGeneratorV2,
+  SourceMapConsumerV2,
+  createSourceMapV2,
+  createIndexMap,
+  combineSourceMapsV2,
+  type SourceMapV2,
+  type IndexMap,
+  type Position as SourceMapPosition,
+  type Range as SourceMapRange,
+  type Scope,
+  type ScopeType,
+  type ScopeSymbol,
+  type EnhancedMappingSegment,
+  type ExpressionType,
+  type HotReloadMapping,
+} from './sourcemap';
+
+// Bundle Analyzer (Sprint 4 - Comprehensive bundle analysis)
+export {
+  BundleAnalyzer,
+  createBundleAnalyzer,
+  type ModuleInfo,
+  type ModuleType,
+  type ChunkInfo,
+  type DuplicateInfo,
+  type TreeshakingOpportunity,
+  type SplittingRecommendation,
+  type PerformanceMetrics,
+  type BundleAnalysisReport,
+  type AnalysisWarning,
+  type BundleAnalyzerOptions,
+  type BundleInput,
+} from './compiler/BundleAnalyzer';
+
+// Dead Code Analysis (Sprint 5 - Reference graph and reachability)
+export {
+  ReferenceGraph,
+  createReferenceGraph,
+  ReachabilityAnalyzer,
+  createReachabilityAnalyzer,
+  analyzeDeadCode,
+  type SymbolType,
+  type SymbolDefinition,
+  type SymbolReference,
+  type ReferenceContext,
+  type GraphNode,
+  type GraphStats,
+  type DeadCodeItem,
+  type DeadCodeType,
+  type ReachabilityResult,
+  type ReachabilityStats,
+  type ReachabilityOptions,
+} from './analysis';
+
+// Deprecation System (Sprint 5 - Deprecation warnings)
+export {
+  DeprecationRegistry,
+  defaultRegistry as defaultDeprecationRegistry,
+  createDeprecationRegistry,
+  registerDeprecation,
+  isTraitDeprecated,
+  checkSyntaxDeprecations,
+  type DeprecationSeverity,
+  type DeprecationEntry,
+  type DeprecationMatch,
+} from './deprecation';
+
+// Migration Assistant (Sprint 5 - Code migration for deprecated patterns)
+export {
+  MigrationAssistant,
+  createMigrationAssistant,
+  analyzeMigrations,
+  autoFixMigrations,
+  type MigrationRule,
+  type MigrationSuggestion,
+  type MigrationResult,
+  type ApplyResult,
+} from './migration';
+
+// Package Registry (Sprint 5 - Package management MVP)
+export {
+  PackageRegistry,
+  createPackageRegistry,
+  defaultRegistry as defaultPackageRegistry,
+  parseSemVer,
+  formatSemVer,
+  compareSemVer,
+  satisfiesRange,
+  findBestMatch,
+  validatePackageName,
+  validateManifest,
+  type SemVer,
+  type PackageDependency,
+  type PackageManifest,
+  type PackageMetadata,
+  type SearchResult,
+  type ResolvedDependency,
+  type InstallResult,
+} from './registry';
+
 // HoloScript LSP Service (NEW - IDE integration)
 export {
   HoloScriptLSP,
@@ -712,7 +832,7 @@ export {
   type ShaderProgram,
   type PlatformConfig,
   type GPUMemoryEstimate,
-  type PerformanceMetrics,
+  type PerformanceMetrics as GraphicsPerformanceMetrics,
 } from './services/HololandGraphicsPipelineService';
 
 // Platform Performance Optimizer (NEW - Phase 5)
@@ -1264,7 +1384,7 @@ export {
 
   // Semantic Search
   SemanticSearchService,
-  type SearchResult,
+  type SearchResult as SemanticSearchResult,
 
   // Config types
   type OpenAIAdapterConfig,
@@ -1430,3 +1550,88 @@ export {
   type HeadlessRuntimeStats,
   type HeadlessNodeInstance,
 } from './runtime/profiles';
+
+// =============================================================================
+// Real-time Sync Protocol (Sprint 3 - Priority 7)
+// =============================================================================
+
+export {
+  // Protocol
+  SyncProtocol,
+  createSyncProtocol,
+  createLocalSync,
+  // Delta Encoding
+  DeltaEncoder,
+  // Interest Management
+  InterestManager,
+  // Transports
+  type Transport,
+  WebSocketTransport,
+  WebRTCTransport,
+  LocalBroadcastTransport,
+  // Types
+  type TransportType,
+  type SerializationType,
+  type ConflictStrategy,
+  type SyncProtocolConfig,
+  type SyncOptimizations,
+  type SyncState,
+  type SyncDelta,
+  type DeltaChange,
+  type SyncMessage,
+  type PresenceInfo,
+  type InterestArea,
+  type SyncStats,
+  type SyncEventType,
+  type SyncEventCallback,
+} from './network/SyncProtocol';
+
+// Local Network Adapter (existing)
+export {
+  LocalNetworkAdapter,
+  createLocalNetworkAdapter,
+  type NetworkUpdate,
+  type UpdateCallback,
+} from './network/LocalNetworkAdapter';
+
+// =============================================================================
+// Package Certification (Sprint 9-10)
+// =============================================================================
+
+export {
+  // Certification Checker
+  CertificationChecker,
+  createCertificationChecker,
+  DEFAULT_CERTIFICATION_CONFIG,
+  type CertificationConfig,
+  type CertificationResult,
+  type CheckResult,
+  type CheckCategory,
+  type CheckStatus,
+  type PackageManifest as CertificationPackageManifest,
+  type PackageFiles as CertificationPackageFiles,
+  // Badge Generator
+  BadgeGenerator,
+  createBadgeGenerator,
+  defaultBadgeGenerator,
+  type BadgeFormat,
+  type BadgeStyle,
+  type BadgeOptions,
+  type Certificate,
+} from './registry/certification';
+
+// =============================================================================
+// Workspace Management (Sprint 8)
+// =============================================================================
+
+export {
+  WorkspaceManager,
+  createWorkspaceManager,
+  type WorkspaceRole,
+  type WorkspaceMember,
+  type WorkspaceSettings,
+  type Workspace,
+  type ActivityType as WorkspaceActivityType,
+  type ActivityEntry,
+  type WorkspaceSecret,
+} from './registry/workspace/WorkspaceManager';

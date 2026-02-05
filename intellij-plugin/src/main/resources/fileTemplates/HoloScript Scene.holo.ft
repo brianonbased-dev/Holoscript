@@ -1,0 +1,12 @@
+// ${NAME} - HoloScript Scene
+// Created: ${DATE}
+
+composition "${NAME}" {
+  @manifest {
+    title: "${NAME}"
+    version: "1.0.0"
+  }
+
+  // Add your objects here
+
+}

@@ -175,7 +175,7 @@ export class HoloScriptCLI {
   }
 
   private async replCommand(): Promise<number> {
-    console.log('HoloScript REPL v1.0.0');
+    console.log('HoloScript REPL v2.5.0');
     console.log('Type HoloScript commands to execute. Type "exit" or Ctrl+C to quit.\n');
 
     const rl = readline.createInterface({

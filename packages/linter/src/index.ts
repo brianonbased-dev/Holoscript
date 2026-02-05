@@ -7,79 +7,27 @@
  * @package @hololand/holoscript-linter
  * @version 2.0.0
  */
- 
-import { HoloScriptPlusParser, type HSPlusASTNode as HSPlusNode } from '@holoscript/core';
 
-// =============================================================================
-// TYPES
-// =============================================================================
+import { HoloScriptPlusParser } from '@holoscript/core';
 
-export type Severity = 'error' | 'warning' | 'info' | 'hint';
+// Import rule modules
+import { noDeadCodeRule } from './rules/no-dead-code';
+import { deprecationWarningRule } from './rules/deprecation-warning';
 
-export type RuleCategory =
-  | 'syntax'
-  | 'naming'
-  | 'best-practice'
-  | 'performance'
-  | 'style'
-  | 'type-safety';
-
-export interface LintDiagnostic {
-  ruleId: string;
-  message: string;
-  severity: Severity;
-  line: number;
-  column: number;
-  endLine?: number;
-  endColumn?: number;
-  fix?: LintFix;
-}
-
-export interface LintFix {
-  range: { start: number; end: number };
-  replacement: string;
-}
-
-export interface LintResult {
-  filePath: string;
-  diagnostics: LintDiagnostic[];
-  errorCount: number;
-  warningCount: number;
-  fixableCount: number;
-}
-
-export interface LinterConfig {
-  // Rule configurations
-  rules: Record<string, RuleConfig>;
-
-  // File patterns to ignore
-  ignorePatterns: string[];
-
-  // Maximum errors before stopping
-  maxErrors: number;
-
-  // Enable type checking (HSPlus only)
-  typeChecking: boolean;
-}
-
-export type RuleConfig = 'off' | 'warn' | 'error' | 'info' | ['warn' | 'error' | 'info', Record<string, unknown>];
-
-export interface Rule {
-  id: string;
-  name: string;
-  description: string;
-  category: RuleCategory;
-  defaultSeverity: Severity;
-  check(context: RuleContext): LintDiagnostic[];
-}
-
-export interface RuleContext {
-  source: string;
-  lines: string[];
-  fileType: 'holo' | 'hsplus';
-  config: Record<string, unknown>;
-  ast?: HSPlusNode;
-}
+// Import and re-export types from standalone types file
+export * from './types';
+import type {
+  Severity,
+  RuleCategory,
+  LintDiagnostic,
+  LintFix,
+  LintResult,
+  LinterConfig,
+  RuleConfig,
+  Rule,
+  RuleContext,
+  LintASTNode,
+} from './types';
 
 // =============================================================================
 // DEFAULT CONFIG
@@ -101,6 +49,8 @@ export const DEFAULT_CONFIG: LinterConfig = {
     'function-naming': 'warn',
 
     // Best practices
+    'no-dead-code': 'warn',
+    'deprecation-warning': 'warn',
     'no-unused-templates': 'warn',
     'no-duplicate-ids': 'error',
     'prefer-templates': 'warn',
@@ -137,6 +87,12 @@ export const DEFAULT_CONFIG: LinterConfig = {
 // =============================================================================
 
 const BUILT_IN_RULES: Rule[] = [
+  // Dead code detection (from external rule module)
+  noDeadCodeRule,
+
+  // Deprecation warnings (from external rule module)
+  deprecationWarningRule,
+
   // No duplicate IDs
   {
     id: 'no-duplicate-ids',
@@ -150,7 +106,7 @@ const BUILT_IN_RULES: Rule[] = [
 
       const ids = new Map<string, { line: number; column: number }>();
 
-      const checkNodes = (nodes: HSPlusNode[]) => {
+      const checkNodes = (nodes: LintASTNode[]) => {
         for (const node of nodes) {
           if (node.id) {
             if (ids.has(node.id)) {
@@ -189,7 +145,7 @@ const BUILT_IN_RULES: Rule[] = [
       const diagnostics: LintDiagnostic[] = [];
       if (!context.ast) return diagnostics;
 
-      const checkNodes = (nodes: HSPlusNode[]) => {
+      const checkNodes = (nodes: LintASTNode[]) => {
         for (const node of nodes) {
           if (node.type === 'composition' && node.id) {
             if (!/^[A-Z][a-zA-Z0-9]*$/.test(node.id)) {
@@ -309,7 +265,7 @@ const BUILT_IN_RULES: Rule[] = [
         'cloth', 'fluid', 'soft_body', 'rope', 'chain', 'wind', 'buoyancy', 'destruction'
       ];
 
-      const checkTraits = (nodes: HSPlusNode[]) => {
+      const checkTraits = (nodes: LintASTNode[]) => {
         for (const node of nodes) {
           if (node.directives) {
              for (const dir of node.directives) {
@@ -351,7 +307,7 @@ const BUILT_IN_RULES: Rule[] = [
         'collision': 'Use @trigger or @physics instead',
       };
 
-      const checkNodes = (nodes: HSPlusNode[]) => {
+      const checkNodes = (nodes: LintASTNode[]) => {
         for (const node of nodes) {
           if (node.directives) {
             for (const dir of node.directives) {
@@ -745,7 +701,7 @@ const BUILT_IN_RULES: Rule[] = [
       const diagnostics: LintDiagnostic[] = [];
       if (!context.ast) return diagnostics;
 
-      const checkNodes = (nodes: HSPlusNode[]) => {
+      const checkNodes = (nodes: LintASTNode[]) => {
         for (const node of nodes) {
           if (node.type === 'orb' && node.id) {
             if (!/^[A-Za-z][a-zA-Z0-9_-]*$/.test(node.id)) {
@@ -778,7 +734,7 @@ const BUILT_IN_RULES: Rule[] = [
       const diagnostics: LintDiagnostic[] = [];
       if (!context.ast) return diagnostics;
 
-      const checkNodes = (nodes: HSPlusNode[]) => {
+      const checkNodes = (nodes: LintASTNode[]) => {
         for (const node of nodes) {
           if (node.type === 'template' && node.id) {
             if (!/^[A-Z][a-zA-Z0-9]*$/.test(node.id)) {
@@ -1037,6 +993,10 @@ export function lint(source: string, filePath = 'input.holo'): LintResult {
 export function createLinter(config: Partial<LinterConfig> = {}): HoloScriptLinter {
   return new HoloScriptLinter(config);
 }
+
+// Rule exports
+export { noDeadCodeRule, createNoDeadCodeRule, type NoDeadCodeOptions } from './rules/no-dead-code';
+export { deprecationWarningRule, createDeprecationWarningRule, type DeprecationWarningOptions, type DeprecationEntry } from './rules/deprecation-warning';
 
 // Default export
 export default HoloScriptLinter;

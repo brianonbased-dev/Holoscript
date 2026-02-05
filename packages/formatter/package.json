@@ -1,6 +1,6 @@
 {
   "name": "@holoscript/formatter",
-  "version": "2.1.0",
+  "version": "2.5.0",
   "description": "Code formatting tool for HoloScript (.holo) and HoloScript+ (.hsplus) files",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

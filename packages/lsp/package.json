@@ -1,6 +1,6 @@
 {
   "name": "@holoscript/lsp",
-  "version": "2.1.0",
+  "version": "2.5.0",
   "description": "Language Server Protocol implementation for HoloScript",
   "main": "dist/server.js",
   "bin": {
@@ -11,6 +11,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "clean": "rm -rf dist",
+    "test": "vitest run",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   }
 }

@@ -56,7 +56,7 @@ export interface HeadlessRuntimeOptions {
   /** Max instances limit (default: 1000) */
   maxInstances?: number;
   /** Custom builtins to inject */
-  builtins?: Record<string, (...args: unknown[]) => unknown>;
+  builtins?: Record<string, unknown>;
 }
 
 export interface HeadlessRuntimeStats {
@@ -99,7 +99,7 @@ export class HeadlessRuntime {
     avgTickDuration: 0,
   };
   private running: boolean = false;
-  private builtins: Record<string, (...args: unknown[]) => unknown>;
+  private builtins: Record<string, unknown>;
 
   constructor(ast: HSPlusAST, options: HeadlessRuntimeOptions = {}) {
     this.ast = ast;
@@ -118,7 +118,7 @@ export class HeadlessRuntime {
     this.builtins = this.createBuiltins();
     this.evaluator = new ExpressionEvaluator(
       this.state.getSnapshot(),
-      this.builtins as unknown as Record<string, unknown>
+      this.builtins
     );
 
     // Initialize state from AST
@@ -140,7 +140,7 @@ export class HeadlessRuntime {
     }
   }
 
-  private createBuiltins(): Record<string, (...args: unknown[]) => unknown> {
+  private createBuiltins(): Record<string, unknown> {
     const runtime = this;
     return {
       log: (...args: unknown[]) => {
@@ -150,7 +150,7 @@ export class HeadlessRuntime {
       },
       warn: (...args: unknown[]) => console.warn('[HeadlessRuntime]', ...args),
       error: (...args: unknown[]) => console.error('[HeadlessRuntime]', ...args),
-      Math,
+      Math: Math as unknown,
 
       range: (start: number, end: number, step: number = 1): number[] => {
         const result: number[] = [];

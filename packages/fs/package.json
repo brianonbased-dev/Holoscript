@@ -1,6 +1,6 @@
 {
   "name": "@holoscript/fs",
-  "version": "2.1.0",
+  "version": "2.5.0",
   "description": "File system library for HoloScript Plus",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,0 +1,645 @@
+/**
+ * Reference Graph - Build reference relationships from AST
+ *
+ * Sprint 5 Priority 1: Dead Code Detection
+ *
+ * Features:
+ * - Track all symbol definitions (orbs, templates, functions, properties)
+ * - Track all symbol references (usages)
+ * - Build directed graph of references
+ * - Support cross-file references
+ *
+ * @version 1.0.0
+ */
+
+/**
+ * Symbol types
+ */
+export type SymbolType =
+  | 'orb'
+  | 'template'
+  | 'function'
+  | 'property'
+  | 'variable'
+  | 'parameter'
+  | 'import'
+  | 'export'
+  | 'composition';
+
+/**
+ * Symbol definition
+ */
+export interface SymbolDefinition {
+  name: string;
+  type: SymbolType;
+  filePath: string;
+  line: number;
+  column: number;
+  endLine?: number;
+  endColumn?: number;
+  parent?: string;
+  isExported?: boolean;
+  isEntryPoint?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Symbol reference
+ */
+export interface SymbolReference {
+  name: string;
+  type: SymbolType;
+  filePath: string;
+  line: number;
+  column: number;
+  context: ReferenceContext;
+  resolvedTo?: string;
+}
+
+/**
+ * Reference context - where the reference occurs
+ */
+export type ReferenceContext =
+  | 'template-usage'
+  | 'function-call'
+  | 'property-access'
+  | 'variable-read'
+  | 'variable-write'
+  | 'import'
+  | 'export'
+  | 'child-reference'
+  | 'trait-config'
+  | 'spread'
+  | 'interpolation';
+
+/**
+ * Graph node representing a symbol
+ */
+export interface GraphNode {
+  id: string;
+  definition: SymbolDefinition;
+  references: Set<string>;    // IDs of nodes this symbol references
+  referencedBy: Set<string>;  // IDs of nodes that reference this symbol
+  isReachable: boolean;
+}
+
+/**
+ * Reference graph statistics
+ */
+export interface GraphStats {
+  totalNodes: number;
+  totalEdges: number;
+  reachableNodes: number;
+  unreachableNodes: number;
+  entryPoints: number;
+  byType: Record<SymbolType, number>;
+}
+
+/**
+ * AST node interface (minimal for compatibility)
+ */
+export interface ASTNode {
+  type: string;
+  id?: string;
+  name?: string;
+  children?: ASTNode[];
+  properties?: Array<{ key: string; value: unknown }>;
+  directives?: Array<{ type: string; name: string; params?: Record<string, unknown> }>;
+  loc?: { start: { line: number; column: number }; end?: { line: number; column: number } };
+  [key: string]: unknown;
+}
+
+/**
+ * Reference Graph Builder
+ */
+export class ReferenceGraph {
+  private nodes: Map<string, GraphNode> = new Map();
+  private definitions: Map<string, SymbolDefinition> = new Map();
+  private references: SymbolReference[] = [];
+  private entryPoints: Set<string> = new Set();
+
+  constructor() {}
+
+  /**
+   * Build reference graph from AST
+   */
+  buildFromAST(ast: ASTNode, filePath: string = 'input.holo'): void {
+    // Phase 1: Collect all definitions
+    this.collectDefinitions(ast, filePath, null);
+
+    // Phase 2: Collect all references
+    this.collectReferences(ast, filePath, null);
+
+    // Phase 3: Build graph edges
+    this.buildEdges();
+
+    // Phase 4: Identify entry points
+    this.identifyEntryPoints();
+  }
+
+  /**
+   * Add multiple ASTs (for cross-file analysis)
+   */
+  addFile(ast: ASTNode, filePath: string): void {
+    this.collectDefinitions(ast, filePath, null);
+    this.collectReferences(ast, filePath, null);
+  }
+
+  /**
+   * Finalize the graph after adding all files
+   */
+  finalize(): void {
+    this.buildEdges();
+    this.identifyEntryPoints();
+  }
+
+  /**
+   * Collect all symbol definitions from AST
+   */
+  private collectDefinitions(node: ASTNode, filePath: string, parent: string | null): void {
+    const nodeId = this.getNodeId(node, filePath);
+
+    // Check node type for definitions
+    if (node.type === 'composition') {
+      this.addDefinition({
+        name: node.id || node.name || 'unnamed',
+        type: 'composition',
+        filePath,
+        line: node.loc?.start.line || 1,
+        column: node.loc?.start.column || 1,
+        isEntryPoint: true,
+      });
+    }
+
+    if (node.type === 'orb' || node.type === 'object') {
+      const name = node.id || node.name || '';
+      if (name) {
+        this.addDefinition({
+          name,
+          type: 'orb',
+          filePath,
+          line: node.loc?.start.line || 1,
+          column: node.loc?.start.column || 1,
+          parent: parent ?? undefined,
+        });
+      }
+    }
+
+    if (node.type === 'template') {
+      const name = node.id || node.name || '';
+      if (name) {
+        this.addDefinition({
+          name,
+          type: 'template',
+          filePath,
+          line: node.loc?.start.line || 1,
+          column: node.loc?.start.column || 1,
+          isExported: true, // Templates are typically available for use
+        });
+      }
+    }
+
+    // Functions
+    if (node.type === 'function' || node.type === 'func') {
+      const name = node.id || node.name || '';
+      if (name) {
+        this.addDefinition({
+          name,
+          type: 'function',
+          filePath,
+          line: node.loc?.start.line || 1,
+          column: node.loc?.start.column || 1,
+          parent: parent ?? undefined,
+        });
+      }
+    }
+
+    // Properties
+    if (node.properties) {
+      for (const prop of node.properties) {
+        this.addDefinition({
+          name: prop.key,
+          type: 'property',
+          filePath,
+          line: node.loc?.start.line || 1,
+          column: node.loc?.start.column || 1,
+          parent: nodeId,
+        });
+      }
+    }
+
+    // Logic blocks - check for function definitions
+    if (node.type === 'logic' && (node as any).body) {
+      const body = (node as any).body;
+      if (body.functions) {
+        for (const func of body.functions) {
+          this.addDefinition({
+            name: func.name,
+            type: 'function',
+            filePath,
+            line: func.loc?.start.line || node.loc?.start.line || 1,
+            column: func.loc?.start.column || node.loc?.start.column || 1,
+            parent: parent ?? undefined,
+          });
+        }
+      }
+    }
+
+    // Recurse into children
+    if (node.children) {
+      for (const child of node.children) {
+        this.collectDefinitions(child, filePath, nodeId);
+      }
+    }
+
+    // Also check 'root' for top-level AST structures
+    if ((node as any).root && Array.isArray((node as any).root.children)) {
+      for (const child of (node as any).root.children) {
+        this.collectDefinitions(child, filePath, null);
+      }
+    }
+  }
+
+  /**
+   * Collect all symbol references from AST
+   */
+  private collectReferences(node: ASTNode, filePath: string, parent: string | null): void {
+    // Template usage: `using "TemplateName"`
+    if ((node as any).template || (node as any).using) {
+      const templateName = (node as any).template || (node as any).using;
+      if (typeof templateName === 'string') {
+        this.addReference({
+          name: templateName,
+          type: 'template',
+          filePath,
+          line: node.loc?.start.line || 1,
+          column: node.loc?.start.column || 1,
+          context: 'template-usage',
+        });
+      }
+    }
+
+    // Spread operator references
+    if (node.properties) {
+      for (const prop of node.properties) {
+        if (typeof prop.key === 'string' && prop.key.startsWith('__spread')) {
+          const spreadValue = prop.value;
+          if (typeof spreadValue === 'string') {
+            this.addReference({
+              name: spreadValue,
+              type: 'template',
+              filePath,
+              line: node.loc?.start.line || 1,
+              column: node.loc?.start.column || 1,
+              context: 'spread',
+            });
+          }
+        }
+
+        // Property value references (look for identifiers)
+        this.scanValueForReferences(prop.value, filePath, node.loc?.start.line || 1);
+      }
+    }
+
+    // Child references
+    if (node.children) {
+      for (const child of node.children) {
+        const childName = child.id || child.name;
+        if (childName && parent) {
+          // Children are referenced by their parent
+          this.addReference({
+            name: childName,
+            type: 'orb',
+            filePath,
+            line: child.loc?.start.line || 1,
+            column: child.loc?.start.column || 1,
+            context: 'child-reference',
+          });
+        }
+        this.collectReferences(child, filePath, this.getNodeId(node, filePath));
+      }
+    }
+
+    // Logic block references
+    if (node.type === 'logic' && (node as any).body) {
+      this.scanLogicBlockForReferences((node as any).body, filePath, node.loc?.start.line || 1);
+    }
+
+    // Directives may reference properties/functions
+    if (node.directives) {
+      for (const dir of node.directives) {
+        if (dir.params) {
+          for (const value of Object.values(dir.params)) {
+            this.scanValueForReferences(value, filePath, node.loc?.start.line || 1);
+          }
+        }
+      }
+    }
+
+    // Check root for top-level
+    if ((node as any).root && Array.isArray((node as any).root.children)) {
+      for (const child of (node as any).root.children) {
+        this.collectReferences(child, filePath, null);
+      }
+    }
+  }
+
+  /**
+   * Scan a value for references
+   */
+  private scanValueForReferences(value: unknown, filePath: string, line: number): void {
+    if (typeof value === 'string') {
+      // Look for identifier patterns like `this.propertyName` or `functionName()`
+      const thisRefs = value.match(/this\.([a-zA-Z_][a-zA-Z0-9_]*)/g);
+      if (thisRefs) {
+        for (const ref of thisRefs) {
+          const name = ref.replace('this.', '');
+          this.addReference({
+            name,
+            type: 'property',
+            filePath,
+            line,
+            column: 1,
+            context: 'property-access',
+          });
+        }
+      }
+
+      // Function calls
+      const funcCalls = value.match(/([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g);
+      if (funcCalls) {
+        for (const call of funcCalls) {
+          const name = call.replace(/\s*\($/, '');
+          if (!['if', 'for', 'while', 'switch', 'log', 'emit'].includes(name)) {
+            this.addReference({
+              name,
+              type: 'function',
+              filePath,
+              line,
+              column: 1,
+              context: 'function-call',
+            });
+          }
+        }
+      }
+    } else if (Array.isArray(value)) {
+      for (const item of value) {
+        this.scanValueForReferences(item, filePath, line);
+      }
+    } else if (value && typeof value === 'object') {
+      for (const v of Object.values(value)) {
+        this.scanValueForReferences(v, filePath, line);
+      }
+    }
+  }
+
+  /**
+   * Scan logic block for references
+   */
+  private scanLogicBlockForReferences(body: Record<string, unknown>, filePath: string, line: number): void {
+    // Functions
+    if (Array.isArray(body.functions)) {
+      for (const func of body.functions) {
+        if (func.body) {
+          this.scanValueForReferences(func.body, filePath, line);
+        }
+      }
+    }
+
+    // Event handlers
+    if (Array.isArray(body.eventHandlers)) {
+      for (const handler of body.eventHandlers) {
+        if (handler.body) {
+          this.scanValueForReferences(handler.body, filePath, line);
+        }
+      }
+    }
+
+    // Tick handlers
+    if (Array.isArray(body.tickHandlers)) {
+      for (const handler of body.tickHandlers) {
+        if (handler.body) {
+          this.scanValueForReferences(handler.body, filePath, line);
+        }
+      }
+    }
+
+    // Lifecycle hooks
+    if (Array.isArray(body.lifecycleHooks)) {
+      for (const hook of body.lifecycleHooks) {
+        if (hook.body) {
+          this.scanValueForReferences(hook.body, filePath, line);
+        }
+      }
+    }
+  }
+
+  /**
+   * Build graph edges from definitions and references
+   */
+  private buildEdges(): void {
+    // Create nodes for all definitions
+    for (const [id, def] of this.definitions) {
+      this.nodes.set(id, {
+        id,
+        definition: def,
+        references: new Set(),
+        referencedBy: new Set(),
+        isReachable: false,
+      });
+    }
+
+    // Add edges for references
+    for (const ref of this.references) {
+      const refId = this.findDefinitionId(ref.name, ref.type);
+      if (refId) {
+        // Find the source node (where the reference occurs)
+        const sourceId = this.findSourceNode(ref.filePath, ref.line);
+        if (sourceId) {
+          const sourceNode = this.nodes.get(sourceId);
+          const targetNode = this.nodes.get(refId);
+
+          if (sourceNode && targetNode) {
+            sourceNode.references.add(refId);
+            targetNode.referencedBy.add(sourceId);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Identify entry points
+   */
+  private identifyEntryPoints(): void {
+    for (const [id, node] of this.nodes) {
+      if (
+        node.definition.isEntryPoint ||
+        node.definition.type === 'composition' ||
+        node.definition.isExported
+      ) {
+        this.entryPoints.add(id);
+      }
+
+      // Top-level orbs without parents are also entry points
+      if (node.definition.type === 'orb' && !node.definition.parent) {
+        this.entryPoints.add(id);
+      }
+    }
+  }
+
+  /**
+   * Add a definition
+   */
+  addDefinition(def: SymbolDefinition): void {
+    const id = `${def.type}:${def.name}:${def.filePath}:${def.line}`;
+    this.definitions.set(id, def);
+  }
+
+  /**
+   * Add a reference
+   */
+  addReference(ref: SymbolReference): void {
+    this.references.push(ref);
+  }
+
+  /**
+   * Find definition ID by name and type
+   */
+  private findDefinitionId(name: string, type: SymbolType): string | null {
+    for (const [id, def] of this.definitions) {
+      if (def.name === name && (def.type === type || this.isCompatibleType(def.type, type))) {
+        return id;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Check if types are compatible
+   */
+  private isCompatibleType(defType: SymbolType, refType: SymbolType): boolean {
+    // Some flexibility for type matching
+    if (defType === 'orb' && refType === 'template') return true;
+    if (defType === 'property' && refType === 'variable') return true;
+    return false;
+  }
+
+  /**
+   * Find source node for a reference location
+   */
+  private findSourceNode(filePath: string, line: number): string | null {
+    let bestMatch: string | null = null;
+    let bestLine = 0;
+
+    for (const [id, def] of this.definitions) {
+      if (def.filePath === filePath && def.line <= line && def.line > bestLine) {
+        bestMatch = id;
+        bestLine = def.line;
+      }
+    }
+
+    return bestMatch;
+  }
+
+  /**
+   * Get node ID
+   */
+  private getNodeId(node: ASTNode, filePath: string): string {
+    const name = node.id || node.name || 'unnamed';
+    const line = node.loc?.start.line || 1;
+    return `${node.type}:${name}:${filePath}:${line}`;
+  }
+
+  /**
+   * Get all nodes
+   */
+  getNodes(): Map<string, GraphNode> {
+    return this.nodes;
+  }
+
+  /**
+   * Get all definitions
+   */
+  getDefinitions(): Map<string, SymbolDefinition> {
+    return this.definitions;
+  }
+
+  /**
+   * Get all references
+   */
+  getReferences(): SymbolReference[] {
+    return this.references;
+  }
+
+  /**
+   * Get entry points
+   */
+  getEntryPoints(): Set<string> {
+    return this.entryPoints;
+  }
+
+  /**
+   * Add custom entry point
+   */
+  addEntryPoint(nodeId: string): void {
+    this.entryPoints.add(nodeId);
+  }
+
+  /**
+   * Get graph statistics
+   */
+  getStats(): GraphStats {
+    let totalEdges = 0;
+    let reachableNodes = 0;
+    let unreachableNodes = 0;
+    const byType: Record<SymbolType, number> = {
+      orb: 0,
+      template: 0,
+      function: 0,
+      property: 0,
+      variable: 0,
+      parameter: 0,
+      import: 0,
+      export: 0,
+      composition: 0,
+    };
+
+    for (const node of this.nodes.values()) {
+      totalEdges += node.references.size;
+      byType[node.definition.type]++;
+
+      if (node.isReachable) {
+        reachableNodes++;
+      } else {
+        unreachableNodes++;
+      }
+    }
+
+    return {
+      totalNodes: this.nodes.size,
+      totalEdges,
+      reachableNodes,
+      unreachableNodes,
+      entryPoints: this.entryPoints.size,
+      byType,
+    };
+  }
+
+  /**
+   * Clear the graph
+   */
+  clear(): void {
+    this.nodes.clear();
+    this.definitions.clear();
+    this.references = [];
+    this.entryPoints.clear();
+  }
+}
+
+/**
+ * Create a reference graph
+ */
+export function createReferenceGraph(): ReferenceGraph {
+  return new ReferenceGraph();
+}

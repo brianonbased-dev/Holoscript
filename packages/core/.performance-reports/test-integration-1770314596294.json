@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-02-05T18:03:16.294Z",
+  "totalMetrics": 2,
+  "summary": {
+    "categories": {
+      "Other": {
+        "count": 2,
+        "avgValue": 15,
+        "minValue": 10,
+        "maxValue": 20,
+        "metrics": [
+          {
+            "name": "Test Metric 1",
+            "value": 10,
+            "unit": "ms"
+          },
+          {
+            "name": "Test Metric 2",
+            "value": 20,
+            "unit": "ms"
+          }
+        ]
+      }
+    }
+  },
+  "recommendations": [
+    "✅ All metrics are within target ranges!"
+  ]
+}

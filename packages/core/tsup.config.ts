@@ -7,6 +7,7 @@ export default defineConfig({
     runtime: 'src/HoloScriptRuntime.ts',
     'type-checker': 'src/HoloScriptTypeChecker.ts',
     debugger: 'src/HoloScriptDebugger.ts',
+    'wot/index': 'src/wot/index.ts',
   },
   format: ['cjs', 'esm'],
   dts: false, // DTS via tsc --emitDeclarationOnly (tsup rollup-dts drops some exports)

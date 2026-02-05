@@ -1,6 +1,6 @@
 /**
  * Spread Operator Type Checking & Validation
- * 
+ *
  * Validates spread expressions during type checking phase:
  * - Ensures spread targets are arrays or objects
  * - Validates template references are valid
@@ -9,9 +9,25 @@
 
 import type { SpreadExpression, ASTNode } from './types';
 
+// Internal types for validation
+interface SymbolEntry {
+  __type?: string;
+  [key: string]: unknown;
+}
+
+interface RefArgument {
+  __ref: string;
+}
+
+interface CallArgument {
+  type: 'call';
+  callee: string;
+  args: unknown[];
+}
+
 export interface SpreadValidationContext {
-  templateRefs: Map<string, any>;
-  symbolTable: Map<string, any>;
+  templateRefs: Map<string, unknown>;
+  symbolTable: Map<string, SymbolEntry>;
   errors: Array<{ message: string; node: ASTNode; line: number; column: number }>;
 }
 
@@ -30,18 +46,12 @@ export class SpreadOperatorValidator {
     const targetType = this.resolveSpreadTarget(spread.argument);
 
     if (!targetType) {
-      this.error(
-        `Cannot resolve spread target in array context at position ${arrayIndex}`,
-        spread
-      );
+      this.error(`Cannot resolve spread target in array context at position ${arrayIndex}`, spread);
       return false;
     }
 
     if (!['array', 'unknown'].includes(targetType)) {
-      this.error(
-        `Invalid array spread: expected array or collection, got ${targetType}`,
-        spread
-      );
+      this.error(`Invalid array spread: expected array or collection, got ${targetType}`, spread);
       return false;
     }
 
@@ -58,18 +68,12 @@ export class SpreadOperatorValidator {
     const targetType = this.resolveSpreadTarget(spread.argument);
 
     if (!targetType) {
-      this.error(
-        `Cannot resolve spread target in object context at key "${objectKey}"`,
-        spread
-      );
+      this.error(`Cannot resolve spread target in object context at key "${objectKey}"`, spread);
       return false;
     }
 
     if (!['object', 'template', 'unknown'].includes(targetType)) {
-      this.error(
-        `Invalid object spread: expected object or template, got ${targetType}`,
-        spread
-      );
+      this.error(`Invalid object spread: expected object or template, got ${targetType}`, spread);
       return false;
     }
 
@@ -86,10 +90,7 @@ export class SpreadOperatorValidator {
     const targetType = this.resolveSpreadTarget(spread.argument);
 
     if (!targetType) {
-      this.error(
-        `Cannot resolve spread target in @${traitName} config`,
-        spread
-      );
+      this.error(`Cannot resolve spread target in @${traitName} config`, spread);
       return false;
     }
 
@@ -110,7 +111,9 @@ export class SpreadOperatorValidator {
    * Resolve the type of a spread target
    * Returns: 'array' | 'object' | 'template' | 'unknown' | null
    */
-  private resolveSpreadTarget(argument: unknown): 'object' | 'array' | 'template' | 'unknown' | null {
+  private resolveSpreadTarget(
+    argument: unknown
+  ): 'object' | 'array' | 'template' | 'unknown' | null {
     if (!argument) return null;
 
     // String identifier reference (most common)
@@ -119,12 +122,17 @@ export class SpreadOperatorValidator {
     }
 
     // Member reference { __ref: 'obj.prop' }
-    if (typeof argument === 'object' && '__ref' in argument) {
-      return this.resolveMemberExpression((argument as any).__ref);
+    if (typeof argument === 'object' && argument !== null && '__ref' in argument) {
+      return this.resolveMemberExpression((argument as RefArgument).__ref);
     }
 
     // Function call { type: 'call', callee: 'getArray', args: [...] }
-    if (typeof argument === 'object' && (argument as any).type === 'call') {
+    if (
+      typeof argument === 'object' &&
+      argument !== null &&
+      'type' in argument &&
+      (argument as CallArgument).type === 'call'
+    ) {
       // Conservative: assume function calls return objects
       return 'unknown';
     }
@@ -166,12 +174,12 @@ export class SpreadOperatorValidator {
    */
   private resolveMemberExpression(memberPath: string): 'object' | 'array' | 'template' | 'unknown' {
     const parts = memberPath.split('.');
-    
+
     if (parts.length === 0) return 'unknown';
 
     // Resolve the root identifier
     const root = parts[0];
-    let currentType = this.resolveIdentifier(root);
+    const currentType = this.resolveIdentifier(root);
 
     // For now, be permissive with nested access
     // Full flow analysis would track type through each member access
@@ -191,13 +199,13 @@ export class SpreadOperatorValidator {
   /**
    * Infer type from a value
    */
-  private inferType(value: any): 'object' | 'array' | 'template' | 'unknown' {
+  private inferType(value: unknown): 'object' | 'array' | 'template' | 'unknown' {
     if (Array.isArray(value)) {
       return 'array';
     }
 
     if (typeof value === 'object' && value !== null) {
-      if (value.__type === 'template') {
+      if ((value as SymbolEntry).__type === 'template') {
         return 'template';
       }
       return 'object';
@@ -222,10 +230,11 @@ export class SpreadOperatorValidator {
 /**
  * Helper to check if a node contains spread operations
  */
-export function hasSpreads(node: any): boolean {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function hasSpreads(node: unknown): boolean {
   if (!node) return false;
 
-  if (node.type === 'spread') {
+  if (typeof node === 'object' && node !== null && 'type' in node && node.type === 'spread') {
     return true;
   }
 
@@ -233,8 +242,8 @@ export function hasSpreads(node: any): boolean {
     return node.some(hasSpreads);
   }
 
-  if (typeof node === 'object') {
-    return Object.values(node).some(hasSpreads);
+  if (typeof node === 'object' && node !== null) {
+    return Object.values(node as Record<string, unknown>).some(hasSpreads);
   }
 
   return false;
@@ -243,20 +252,20 @@ export function hasSpreads(node: any): boolean {
 /**
  * Extract all spread expressions from an AST node
  */
-export function extractSpreads(node: any): SpreadExpression[] {
+export function extractSpreads(node: unknown): SpreadExpression[] {
   const spreads: SpreadExpression[] = [];
 
-  function visit(n: any): void {
+  function visit(n: unknown): void {
     if (!n) return;
 
-    if (n.type === 'spread') {
-      spreads.push(n);
+    if (typeof n === 'object' && n !== null && 'type' in n && n.type === 'spread') {
+      spreads.push(n as SpreadExpression);
     }
 
     if (Array.isArray(n)) {
       n.forEach(visit);
-    } else if (typeof n === 'object') {
-      Object.values(n).forEach(visit);
+    } else if (typeof n === 'object' && n !== null) {
+      Object.values(n as Record<string, unknown>).forEach(visit);
     }
   }
 
@@ -267,10 +276,7 @@ export function extractSpreads(node: any): SpreadExpression[] {
 /**
  * Validate all spreads in an AST tree
  */
-export function validateAllSpreads(
-  ast: any,
-  context: SpreadValidationContext
-): boolean {
+export function validateAllSpreads(ast: unknown, context: SpreadValidationContext): boolean {
   const validator = new SpreadOperatorValidator(context);
   const spreads = extractSpreads(ast);
 
@@ -279,8 +285,8 @@ export function validateAllSpreads(
   for (const spread of spreads) {
     // Determine context from parent node
     // This is a simplified check - full implementation would track parent
-    const parent = findParent(ast, spread);
-    
+    const parent = findParent(ast, spread) as unknown[] | Record<string, unknown> | null;
+
     if (parent && Array.isArray(parent)) {
       if (!validator.validateArraySpread(spread, parent.indexOf(spread))) {
         allValid = false;
@@ -298,8 +304,8 @@ export function validateAllSpreads(
 /**
  * Find parent node (simplified - real implementation would use visitor pattern)
  */
-function findParent(root: any, target: any): any {
-  function search(node: any): any {
+function findParent(root: unknown, target: unknown): unknown {
+  function search(node: unknown): unknown {
     if (!node) return null;
 
     if (Array.isArray(node)) {
@@ -308,8 +314,8 @@ function findParent(root: any, target: any): any {
         const result = search(item);
         if (result) return result;
       }
-    } else if (typeof node === 'object') {
-      for (const value of Object.values(node)) {
+    } else if (typeof node === 'object' && node !== null) {
+      for (const value of Object.values(node as Record<string, unknown>)) {
         if (value === target) return node;
         const result = search(value);
         if (result) return result;
@@ -334,6 +340,11 @@ export function getSpreadErrorMessage(
     return `Cannot spread unknown value in ${context} context. Did you mean to reference a variable, template, or call a function?`;
   }
 
-  const validTypes = context === 'array' ? 'arrays' : context === 'trait' ? 'configuration objects' : 'objects or templates';
+  const validTypes =
+    context === 'array'
+      ? 'arrays'
+      : context === 'trait'
+        ? 'configuration objects'
+        : 'objects or templates';
   return `Cannot spread ${targetType} in ${context} context. Expected ${validTypes}.`;
 }

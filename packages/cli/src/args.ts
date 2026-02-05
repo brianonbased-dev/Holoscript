@@ -4,8 +4,10 @@
 
 export type RuntimeProfileName = 'headless' | 'minimal' | 'standard' | 'vr';
 
+export type EdgePlatform = 'linux-arm64' | 'linux-x64' | 'windows-x64' | 'wasm';
+
 export interface CLIOptions {
-  command: 'parse' | 'validate' | 'run' | 'ast' | 'repl' | 'watch' | 'compile' | 'build' | 'add' | 'remove' | 'list' | 'traits' | 'suggest' | 'generate' | 'templates' | 'pack' | 'unpack' | 'inspect' | 'diff' | 'wot-export' | 'headless' | 'help' | 'version';
+  command: 'parse' | 'validate' | 'run' | 'ast' | 'repl' | 'watch' | 'compile' | 'build' | 'add' | 'remove' | 'list' | 'traits' | 'suggest' | 'generate' | 'templates' | 'pack' | 'unpack' | 'inspect' | 'diff' | 'wot-export' | 'headless' | 'package' | 'deploy' | 'monitor' | 'publish' | 'login' | 'logout' | 'whoami' | 'access' | 'org' | 'token' | 'help' | 'version';
   input?: string;
   output?: string;
   verbose: boolean;
@@ -26,6 +28,52 @@ export interface CLIOptions {
   tickRate?: number;
   /** Duration to run headless runtime (ms), 0 = indefinite */
   duration?: number;
+  /** Edge deployment platform */
+  platform?: EdgePlatform;
+  /** Remote host for deploy/monitor */
+  host?: string;
+  /** SSH username for deploy */
+  username?: string;
+  /** SSH key path for deploy */
+  keyPath?: string;
+  /** SSH port for deploy */
+  port?: number;
+  /** Remote path for deploy */
+  remotePath?: string;
+  /** Service name for deploy */
+  serviceName?: string;
+  /** Dashboard mode for monitor */
+  dashboard?: boolean;
+  /** Refresh interval for monitor (ms) */
+  interval?: number;
+  /** Dry run mode for publish */
+  dryRun?: boolean;
+  /** Force publish even with warnings */
+  force?: boolean;
+  /** Registry URL for publish */
+  registry?: string;
+  /** Authentication token */
+  authToken?: string;
+  /** Version tag for publish (e.g., "latest", "beta") */
+  tag?: string;
+  /** Access level for publish */
+  access?: 'public' | 'restricted';
+  /** OTP code for 2FA */
+  otp?: string;
+  /** Subcommand for access/org/token commands */
+  subcommand?: string;
+  /** Role for org commands */
+  role?: 'owner' | 'admin' | 'member';
+  /** Permission level for access commands */
+  permission?: 'read' | 'write' | 'admin';
+  /** Token name */
+  tokenName?: string;
+  /** Read-only token flag */
+  readonly?: boolean;
+  /** Scopes for token */
+  scopes?: string[];
+  /** Expiration in days for token */
+  expiresInDays?: number;
 }
 
 const DEFAULT_OPTIONS: CLIOptions = {
@@ -53,8 +101,11 @@ export function parseArgs(args: string[]): CLIOptions {
 
     // Commands
     if (!arg.startsWith('-')) {
-      if (['parse', 'validate', 'run', 'ast', 'repl', 'watch', 'compile', 'build', 'add', 'remove', 'list', 'traits', 'suggest', 'generate', 'templates', 'pack', 'unpack', 'inspect', 'diff', 'wot-export', 'headless', 'help', 'version'].includes(arg)) {
+      if (['parse', 'validate', 'run', 'ast', 'repl', 'watch', 'compile', 'build', 'add', 'remove', 'list', 'traits', 'suggest', 'generate', 'templates', 'pack', 'unpack', 'inspect', 'diff', 'wot-export', 'headless', 'package', 'deploy', 'monitor', 'publish', 'login', 'logout', 'whoami', 'access', 'org', 'token', 'help', 'version'].includes(arg)) {
         options.command = arg as CLIOptions['command'];
+      } else if (['access', 'org', 'token'].includes(options.command) && !options.subcommand) {
+        // Subcommands for access/org/token
+        options.subcommand = arg;
       } else if (['add', 'remove'].includes(options.command)) {
         // Collect package names for add/remove commands
         options.packages.push(arg);
@@ -127,6 +178,76 @@ export function parseArgs(args: string[]): CLIOptions {
       case '--duration':
         options.duration = parseInt(args[++i], 10) || 0;
         break;
+      case '--platform':
+        options.platform = args[++i] as EdgePlatform;
+        break;
+      case '--host':
+        options.host = args[++i];
+        break;
+      case '-u':
+      case '--username':
+        options.username = args[++i];
+        break;
+      case '-k':
+      case '--key':
+        options.keyPath = args[++i];
+        break;
+      case '--port':
+        options.port = parseInt(args[++i], 10) || 22;
+        break;
+      case '--remote-path':
+        options.remotePath = args[++i];
+        break;
+      case '--service-name':
+        options.serviceName = args[++i];
+        break;
+      case '--dashboard':
+        options.dashboard = true;
+        break;
+      case '--interval':
+        options.interval = parseInt(args[++i], 10) || 2000;
+        break;
+      case '--dry-run':
+        options.dryRun = true;
+        break;
+      case '-f':
+      case '--force':
+        options.force = true;
+        break;
+      case '--registry':
+        options.registry = args[++i];
+        break;
+      case '--token':
+        options.authToken = args[++i];
+        break;
+      case '--tag':
+        options.tag = args[++i];
+        break;
+      case '--access':
+        options.access = args[++i] as 'public' | 'restricted';
+        break;
+      case '--otp':
+        options.otp = args[++i];
+        break;
+      case '--role':
+        options.role = args[++i] as 'owner' | 'admin' | 'member';
+        break;
+      case '--permission':
+        options.permission = args[++i] as 'read' | 'write' | 'admin';
+        break;
+      case '--name':
+        options.tokenName = args[++i];
+        break;
+      case '--readonly':
+        options.readonly = true;
+        break;
+      case '--scope':
+        if (!options.scopes) options.scopes = [];
+        options.scopes.push(args[++i]);
+        break;
+      case '--expires':
+        options.expiresInDays = parseInt(args[++i], 10) || 30;
+        break;
     }
     i++;
   }
@@ -136,7 +257,7 @@ export function parseArgs(args: string[]): CLIOptions {
 
 export function printHelp(): void {
   console.log(`
-\x1b[36mHoloScript CLI v1.0.0-alpha.1\x1b[0m
+\x1b[36mHoloScript CLI v2.5.0\x1b[0m
 
 Usage: holoscript <command> [options] [input]
 
@@ -160,6 +281,25 @@ Usage: holoscript <command> [options] [input]
   add <pkg...>      Add HoloScript packages to current project
   remove <pkg...>   Remove HoloScript packages from current project
   list              List installed HoloScript packages
+  publish           Publish package to HoloScript registry
+                    Use --dry-run to preview without publishing
+
+  \x1b[33mAuthentication:\x1b[0m
+  login             Log in to HoloScript registry
+  logout            Log out from HoloScript registry
+  whoami            Display current logged-in user
+
+  \x1b[33mAccess Control:\x1b[0m
+  access grant <pkg> <user>     Grant access to a package
+  access revoke <pkg> <user>    Revoke access from a package
+  access list <pkg>             List access for a package
+  org create <name>             Create an organization
+  org add-member <org> <user>   Add member to organization
+  org remove-member <org> <user> Remove member from organization
+  org list-members <org>        List organization members
+  token create                  Create authentication token
+  token revoke <id>             Revoke authentication token
+  token list                    List your tokens
 
   \x1b[33mDiff & Analysis:\x1b[0m
   diff <a> <b>      Compare two HoloScript files (semantic diff)
@@ -172,6 +312,14 @@ Usage: holoscript <command> [options] [input]
                     Ideal for IoT, edge computing, testing
                     Use --profile to select runtime profile
 
+  \x1b[33mEdge Deployment:\x1b[0m
+  package <source>  Package HoloScript for edge deployment
+                    Supports linux-arm64, linux-x64, windows-x64, wasm
+  deploy <package>  Deploy package to remote device via SSH
+                    Includes systemd service setup and OTA updates
+  monitor <host>    Monitor deployed HoloScript on remote device
+                    Live dashboard with CPU, memory, and metrics
+
   help              Show this help message
   version           Show version information
 
@@ -179,7 +327,7 @@ Usage: holoscript <command> [options] [input]
   -v, --verbose       Enable verbose output
   -j, --json          Output results as JSON
   -o, --output        Write output to file
-  -t, --target        Compile target (threejs, unity, vrchat, babylon)
+  -t, --target        Compile target (threejs, unity, vrchat, babylon, wasm)
   -p, --profile       Runtime profile (headless, minimal, standard, vr)
   --tick-rate <hz>    Tick rate for headless runtime (default: 10)
   --duration <ms>     Duration to run headless (0 = indefinite)
@@ -189,6 +337,34 @@ Usage: holoscript <command> [options] [input]
   -D, --dev           Install as dev dependency (for add command)
   --brittney-url      Brittney AI service URL (optional, enhances generation)
   -w, --watch         Enable watch mode for continuous execution/build
+
+  \x1b[2m# Edge Deployment Options\x1b[0m
+  --platform <plat>   Target platform (linux-arm64, linux-x64, windows-x64, wasm)
+  --host <host>       Remote host IP or hostname
+  -u, --username      SSH username (default: holoscript)
+  -k, --key <path>    SSH private key path
+  --port <port>       SSH port (default: 22)
+  --remote-path       Remote installation path (default: /opt/holoscript)
+  --service-name      Systemd service name
+  --dashboard         Enable real-time dashboard for monitor
+  --interval <ms>     Refresh interval for monitor (default: 2000)
+
+  \x1b[2m# Package Publishing Options\x1b[0m
+  --dry-run           Preview publish without uploading
+  -f, --force         Publish even with warnings
+  --registry <url>    Registry URL (default: https://registry.holoscript.dev)
+  --token <token>     Authentication token
+  --tag <tag>         Version tag (default: "latest")
+  --access <level>    Access level: public or restricted
+  --otp <code>        One-time password for 2FA
+
+  \x1b[2m# Access Control Options\x1b[0m
+  --permission <perm> Permission level: read, write, or admin
+  --role <role>       Organization role: owner, admin, or member
+  --name <name>       Token name
+  --readonly          Create read-only token
+  --scope <scope>     Token scope (can be repeated)
+  --expires <days>    Token expiration in days
 
 \x1b[1mExamples:\x1b[0m
   holoscript parse world.hs
@@ -215,6 +391,20 @@ Usage: holoscript <command> [options] [input]
   holoscript remove @holoscript/network
   holoscript list
 
+  \x1b[2m# Publishing Packages\x1b[0m
+  holoscript publish                    # Publish current package
+  holoscript publish --dry-run          # Preview without publishing
+  holoscript publish --tag beta         # Publish as beta version
+  holoscript login                      # Log in to registry
+  holoscript whoami                     # Show current user
+
+  \x1b[2m# Access Control\x1b[0m
+  holoscript org create mycompany       # Create organization
+  holoscript org add-member mycompany user1 --role admin
+  holoscript access grant @mycompany/pkg user2 --permission write
+  holoscript token create --name "CI Token" --readonly
+  holoscript token list                 # List your tokens
+
   \x1b[2m# Diff & Analysis\x1b[0m
   holoscript diff old.holo new.holo       # Semantic diff
   holoscript diff old.holo new.holo --json # Machine-readable output
@@ -228,6 +418,18 @@ Usage: holoscript <command> [options] [input]
   holoscript headless device.holo --tick-rate 60  # 60Hz update rate
   holoscript headless device.holo --duration 5000 # Run for 5 seconds
   holoscript run scene.holo --profile minimal     # Use minimal profile
+
+  \x1b[2m# WebAssembly Compilation\x1b[0m
+  holoscript compile scene.holo --target wasm      # Generate WAT + bindings
+  holoscript compile scene.holo --target wasm -o output.wat
+
+  \x1b[2m# Edge Deployment\x1b[0m
+  holoscript package scene.holo --platform linux-arm64   # Package for Raspberry Pi
+  holoscript package . -o dist/edge                      # Package current directory
+  holoscript deploy dist/edge --host 192.168.1.100       # Deploy via SSH
+  holoscript deploy dist/edge --host pi.local -u pi      # Deploy with username
+  holoscript monitor 192.168.1.100                       # Live monitoring
+  holoscript monitor 192.168.1.100 --dashboard           # Real-time dashboard
 
 \x1b[1mAliases:\x1b[0m
   hs              Short alias for holoscript

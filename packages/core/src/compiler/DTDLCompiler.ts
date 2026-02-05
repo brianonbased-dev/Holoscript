@@ -22,6 +22,7 @@ import type {
   HoloState,
   HoloLogic,
   HoloValue,
+  HoloEnvironment,
 } from '../parser/HoloCompositionTypes';
 
 export interface DTDLCompilerOptions {
@@ -49,17 +50,17 @@ export interface DTDLInterface {
   schemas?: DTDLSchema[];
 }
 
-export type DTDLContent = 
-  | DTDLProperty 
-  | DTDLTelemetry 
-  | DTDLCommand 
-  | DTDLRelationship 
+export type DTDLContent =
+  | DTDLProperty
+  | DTDLTelemetry
+  | DTDLCommand
+  | DTDLRelationship
   | DTDLComponent;
 
 export interface DTDLProperty {
   '@type': 'Property' | ['Property', ...string[]];
   name: string;
-  schema: DTDLSchema | string;
+  schema: DTDLSchema;
   displayName?: string;
   description?: string;
   writable?: boolean;
@@ -69,7 +70,7 @@ export interface DTDLProperty {
 export interface DTDLTelemetry {
   '@type': 'Telemetry' | ['Telemetry', ...string[]];
   name: string;
-  schema: DTDLSchema | string;
+  schema: DTDLSchema;
   displayName?: string;
   description?: string;
   unit?: string;
@@ -82,11 +83,11 @@ export interface DTDLCommand {
   description?: string;
   request?: {
     name: string;
-    schema: DTDLSchema | string;
+    schema: DTDLSchema;
   };
   response?: {
     name: string;
-    schema: DTDLSchema | string;
+    schema: DTDLSchema;
   };
 }
 
@@ -104,25 +105,28 @@ export interface DTDLRelationship {
 export interface DTDLComponent {
   '@type': 'Component';
   name: string;
-  schema: string;
+  schema: DTDLSchema;
   displayName?: string;
   description?: string;
 }
 
-export type DTDLSchema = 
-  | 'boolean' | 'date' | 'dateTime' | 'double' | 'duration' 
-  | 'float' | 'integer' | 'long' | 'string' | 'time'
-  | DTDLMapSchema | DTDLArraySchema | DTDLEnumSchema | DTDLObjectSchema;
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+export type DTDLSchema =
+  | string
+  | DTDLMapSchema
+  | DTDLArraySchema
+  | DTDLEnumSchema
+  | DTDLObjectSchema;
 
 export interface DTDLMapSchema {
   '@type': 'Map';
-  mapKey: { name: string; schema: string };
-  mapValue: { name: string; schema: DTDLSchema | string };
+  mapKey: { name: string; schema: DTDLSchema };
+  mapValue: { name: string; schema: DTDLSchema };
 }
 
 export interface DTDLArraySchema {
   '@type': 'Array';
-  elementSchema: DTDLSchema | string;
+  elementSchema: DTDLSchema;
 }
 
 export interface DTDLEnumSchema {
@@ -133,7 +137,7 @@ export interface DTDLEnumSchema {
 
 export interface DTDLObjectSchema {
   '@type': 'Object';
-  fields: Array<{ name: string; schema: DTDLSchema | string; displayName?: string }>;
+  fields: Array<{ name: string; schema: DTDLSchema; displayName?: string }>;
 }
 
 export class DTDLCompiler {
@@ -148,6 +152,20 @@ export class DTDLCompiler {
       includeDescriptions: options.includeDescriptions ?? true,
       includeTraitComponents: options.includeTraitComponents ?? true,
     };
+  }
+
+  /**
+   * Get trait name from either string or { name: string } format
+   */
+  private getTraitName(trait: string | { name: string }): string {
+    return typeof trait === 'string' ? trait : trait.name;
+  }
+
+  /**
+   * Check if traits include a specific trait name
+   */
+  private hasTrait(traits: Array<string | { name: string }> | undefined, targetTrait: string): boolean {
+    return traits?.some(t => this.getTraitName(t) === targetTrait) ?? false;
   }
 
   compile(composition: HoloComposition): string {
@@ -251,10 +269,12 @@ export class DTDLCompiler {
       }
     }
 
-    // Traits as components
+    // Traits as components - handle both string array and object array formats
     if (template.traits && this.options.includeTraitComponents) {
       for (const trait of template.traits) {
-        const component = this.traitToComponent(trait);
+        // Handle both { name: 'physics' } and 'physics' formats
+        const traitName = typeof trait === 'string' ? trait : trait.name;
+        const component = this.traitToComponent(traitName);
         if (component) {
           contents.push(component);
         }
@@ -270,8 +290,10 @@ export class DTDLCompiler {
     };
 
     // Handle template inheritance
-    if (template.extends) {
-      iface.extends = this.generateModelId(template.extends);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const templateAny = template as any;
+    if (templateAny.extends) {
+      iface.extends = [this.generateModelId(templateAny.extends)];
     }
 
     return iface;
@@ -282,7 +304,7 @@ export class DTDLCompiler {
     const contents: DTDLContent[] = [];
 
     // Add position as property
-    const posProp = obj.properties.find(p => p.key === 'position');
+    const posProp = obj.properties.find((p) => p.key === 'position');
     if (posProp) {
       contents.push({
         '@type': ['Property', 'Location'],
@@ -306,8 +328,8 @@ export class DTDLCompiler {
       }
     }
 
-    // Add telemetry for sensor traits
-    if (obj.traits?.includes('sensor') || obj.traits?.includes('observable')) {
+    // Add telemetry for sensor traits - handle both string and object trait formats
+    if (this.hasTrait(obj.traits, 'sensor') || this.hasTrait(obj.traits, 'observable')) {
       contents.push({
         '@type': 'Telemetry',
         name: 'sensorReading',
@@ -316,10 +338,11 @@ export class DTDLCompiler {
       });
     }
 
-    // Add traits as components
+    // Add traits as components - handle both string and object trait formats
     if (obj.traits && this.options.includeTraitComponents) {
       for (const trait of obj.traits) {
-        const component = this.traitToComponent(trait);
+        const traitName = this.getTraitName(trait);
+        const component = this.traitToComponent(traitName);
         if (component) {
           contents.push(component);
         }
@@ -342,10 +365,32 @@ export class DTDLCompiler {
     return iface;
   }
 
-  private compileEnvironmentProperties(env: Record<string, unknown>): DTDLProperty[] {
+  private compileEnvironmentProperties(env: HoloEnvironment): DTDLProperty[] {
     const props: DTDLProperty[] = [];
 
-    if (env.skybox) {
+    // Handle both structured format (properties array) and plain object format
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const envAny = env as any;
+    
+    // If env has a properties array, use it; otherwise treat env itself as key-value object
+    if (Array.isArray(envAny.properties)) {
+      for (const prop of envAny.properties) {
+        this.addEnvironmentProperty(props, prop.key, prop.value);
+      }
+    } else {
+      // Plain object format: { skybox: 'sunset', ambient_light: 0.5 }
+      for (const key of Object.keys(envAny)) {
+        if (key !== 'type') {
+          this.addEnvironmentProperty(props, key, envAny[key]);
+        }
+      }
+    }
+
+    return props;
+  }
+
+  private addEnvironmentProperty(props: DTDLProperty[], key: string, value: unknown): void {
+    if (key === 'skybox') {
       props.push({
         '@type': 'Property',
         name: 'skybox',
@@ -353,9 +398,7 @@ export class DTDLCompiler {
         displayName: 'Skybox',
         description: 'Environment skybox setting',
       });
-    }
-
-    if (env.ambient_light !== undefined) {
+    } else if (key === 'ambient_light') {
       props.push({
         '@type': 'Property',
         name: 'ambientLight',
@@ -363,9 +406,7 @@ export class DTDLCompiler {
         displayName: 'Ambient Light',
         description: 'Ambient light level',
       });
-    }
-
-    if (env.fog !== undefined) {
+    } else if (key === 'fog') {
       props.push({
         '@type': 'Property',
         name: 'fogEnabled',
@@ -373,15 +414,13 @@ export class DTDLCompiler {
         displayName: 'Fog Enabled',
       });
     }
-
-    return props;
   }
 
   private compileStateProperties(state: HoloState): DTDLProperty[] {
     const props: DTDLProperty[] = [];
 
     for (const prop of state.properties) {
-      props.push(this.propertyToContent(prop.key, prop.value) as DTDLProperty);
+      props.push(this.propertyToContent(prop.key, prop.value));
     }
 
     return props;
@@ -390,16 +429,20 @@ export class DTDLCompiler {
   private compileLogicCommands(logic: HoloLogic): DTDLCommand[] {
     const commands: DTDLCommand[] = [];
 
-    if (logic.rules) {
-      for (const rule of logic.rules) {
-        if (rule.event?.startsWith('on_')) {
-          commands.push({
-            '@type': 'Command',
-            name: rule.event.replace('on_', ''),
-            displayName: this.formatEventName(rule.event),
-            description: `Event handler for ${rule.event}`,
-          });
-        }
+    // Handle both handlers and rules formats
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const logicAny = logic as any;
+    const items = logicAny.handlers || logicAny.rules || [];
+
+    for (const item of items) {
+      const event = item.event;
+      if (event?.startsWith('on_')) {
+        commands.push({
+          '@type': 'Command',
+          name: event.replace('on_', ''),
+          displayName: this.formatEventName(event),
+          description: `Event handler for ${event}`,
+        });
       }
     }
 
@@ -421,17 +464,15 @@ export class DTDLCompiler {
       '@type': 'Relationship',
       name: `has${this.pascalCase(obj.name)}`,
       displayName: obj.name,
-      target: this.objectNeedsInterface(obj) 
-        ? this.generateModelId(obj.name) 
-        : undefined,
+      target: this.objectNeedsInterface(obj) ? this.generateModelId(obj.name) : undefined,
       maxMultiplicity: 1,
     };
   }
 
   private traitToComponent(trait: string): DTDLComponent | null {
     // Map HoloScript traits to DTDL components
-    const traitComponents: Record<string, { schema: string; description: string }> = {
-      grabbable: { 
+    const traitComponents: Record<string, { schema: DTDLSchema; description: string }> = {
+      grabbable: {
         schema: `${this.options.namespace}:component:Grabbable;${this.options.modelVersion}`,
         description: 'Allows object to be grabbed/manipulated',
       },
@@ -468,7 +509,7 @@ export class DTDLCompiler {
     };
   }
 
-  private inferSchema(value: HoloValue): DTDLSchema | string {
+  private inferSchema(value: HoloValue): DTDLSchema {
     if (typeof value === 'boolean') return 'boolean';
     if (typeof value === 'number') {
       return Number.isInteger(value) ? 'integer' : 'double';
@@ -494,9 +535,7 @@ export class DTDLCompiler {
   }
 
   private getDtdlContext(): string {
-    return this.options.dtdlVersion === 3
-      ? 'dtmi:dtdl:context;3'
-      : 'dtmi:dtdl:context;2';
+    return this.options.dtdlVersion === 3 ? 'dtmi:dtdl:context;3' : 'dtmi:dtdl:context;2';
   }
 
   private generateModelId(name: string): string {
@@ -506,12 +545,10 @@ export class DTDLCompiler {
 
   private objectNeedsInterface(obj: HoloObjectDecl): boolean {
     // Objects need their own interface if they have state, logic, or complex traits
-    const hasState = obj.properties.some(p => 
-      p.key === 'state' || 
-      typeof p.value === 'object'
-    );
-    const hasComplexTraits = obj.traits?.some(t => 
-      ['networked', 'sensor', 'observable', 'state'].includes(t)
+    const hasState = obj.properties.some((p) => p.key === 'state' || typeof p.value === 'object');
+    const complexTraitList = ['networked', 'sensor', 'observable', 'state'];
+    const hasComplexTraits = obj.traits?.some((t) =>
+      complexTraitList.includes(this.getTraitName(t))
     );
     return hasState || hasComplexTraits || false;
   }
@@ -527,7 +564,7 @@ export class DTDLCompiler {
     return name
       .replace(/_/g, ' ')
       .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, s => s.toUpperCase())
+      .replace(/^./, (s) => s.toUpperCase())
       .trim();
   }
 
@@ -535,14 +572,14 @@ export class DTDLCompiler {
     return event
       .replace(/^on_/, '')
       .replace(/_/g, ' ')
-      .replace(/^./, s => s.toUpperCase());
+      .replace(/^./, (s) => s.toUpperCase());
   }
 
   private pascalCase(name: string): string {
     return name
       .replace(/[^a-zA-Z0-9]/g, ' ')
       .split(' ')
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
       .join('');
   }
 }

@@ -86,9 +86,72 @@ const documentCache = new Map<string, {
   typeChecker: HoloScriptTypeChecker;
 }>();
 
-// Semantic token types and modifiers
-const tokenTypes = ['class', 'property', 'function', 'variable', 'number', 'string', 'keyword', 'operator', 'comment'];
-const tokenModifiers = ['declaration', 'definition', 'readonly', 'static', 'deprecated'];
+// Semantic token types and modifiers - Enhanced for HoloScript
+const tokenTypes = [
+  'class',       // 0: object declarations (orb, world, composition, template)
+  'property',    // 1: properties (key:)
+  'function',    // 2: functions and event handlers
+  'variable',    // 3: variables
+  'number',      // 4: numeric literals
+  'string',      // 5: string literals
+  'keyword',     // 6: language keywords
+  'operator',    // 7: operators
+  'comment',     // 8: comments
+  'decorator',   // 9: traits (@grabbable, @networked, etc.)
+  'type',        // 10: geometry types (cube, sphere, cylinder, etc.)
+  'event',       // 11: event handlers (onGrab, onPoint, etc.)
+  'namespace',   // 12: namespaces and imports
+  'enum',        // 13: enum values
+  'parameter',   // 14: function parameters
+];
+const tokenModifiers = ['declaration', 'definition', 'readonly', 'static', 'deprecated', 'modification', 'defaultLibrary'];
+
+// HoloScript-specific syntax patterns
+const HOLOSCRIPT_KEYWORDS = [
+  // Object declarations
+  'orb', 'world', 'composition', 'template', 'object', 'system', 'environment',
+  // Control flow
+  'if', 'else', 'while', 'for', 'return', 'break', 'continue',
+  // Modules
+  'import', 'from', 'export', 'as',
+  // Values
+  'true', 'false', 'null', 'undefined',
+  // Blocks
+  'state', 'logic', 'animation', 'physics', 'spatial_group', 'networked_object',
+  // Modifiers
+  'using', 'extends', 'connect', 'execute'
+];
+
+const HOLOSCRIPT_TRAITS = [
+  // Interaction traits
+  'grabbable', 'throwable', 'holdable', 'clickable', 'hoverable', 'draggable', 'pointable', 'scalable',
+  // Physics traits
+  'collidable', 'physics', 'rigid', 'kinematic', 'trigger', 'gravity',
+  // Visual traits
+  'glowing', 'emissive', 'transparent', 'reflective', 'animated', 'billboard',
+  // Networking traits
+  'networked', 'synced', 'persistent', 'owned', 'host_only',
+  // Behavior traits
+  'stackable', 'attachable', 'equippable', 'consumable', 'destructible',
+  // Spatial traits
+  'anchor', 'tracked', 'world_locked', 'hand_tracked', 'eye_tracked',
+  // Audio traits
+  'spatial_audio', 'ambient', 'voice_activated',
+  // State traits
+  'state', 'reactive', 'observable', 'computed'
+];
+
+const GEOMETRY_TYPES = [
+  'cube', 'sphere', 'cylinder', 'cone', 'torus', 'capsule', 'plane', 'box',
+  'model', 'mesh', 'primitive', 'custom'
+];
+
+const EVENT_HANDLERS = [
+  'onPoint', 'onGrab', 'onRelease', 'onHoverEnter', 'onHoverExit',
+  'onTriggerEnter', 'onTriggerExit', 'onSwing', 'onGesture',
+  'onClick', 'onDrag', 'onDrop', 'onCollision', 'onMount', 'onUpdate', 'onUnmount',
+  'on_mount', 'on_update', 'on_unmount', 'on_player_attack'
+];
 
 const legend: SemanticTokensLegend = {
   tokenTypes,
@@ -646,7 +709,7 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => 
 });
 
 /**
- * Semantic tokens for syntax highlighting
+ * Semantic tokens for syntax highlighting - Enhanced for HoloScript
  */
 connection.onRequest('textDocument/semanticTokens/full', (params: SemanticTokensParams): SemanticTokens => {
   const document = documents.get(params.textDocument.uri);
@@ -659,41 +722,97 @@ connection.onRequest('textDocument/semanticTokens/full', (params: SemanticTokens
   for (let lineNum = 0; lineNum < lines.length; lineNum++) {
     const line = lines[lineNum];
 
-    // Keywords
-    const keywords = ['orb', 'world', 'import', 'from', 'system', 'true', 'false', 'null'];
-    for (const keyword of keywords) {
-      const regex = new RegExp(`\\b${keyword}\\b`, 'g');
-      let match;
-      while ((match = regex.exec(line)) !== null) {
-        builder.push(lineNum, match.index, keyword.length, tokenTypes.indexOf('keyword'), 0);
+    // Skip if line is empty
+    if (!line.trim()) continue;
+
+    // Comments (check first to skip highlighting inside comments)
+    const commentIndex = line.indexOf('//');
+    const effectiveLine = commentIndex !== -1 ? line.substring(0, commentIndex) : line;
+    if (commentIndex !== -1) {
+      builder.push(lineNum, commentIndex, line.length - commentIndex, tokenTypes.indexOf('comment'), 0);
+    }
+
+    // Traits (@grabbable, @networked, etc.)
+    const traitRegex = /@(\w+)/g;
+    let traitMatch;
+    while ((traitMatch = traitRegex.exec(effectiveLine)) !== null) {
+      const traitName = traitMatch[1];
+      if (HOLOSCRIPT_TRAITS.includes(traitName)) {
+        builder.push(lineNum, traitMatch.index, traitMatch[0].length, tokenTypes.indexOf('decorator'), 0);
       }
     }
 
-    // Properties (word followed by colon)
-    const propRegex = /(\w+):/g;
+    // Object declarations (orb, world, composition, template followed by name)
+    const objectDeclRegex = /\b(orb|world|composition|template|object|system|environment|spatial_group|networked_object)\s+["']?(\w+)/g;
+    let objectDeclMatch;
+    while ((objectDeclMatch = objectDeclRegex.exec(effectiveLine)) !== null) {
+      // Highlight the keyword
+      builder.push(lineNum, objectDeclMatch.index, objectDeclMatch[1].length, tokenTypes.indexOf('keyword'), 1); // declaration modifier
+      // Highlight the object name as class
+      const nameStart = objectDeclMatch.index + objectDeclMatch[0].indexOf(objectDeclMatch[2]);
+      builder.push(lineNum, nameStart, objectDeclMatch[2].length, tokenTypes.indexOf('class'), 1); // declaration modifier
+    }
+
+    // Event handlers (onGrab, onPoint, etc.)
+    for (const handler of EVENT_HANDLERS) {
+      const handlerRegex = new RegExp(`\\b${handler}\\b`, 'g');
+      let handlerMatch;
+      while ((handlerMatch = handlerRegex.exec(effectiveLine)) !== null) {
+        builder.push(lineNum, handlerMatch.index, handler.length, tokenTypes.indexOf('event'), 0);
+      }
+    }
+
+    // Geometry types
+    const geometryRegex = new RegExp(`\\b(geometry|type)\\s*:\\s*['"]?(${GEOMETRY_TYPES.join('|')})`, 'g');
+    let geometryMatch;
+    while ((geometryMatch = geometryRegex.exec(effectiveLine)) !== null) {
+      const typeStart = geometryMatch.index + geometryMatch[0].lastIndexOf(geometryMatch[2]);
+      builder.push(lineNum, typeStart, geometryMatch[2].length, tokenTypes.indexOf('type'), 0);
+    }
+
+    // Keywords (that weren't already handled as object declarations)
+    for (const keyword of HOLOSCRIPT_KEYWORDS) {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+      let match;
+      while ((match = regex.exec(effectiveLine)) !== null) {
+        // Skip if this position is already part of an object declaration
+        if (!['orb', 'world', 'composition', 'template', 'object', 'system', 'environment', 'spatial_group', 'networked_object'].includes(keyword)) {
+          builder.push(lineNum, match.index, keyword.length, tokenTypes.indexOf('keyword'), 0);
+        }
+      }
+    }
+
+    // Function declarations (function name() or action name())
+    const funcDeclRegex = /\b(function|action|behavior)\s+(\w+)/g;
+    let funcMatch;
+    while ((funcMatch = funcDeclRegex.exec(effectiveLine)) !== null) {
+      builder.push(lineNum, funcMatch.index, funcMatch[1].length, tokenTypes.indexOf('keyword'), 0);
+      const nameStart = funcMatch.index + funcMatch[0].indexOf(funcMatch[2]);
+      builder.push(lineNum, nameStart, funcMatch[2].length, tokenTypes.indexOf('function'), 1); // declaration modifier
+    }
+
+    // Properties (word followed by colon, but not URLs)
+    const propRegex = /(\w+)\s*:/g;
     let propMatch;
-    while ((propMatch = propRegex.exec(line)) !== null) {
-      builder.push(lineNum, propMatch.index, propMatch[1].length, tokenTypes.indexOf('property'), 0);
+    while ((propMatch = propRegex.exec(effectiveLine)) !== null) {
+      // Skip if it looks like a URL scheme (http:, https:, file:)
+      if (!['http', 'https', 'file', 'ws', 'wss', 'ftp'].includes(propMatch[1])) {
+        builder.push(lineNum, propMatch.index, propMatch[1].length, tokenTypes.indexOf('property'), 0);
+      }
     }
 
     // Strings
     const stringRegex = /"[^"]*"|'[^']*'/g;
     let stringMatch;
-    while ((stringMatch = stringRegex.exec(line)) !== null) {
+    while ((stringMatch = stringRegex.exec(effectiveLine)) !== null) {
       builder.push(lineNum, stringMatch.index, stringMatch[0].length, tokenTypes.indexOf('string'), 0);
     }
 
-    // Numbers
-    const numRegex = /\b\d+(\.\d+)?\b/g;
+    // Numbers (including decimals and negative)
+    const numRegex = /-?\b\d+(\.\d+)?\b/g;
     let numMatch;
-    while ((numMatch = numRegex.exec(line)) !== null) {
+    while ((numMatch = numRegex.exec(effectiveLine)) !== null) {
       builder.push(lineNum, numMatch.index, numMatch[0].length, tokenTypes.indexOf('number'), 0);
-    }
-
-    // Comments
-    const commentIndex = line.indexOf('//');
-    if (commentIndex !== -1) {
-      builder.push(lineNum, commentIndex, line.length - commentIndex, tokenTypes.indexOf('comment'), 0);
     }
   }
 

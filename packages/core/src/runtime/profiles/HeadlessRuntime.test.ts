@@ -383,7 +383,8 @@ describe('HeadlessRuntime', () => {
       });
 
       runtime.start();
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      // Wait longer than tickRate (100ms) to ensure at least one tick occurs
+      await new Promise((resolve) => setTimeout(resolve, 150));
       runtime.stop();
 
       const state = runtime.getState();

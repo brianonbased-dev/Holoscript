@@ -7,8 +7,9 @@
 import * as readline from 'readline';
 import { HoloScriptCodeParser, HoloScriptRuntime, enableConsoleLogging } from '@holoscript/core';
 import type { ExecutionResult, ASTNode } from '@holoscript/core';
+import { KnowledgeClient, getKnowledgeClient } from './knowledge-client.js';
 
-const VERSION = '1.0.0-alpha.1';
+const VERSION = '2.5.0';
 
 interface REPLOptions {
   verbose: boolean;
@@ -99,6 +100,7 @@ ${COLORS.cyan}╔═════════════════════
 ║    ${COLORS.yellow}.funcs${COLORS.cyan}    Show all functions                          ║
 ║    ${COLORS.yellow}.reset${COLORS.cyan}    Reset runtime state                         ║
 ║    ${COLORS.yellow}.ast${COLORS.cyan}      Toggle AST display                          ║
+║    ${COLORS.yellow}.k${COLORS.cyan}        Search knowledge hub (patterns/gotchas)    ║
 ║    ${COLORS.yellow}.exit${COLORS.cyan}     Exit the REPL                               ║
 ╚══════════════════════════════════════════════════════════╝${COLORS.reset}
 `);
@@ -195,6 +197,11 @@ ${COLORS.cyan}╔═════════════════════
         this.showHistory();
         break;
 
+      case '.k':
+      case '.knowledge':
+        await this.handleKnowledgeCommand(parts.slice(1));
+        break;
+
       default:
         console.log(`${COLORS.red}Unknown command: ${command}${COLORS.reset}`);
         console.log(`${COLORS.dim}Type .help for available commands${COLORS.reset}`);
@@ -214,6 +221,14 @@ ${COLORS.bright}Available Commands:${COLORS.reset}
   ${COLORS.yellow}.load <file>${COLORS.reset}     Load and execute a HoloScript file
   ${COLORS.yellow}.history${COLORS.reset}         Show command history
   ${COLORS.yellow}.exit${COLORS.reset}            Exit the REPL
+
+${COLORS.bright}Knowledge Hub Commands:${COLORS.reset}
+
+  ${COLORS.yellow}.k search <query>${COLORS.reset}  Search all knowledge
+  ${COLORS.yellow}.k patterns <q>${COLORS.reset}    Search patterns
+  ${COLORS.yellow}.k gotchas <q>${COLORS.reset}     Search gotchas (common mistakes)
+  ${COLORS.yellow}.k wisdom <q>${COLORS.reset}      Search wisdom entries
+  ${COLORS.yellow}.k stats${COLORS.reset}           Show knowledge stats
 
 ${COLORS.bright}HoloScript Syntax Examples:${COLORS.reset}
 
@@ -272,6 +287,154 @@ ${COLORS.bright}HoloScript Syntax Examples:${COLORS.reset}
       console.log(`  ${COLORS.dim}${i + 1}${COLORS.reset} ${line}`);
     });
     console.log();
+  }
+
+  private async handleKnowledgeCommand(args: string[]): Promise<void> {
+    const subcommand = args[0]?.toLowerCase();
+    const query = args.slice(1).join(' ');
+
+    if (!subcommand) {
+      console.log(`
+${COLORS.bright}Knowledge Hub Commands:${COLORS.reset}
+
+  ${COLORS.yellow}.k search <query>${COLORS.reset}    Search all knowledge
+  ${COLORS.yellow}.k patterns <query>${COLORS.reset}  Search patterns
+  ${COLORS.yellow}.k gotchas <query>${COLORS.reset}   Search gotchas
+  ${COLORS.yellow}.k wisdom <query>${COLORS.reset}    Search wisdom
+  ${COLORS.yellow}.k stats${COLORS.reset}             Show knowledge stats
+
+${COLORS.dim}Example: .k search spread operator${COLORS.reset}
+`);
+      return;
+    }
+
+    const client = getKnowledgeClient();
+
+    // Check availability
+    const available = await client.isAvailable();
+    if (!available) {
+      console.log(`${COLORS.red}Knowledge Hub not available.${COLORS.reset}`);
+      console.log(`${COLORS.dim}Start it with: docker-compose -f docker-compose.knowledge.yml up -d${COLORS.reset}`);
+      return;
+    }
+
+    try {
+      switch (subcommand) {
+        case 's':
+        case 'search': {
+          if (!query) {
+            console.log(`${COLORS.red}Usage: .k search <query>${COLORS.reset}`);
+            return;
+          }
+          console.log(`${COLORS.dim}Searching...${COLORS.reset}`);
+          const results = await client.search(query, { limit: 5 });
+          this.displayKnowledgeResults(results);
+          break;
+        }
+
+        case 'p':
+        case 'patterns': {
+          if (!query) {
+            console.log(`${COLORS.red}Usage: .k patterns <query>${COLORS.reset}`);
+            return;
+          }
+          console.log(`${COLORS.dim}Searching patterns...${COLORS.reset}`);
+          const patterns = await client.getRelevantPatterns(query);
+          if (patterns.length === 0) {
+            console.log(`${COLORS.dim}No patterns found.${COLORS.reset}`);
+          } else {
+            patterns.forEach((p, i) => {
+              console.log(`\n${COLORS.cyan}${i + 1}. ${p.id}: ${p.name}${COLORS.reset}`);
+              console.log(`${COLORS.dim}Problem:${COLORS.reset} ${p.problem.slice(0, 100)}...`);
+              console.log(`${COLORS.dim}Solution:${COLORS.reset} ${p.solution.slice(0, 100)}...`);
+            });
+          }
+          break;
+        }
+
+        case 'g':
+        case 'gotchas': {
+          if (!query) {
+            console.log(`${COLORS.red}Usage: .k gotchas <query>${COLORS.reset}`);
+            return;
+          }
+          console.log(`${COLORS.dim}Searching gotchas...${COLORS.reset}`);
+          const gotchas = await client.getRelevantGotchas(query);
+          if (gotchas.length === 0) {
+            console.log(`${COLORS.dim}No gotchas found.${COLORS.reset}`);
+          } else {
+            gotchas.forEach((g, i) => {
+              console.log(`\n${COLORS.yellow}${i + 1}. ${g.id}${COLORS.reset}`);
+              console.log(`${COLORS.red}Mistake:${COLORS.reset} ${g.mistake.slice(0, 100)}...`);
+              console.log(`${COLORS.green}Fix:${COLORS.reset} ${g.fix.slice(0, 100)}...`);
+            });
+          }
+          break;
+        }
+
+        case 'w':
+        case 'wisdom': {
+          if (!query) {
+            console.log(`${COLORS.red}Usage: .k wisdom <query>${COLORS.reset}`);
+            return;
+          }
+          console.log(`${COLORS.dim}Searching wisdom...${COLORS.reset}`);
+          const wisdom = await client.getRelevantWisdom(query);
+          if (wisdom.length === 0) {
+            console.log(`${COLORS.dim}No wisdom found.${COLORS.reset}`);
+          } else {
+            wisdom.forEach((w, i) => {
+              console.log(`\n${COLORS.magenta}${i + 1}. ${w.id}${COLORS.reset}`);
+              console.log(`${w.insight.slice(0, 200)}...`);
+            });
+          }
+          break;
+        }
+
+        case 'stats': {
+          console.log(`${COLORS.dim}Fetching stats...${COLORS.reset}`);
+          const stats = await client.getStats();
+          console.log(`\n${COLORS.bright}Knowledge Base Stats:${COLORS.reset}`);
+          console.log(`  Total entries: ${stats.totalEntries}`);
+          console.log(`  Patterns: ${stats.byCategory.pattern}`);
+          console.log(`  Gotchas: ${stats.byCategory.gotcha}`);
+          console.log(`  Wisdom: ${stats.byCategory.wisdom}`);
+          console.log(`  Research: ${stats.byCategory.research}`);
+          console.log(`  Session: ${stats.byCategory.session}`);
+          break;
+        }
+
+        default:
+          console.log(`${COLORS.red}Unknown subcommand: ${subcommand}${COLORS.reset}`);
+          console.log(`${COLORS.dim}Type .k for available commands${COLORS.reset}`);
+      }
+    } catch (error) {
+      console.log(`${COLORS.red}Error: ${(error as Error).message}${COLORS.reset}`);
+    }
+  }
+
+  private displayKnowledgeResults(results: any[]): void {
+    if (results.length === 0) {
+      console.log(`${COLORS.dim}No results found.${COLORS.reset}`);
+      return;
+    }
+
+    console.log(`\n${COLORS.bright}Found ${results.length} results:${COLORS.reset}\n`);
+
+    results.forEach((r, i) => {
+      const categoryColor = {
+        pattern: COLORS.cyan,
+        gotcha: COLORS.yellow,
+        wisdom: COLORS.magenta,
+        research: COLORS.blue,
+        session: COLORS.dim
+      }[r.metadata.category] || COLORS.reset;
+
+      console.log(`${categoryColor}${i + 1}. [${r.score.toFixed(2)}] ${r.metadata.category}:${r.metadata.domain}${COLORS.reset}`);
+      console.log(`   ${COLORS.dim}${r.metadata.source}${COLORS.reset}`);
+      console.log(`   ${r.content.slice(0, 150).replace(/\n/g, ' ')}...`);
+      console.log();
+    });
   }
 
   private async loadFile(filename: string): Promise<void> {

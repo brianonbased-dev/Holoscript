@@ -110,10 +110,54 @@ export type HoloScriptValue =
   | ASTNode
   | SpreadExpression
   | NullCoalescingAssignment
+  | MatchExpression
   | Function
   | SpatialPosition
   | HologramProperties
   | Animation;
+
+// Forward declaration for circular reference
+export interface MatchExpression extends ASTNode {
+  type: 'match';
+  subject: string | HoloScriptValue;
+  cases: MatchCase[];
+  hasWildcard?: boolean;
+  sourceLocation?: { line: number; column: number };
+}
+
+export interface MatchCase extends ASTNode {
+  type: 'match-case';
+  pattern: MatchPattern;
+  body: ASTNode[] | HoloScriptValue;
+  guard?: string;
+}
+
+export type MatchPattern =
+  | LiteralPattern
+  | WildcardPattern
+  | BindingPattern
+  | DestructuringPattern;
+
+export interface LiteralPattern {
+  type: 'literal-pattern';
+  value: string | number | boolean;
+}
+
+export interface WildcardPattern {
+  type: 'wildcard-pattern';
+  symbol: '_';
+}
+
+export interface BindingPattern {
+  type: 'binding-pattern';
+  name: string;
+}
+
+export interface DestructuringPattern {
+  type: 'destructuring-pattern';
+  kind: 'object' | 'array';
+  properties: Array<{ key: string; pattern: MatchPattern }>;
+}
 
 export interface ASTNode {
   type: string;

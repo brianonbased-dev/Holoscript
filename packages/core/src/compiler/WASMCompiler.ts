@@ -220,22 +220,47 @@ export class WASMCompiler {
   // ===========================================================================
 
   private analyzeState(state?: HoloState): void {
-    if (!state?.declarations) return;
+    if (!state) return;
 
     let offset = 0;
-    for (const [name, value] of Object.entries(state.declarations)) {
-      const type = this.inferWASMType(value);
-      const size = this.getTypeSize(type);
 
-      this.stateVars.push({
-        name,
-        type,
-        offset,
-        size,
-        initialValue: this.valueToWASM(value, type),
-      });
+    // Support both property array format and declarations object format
+    // (declarations format for backwards compatibility with tests)
+    const stateAny = state as unknown as {
+      properties?: { key: string; value: unknown }[];
+      declarations?: Record<string, unknown>;
+    };
 
-      offset += size;
+    if (stateAny.properties) {
+      for (const prop of stateAny.properties) {
+        const type = this.inferWASMType(prop.value);
+        const size = this.getTypeSize(type);
+
+        this.stateVars.push({
+          name: prop.key,
+          type,
+          offset,
+          size,
+          initialValue: this.valueToWASM(prop.value, type),
+        });
+
+        offset += size;
+      }
+    } else if (stateAny.declarations) {
+      for (const [name, value] of Object.entries(stateAny.declarations)) {
+        const type = this.inferWASMType(value);
+        const size = this.getTypeSize(type);
+
+        this.stateVars.push({
+          name,
+          type,
+          offset,
+          size,
+          initialValue: this.valueToWASM(value, type),
+        });
+
+        offset += size;
+      }
     }
 
     this.memoryLayout.stateSize = offset;
@@ -849,11 +874,31 @@ export class WASMCompiler {
 
   private generateBindingsFromAST(ast: HSPlusAST): string {
     // Same as generateBindings but for AST input
-    return this.generateBindings({
+    // Create a minimal HoloComposition for bindings generation
+    const minimalComposition: Partial<HoloComposition> = {
+      type: 'Composition',
       name: ast.root.id || 'scene',
       objects: [],
-      state: undefined,
-    } as HoloComposition);
+      templates: [],
+      spatialGroups: [],
+      lights: [],
+      imports: [],
+      timelines: [],
+      audio: [],
+      zones: [],
+      transitions: [],
+      conditionals: [],
+      iterators: [],
+      npcs: [],
+      quests: [],
+      abilities: [],
+      dialogues: [],
+      stateMachines: [],
+      achievements: [],
+      talentTrees: [],
+      shapes: [],
+    };
+    return this.generateBindings(minimalComposition as HoloComposition);
   }
 
   // ===========================================================================
