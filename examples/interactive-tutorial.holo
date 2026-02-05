@@ -1,0 +1,307 @@
+/**
+ * HoloScript Interactive Tutorial
+ * 
+ * A step-by-step learning environment that teaches
+ * spatial computing concepts through hands-on interaction.
+ * 
+ * Features:
+ * - Progressive tutorial steps
+ * - Visual feedback
+ * - Practice mode
+ * - Achievement tracking
+ */
+
+composition "Interactive Tutorial" {
+  environment {
+    skybox: "gradient"
+    gradient_colors: ['#1a1a2e', '#16213e', '#0f3460']
+    ambient_light: 0.5
+  }
+  
+  // Tutorial state management
+  state {
+    currentStep: 0
+    completedSteps: []
+    achievements: []
+    practiceMode: false
+  }
+  
+  // Tutorial steps
+  template "TutorialStep" {
+    visible: false
+    
+    state {
+      isComplete: false
+      attempts: 0
+    }
+  }
+  
+  // Step 1: Pointing
+  object "Step1_Pointing" using "TutorialStep" {
+    instruction: "Point at the glowing orb to select it"
+    
+    object "TargetOrb" @pointable @glowing {
+      geometry: 'sphere'
+      position: [0, 1.5, -2]
+      scale: [0.3, 0.3, 0.3]
+      color: '#00ffff'
+      
+      animation pulse {
+        property: 'scale'
+        from: [0.3, 0.3, 0.3]
+        to: [0.35, 0.35, 0.35]
+        duration: 500
+        loop: infinite
+        easing: 'easeInOut'
+        direction: 'alternate'
+      }
+      
+      onPoint: {
+        haptic.feedback('light')
+        audio.play('success.mp3')
+        completeStep(1)
+        this.color = '#00ff00'
+        this.stopAnimation('pulse')
+      }
+    }
+  }
+  
+  // Step 2: Grabbing
+  object "Step2_Grabbing" using "TutorialStep" {
+    instruction: "Grab the cube and place it on the pedestal"
+    
+    object "GrabbableCube" @grabbable @collidable {
+      geometry: 'cube'
+      position: [-1, 1, -2]
+      scale: [0.2, 0.2, 0.2]
+      color: '#ff6600'
+      
+      physics: { type: 'dynamic', mass: 1 }
+      
+      onGrab: { haptic.feedback('medium') }
+      onRelease: { checkPlacement(this) }
+    }
+    
+    object "DropZone" @collidable @trigger {
+      geometry: 'cylinder'
+      position: [1, 0.6, -2]
+      scale: [0.25, 0.1, 0.25]
+      color: '#333333'
+      material: { 
+        opacity: 0.5
+        emission: { color: '#ffff00', intensity: 0.3 }
+      }
+      
+      onTriggerEnter: (obj) => {
+        if (obj.id === 'GrabbableCube') {
+          audio.play('drop.mp3')
+          haptic.feedback('strong')
+          completeStep(2)
+          obj.color = '#00ff00'
+          obj.position = [1, 0.7, -2]
+          obj.physics.type = 'static'
+          this.material.emission.color = '#00ff00'
+        }
+      }
+    }
+  }
+  
+  // Step 3: Scaling
+  object "Step3_Scaling" using "TutorialStep" {
+    instruction: "Use both hands to scale the object larger"
+    
+    object "ScalableObject" @grabbable @scalable {
+      geometry: 'torus'
+      position: [0, 1.5, -2]
+      scale: [0.2, 0.2, 0.2]
+      color: '#ff00ff'
+      
+      state {
+        initialScale: 0.2
+        targetScale: 0.5
+      }
+      
+      onScaleChange: (newScale) => {
+        if (newScale[0] >= this.targetScale) {
+          audio.play('success.mp3')
+          haptic.feedback('strong')
+          completeStep(3)
+          this.color = '#00ff00'
+        }
+      }
+    }
+  }
+  
+  // Step 4: Voice Command (optional)
+  object "Step4_Voice" using "TutorialStep" {
+    instruction: "Say 'Change color to blue'"
+    
+    object "VoiceTarget" @voice_activated {
+      geometry: 'sphere'
+      position: [0, 1.5, -2]
+      scale: [0.3, 0.3, 0.3]
+      color: '#ffffff'
+      
+      voiceCommands: {
+        'change color to blue': () => {
+          this.color = '#0066ff'
+          audio.play('success.mp3')
+          completeStep(4)
+        }
+        'blue': () => {
+          this.color = '#0066ff'
+          audio.play('success.mp3')
+          completeStep(4)
+        }
+      }
+    }
+  }
+  
+  // Progress indicator
+  object "ProgressBar" @billboard {
+    geometry: 'plane'
+    position: [0, 2.5, -2]
+    scale: [2, 0.2, 1]
+    
+    children: [
+      { id: 'fill', geometry: 'plane', scale: [0, 1, 1], color: '#00ff00' }
+    ]
+    
+    update: (state) => {
+      const progress = state.completedSteps.length / 4
+      this.children[0].scale[0] = progress
+    }
+  }
+  
+  // Instruction display
+  object "InstructionPanel" @billboard {
+    geometry: 'plane'
+    position: [0, 2.8, -2]
+    scale: [3, 0.5, 1]
+    
+    state {
+      text: 'Welcome to the tutorial!'
+    }
+  }
+  
+  // Navigation buttons
+  object "NextButton" @pointable {
+    geometry: 'cube'
+    position: [1.5, 0.5, -1]
+    scale: [0.3, 0.1, 0.1]
+    color: '#4CAF50'
+    label: 'Next'
+    
+    visible: false  // Show only when step complete
+    
+    onPoint: {
+      haptic.feedback('light')
+      advanceStep()
+    }
+  }
+  
+  object "PracticeButton" @pointable {
+    geometry: 'cube'
+    position: [-1.5, 0.5, -1]
+    scale: [0.3, 0.1, 0.1]
+    color: '#2196F3'
+    label: 'Practice'
+    
+    onPoint: {
+      haptic.feedback('light')
+      togglePracticeMode()
+    }
+  }
+  
+  // Achievement display
+  object "AchievementPopup" {
+    geometry: 'plane'
+    position: [0, 3.5, -2]
+    scale: [1.5, 0.5, 1]
+    visible: false
+    
+    animation slideIn {
+      property: 'position.y'
+      from: 4
+      to: 3.5
+      duration: 300
+      easing: 'easeOut'
+    }
+    
+    animation fadeOut {
+      property: 'opacity'
+      from: 1
+      to: 0
+      duration: 500
+      delay: 2000
+    }
+  }
+  
+  logic {
+    function completeStep(stepNum) {
+      if (!state.completedSteps.includes(stepNum)) {
+        state.completedSteps.push(stepNum)
+        
+        // Check for achievements
+        if (state.completedSteps.length === 4) {
+          showAchievement('Tutorial Complete!')
+          state.achievements.push('tutorial_master')
+        }
+        
+        // Show next button
+        scene.findById('NextButton').visible = true
+        
+        // Update progress
+        updateProgress()
+      }
+    }
+    
+    function advanceStep() {
+      state.currentStep++
+      
+      // Hide all steps
+      scene.findAll('TutorialStep').forEach(s => s.visible = false)
+      
+      // Show current step
+      const currentStepObj = scene.findById(`Step${state.currentStep}_*`)
+      if (currentStepObj) {
+        currentStepObj.visible = true
+        scene.findById('InstructionPanel').text = currentStepObj.instruction
+      }
+      
+      scene.findById('NextButton').visible = false
+    }
+    
+    function togglePracticeMode() {
+      state.practiceMode = !state.practiceMode
+      
+      if (state.practiceMode) {
+        // Show all interactive objects
+        scene.findAll('TutorialStep').forEach(s => s.visible = true)
+        scene.findById('InstructionPanel').text = 'Practice Mode - Try everything!'
+      } else {
+        advanceStep()
+      }
+    }
+    
+    function showAchievement(title) {
+      const popup = scene.findById('AchievementPopup')
+      popup.text = `🏆 ${title}`
+      popup.visible = true
+      popup.playAnimation('slideIn')
+      popup.playAnimation('fadeOut')
+      
+      setTimeout(() => popup.visible = false, 3000)
+    }
+    
+    function updateProgress() {
+      const fill = state.completedSteps.length / 4
+      scene.findById('ProgressBar').children[0].scale[0] = fill
+    }
+    
+    // Initialize tutorial
+    on_scene_ready() {
+      advanceStep()
+    }
+  }
+}

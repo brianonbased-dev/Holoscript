@@ -1,0 +1,267 @@
+/**
+ * HoloScript VR Meeting Room
+ * 
+ * A professional virtual meeting space with:
+ * - Networked avatars
+ * - Screen sharing
+ * - Spatial audio
+ * - Interactive whiteboard
+ * - Presentation mode
+ */
+
+composition "VR Meeting Room" {
+  environment {
+    skybox: "office"
+    ambient_light: 0.6
+    shadow_quality: "high"
+  }
+  
+  // Room structure
+  object "Floor" {
+    geometry: 'plane'
+    position: [0, 0, 0]
+    scale: [12, 1, 12]
+    material: {
+      texture: 'textures/carpet.jpg'
+      repeat: [4, 4]
+    }
+  }
+  
+  // Conference table
+  object "Table" {
+    geometry: 'model/conference-table.glb'
+    position: [0, 0, 0]
+    scale: [2, 1, 1]
+    color: '#8B4513'
+  }
+  
+  // Chairs around table
+  template "Chair" {
+    geometry: 'model/office-chair.glb'
+    scale: [0.5, 0.5, 0.5]
+    
+    @collidable
+    
+    state {
+      occupied: false
+      occupiedBy: null
+    }
+  }
+  
+  spatial_group "Seating" {
+    object "Chair_1" using "Chair" { position: [-2, 0, 2] rotation: [0, 180, 0] }
+    object "Chair_2" using "Chair" { position: [0, 0, 2] rotation: [0, 180, 0] }
+    object "Chair_3" using "Chair" { position: [2, 0, 2] rotation: [0, 180, 0] }
+    object "Chair_4" using "Chair" { position: [-2, 0, -2] rotation: [0, 0, 0] }
+    object "Chair_5" using "Chair" { position: [0, 0, -2] rotation: [0, 0, 0] }
+    object "Chair_6" using "Chair" { position: [2, 0, -2] rotation: [0, 0, 0] }
+  }
+  
+  // Main presentation screen
+  object "MainScreen" @networked {
+    geometry: 'plane'
+    position: [0, 2.5, -5]
+    scale: [6, 3, 1]
+    color: '#1a1a1a'
+    
+    state {
+      isSharing: false
+      shareSource: null
+      slideIndex: 0
+    }
+  }
+  
+  // Screen share button
+  object "ShareButton" @pointable {
+    geometry: 'cube'
+    position: [-3, 1.5, -4.9]
+    scale: [0.2, 0.1, 0.05]
+    color: '#4CAF50'
+    
+    onPoint: {
+      if (!MainScreen.isSharing) {
+        screen.startShare('MainScreen')
+        this.color = '#f44336'  // Red when sharing
+      } else {
+        screen.stopShare()
+        this.color = '#4CAF50'  // Green when not sharing
+      }
+      haptic.feedback('medium')
+    }
+  }
+  
+  // Interactive whiteboard
+  object "Whiteboard" @networked {
+    geometry: 'plane'
+    position: [5, 2, 0]
+    rotation: [0, -90, 0]
+    scale: [4, 2.5, 1]
+    color: '#ffffff'
+    
+    @drawable
+    @synced
+    
+    state {
+      strokes: []
+      currentColor: '#000000'
+      brushSize: 3
+    }
+  }
+  
+  // Whiteboard tools
+  spatial_group "WhiteboardTools" {
+    position: [4.9, 1, -1.5]
+    rotation: [0, -90, 0]
+    
+    object "PenBlack" @pointable {
+      geometry: 'cylinder'
+      scale: [0.03, 0.15, 0.03]
+      color: '#000000'
+      onPoint: { Whiteboard.currentColor = '#000000' }
+    }
+    
+    object "PenRed" @pointable {
+      geometry: 'cylinder'
+      scale: [0.03, 0.15, 0.03]
+      position: [0, 0, 0.1]
+      color: '#ff0000'
+      onPoint: { Whiteboard.currentColor = '#ff0000' }
+    }
+    
+    object "PenBlue" @pointable {
+      geometry: 'cylinder'
+      scale: [0.03, 0.15, 0.03]
+      position: [0, 0, 0.2]
+      color: '#0000ff'
+      onPoint: { Whiteboard.currentColor = '#0000ff' }
+    }
+    
+    object "Eraser" @pointable {
+      geometry: 'cube'
+      scale: [0.08, 0.04, 0.04]
+      position: [0, 0, 0.35]
+      color: '#ffcccc'
+      onPoint: { Whiteboard.currentColor = '#ffffff' }
+    }
+    
+    object "ClearAll" @pointable {
+      geometry: 'cube'
+      scale: [0.08, 0.04, 0.04]
+      position: [0, 0, 0.5]
+      color: '#ff6600'
+      onPoint: { 
+        Whiteboard.strokes = []
+        network.sync(Whiteboard.strokes)
+      }
+    }
+  }
+  
+  // Networked participant avatar
+  networked_object "Participant" {
+    geometry: 'model/avatar-business.glb'
+    scale: [1, 1, 1]
+    
+    @spatial_audio
+    @hand_tracked
+    
+    sync_rate: 30hz
+    
+    state sync {
+      position
+      rotation
+      handPoses
+      isSpeaking
+      isMuted
+    }
+    
+    // Speaking indicator glow
+    onSpeakStart: {
+      this.material.emission.intensity = 0.5
+      this.material.emission.color = '#00ff00'
+    }
+    
+    onSpeakEnd: {
+      this.material.emission.intensity = 0
+    }
+  }
+  
+  // Mute button (on wrist)
+  object "MuteButton" @pointable {
+    geometry: 'sphere'
+    scale: [0.03, 0.03, 0.03]
+    attachTo: 'leftWrist'
+    offset: [0, 0.05, 0]
+    color: '#00ff00'
+    
+    state {
+      isMuted: false
+    }
+    
+    onPoint: {
+      this.isMuted = !this.isMuted
+      this.color = this.isMuted ? '#ff0000' : '#00ff00'
+      audio.setMicMute(this.isMuted)
+      haptic.feedback('light')
+    }
+  }
+  
+  // Volume control
+  object "VolumeSlider" @draggable {
+    geometry: 'sphere'
+    position: [-5.9, 1.5, 0]
+    scale: [0.08, 0.08, 0.08]
+    color: '#333333'
+    
+    constraints: {
+      axis: 'y'
+      min: 1
+      max: 2
+    }
+    
+    onDrag: {
+      const volume = (this.position.y - 1) / 1  // 0-1 range
+      audio.setMasterVolume(volume)
+    }
+  }
+  
+  // Clock
+  object "Clock" @billboard {
+    geometry: 'plane'
+    position: [5.9, 3, 2]
+    scale: [0.5, 0.25, 1]
+    
+    update: () => {
+      this.text = new Date().toLocaleTimeString()
+    }
+    updateInterval: 1000
+  }
+  
+  logic {
+    on_participant_join(participant) {
+      // Find empty seat
+      const emptySeat = scene.findAll('Chair')
+        .find(c => !c.occupied)
+      
+      if (emptySeat) {
+        participant.teleportTo(emptySeat.position)
+        emptySeat.occupied = true
+        emptySeat.occupiedBy = participant.id
+      }
+      
+      // Announce
+      audio.play('join-chime.mp3')
+    }
+    
+    on_participant_leave(participant) {
+      const seat = scene.findAll('Chair')
+        .find(c => c.occupiedBy === participant.id)
+      
+      if (seat) {
+        seat.occupied = false
+        seat.occupiedBy = null
+      }
+      
+      audio.play('leave-chime.mp3')
+    }
+  }
+}

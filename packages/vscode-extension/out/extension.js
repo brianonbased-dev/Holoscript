@@ -3391,8 +3391,8 @@ var require_main2 = __commonJS({
         }
         uinteger2.is = is;
       })(uinteger || (exports3.uinteger = uinteger = {}));
-      var Position;
-      (function(Position2) {
+      var Position2;
+      (function(Position3) {
         function create(line, character) {
           if (line === Number.MAX_VALUE) {
             line = uinteger.MAX_VALUE;
@@ -3402,31 +3402,31 @@ var require_main2 = __commonJS({
           }
           return { line, character };
         }
-        Position2.create = create;
+        Position3.create = create;
         function is(value) {
           var candidate = value;
           return Is.objectLiteral(candidate) && Is.uinteger(candidate.line) && Is.uinteger(candidate.character);
         }
-        Position2.is = is;
-      })(Position || (exports3.Position = Position = {}));
-      var Range3;
-      (function(Range4) {
+        Position3.is = is;
+      })(Position2 || (exports3.Position = Position2 = {}));
+      var Range4;
+      (function(Range5) {
         function create(one, two, three, four) {
           if (Is.uinteger(one) && Is.uinteger(two) && Is.uinteger(three) && Is.uinteger(four)) {
-            return { start: Position.create(one, two), end: Position.create(three, four) };
-          } else if (Position.is(one) && Position.is(two)) {
+            return { start: Position2.create(one, two), end: Position2.create(three, four) };
+          } else if (Position2.is(one) && Position2.is(two)) {
             return { start: one, end: two };
           } else {
             throw new Error("Range#create called with invalid arguments[".concat(one, ", ").concat(two, ", ").concat(three, ", ").concat(four, "]"));
           }
         }
-        Range4.create = create;
+        Range5.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
+          return Is.objectLiteral(candidate) && Position2.is(candidate.start) && Position2.is(candidate.end);
         }
-        Range4.is = is;
-      })(Range3 || (exports3.Range = Range3 = {}));
+        Range5.is = is;
+      })(Range4 || (exports3.Range = Range4 = {}));
       var Location;
       (function(Location2) {
         function create(uri, range) {
@@ -3435,7 +3435,7 @@ var require_main2 = __commonJS({
         Location2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
+          return Is.objectLiteral(candidate) && Range4.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
         }
         Location2.is = is;
       })(Location || (exports3.Location = Location = {}));
@@ -3447,7 +3447,7 @@ var require_main2 = __commonJS({
         LocationLink2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.targetRange) && Is.string(candidate.targetUri) && Range3.is(candidate.targetSelectionRange) && (Range3.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
+          return Is.objectLiteral(candidate) && Range4.is(candidate.targetRange) && Is.string(candidate.targetUri) && Range4.is(candidate.targetSelectionRange) && (Range4.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
         }
         LocationLink2.is = is;
       })(LocationLink || (exports3.LocationLink = LocationLink = {}));
@@ -3479,7 +3479,7 @@ var require_main2 = __commonJS({
         ColorInformation2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.range) && Color.is(candidate.color);
+          return Is.objectLiteral(candidate) && Range4.is(candidate.range) && Color.is(candidate.color);
         }
         ColorInformation2.is = is;
       })(ColorInformation || (exports3.ColorInformation = ColorInformation = {}));
@@ -3590,7 +3590,7 @@ var require_main2 = __commonJS({
         function is(value) {
           var _a;
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(candidate.range) && Is.string(candidate.message) && (Is.number(candidate.severity) || Is.undefined(candidate.severity)) && (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code)) && (Is.undefined(candidate.codeDescription) || Is.string((_a = candidate.codeDescription) === null || _a === void 0 ? void 0 : _a.href)) && (Is.string(candidate.source) || Is.undefined(candidate.source)) && (Is.undefined(candidate.relatedInformation) || Is.typedArray(candidate.relatedInformation, DiagnosticRelatedInformation.is));
+          return Is.defined(candidate) && Range4.is(candidate.range) && Is.string(candidate.message) && (Is.number(candidate.severity) || Is.undefined(candidate.severity)) && (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code)) && (Is.undefined(candidate.codeDescription) || Is.string((_a = candidate.codeDescription) === null || _a === void 0 ? void 0 : _a.href)) && (Is.string(candidate.source) || Is.undefined(candidate.source)) && (Is.undefined(candidate.relatedInformation) || Is.typedArray(candidate.relatedInformation, DiagnosticRelatedInformation.is));
         }
         Diagnostic2.is = is;
       })(Diagnostic || (exports3.Diagnostic = Diagnostic = {}));
@@ -3630,7 +3630,7 @@ var require_main2 = __commonJS({
         TextEdit3.del = del;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Is.string(candidate.newText) && Range3.is(candidate.range);
+          return Is.objectLiteral(candidate) && Is.string(candidate.newText) && Range4.is(candidate.range);
         }
         TextEdit3.is = is;
       })(TextEdit2 || (exports3.TextEdit = TextEdit2 = {}));
@@ -4174,7 +4174,7 @@ var require_main2 = __commonJS({
         InsertReplaceEdit2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate && Is.string(candidate.newText) && Range3.is(candidate.insert) && Range3.is(candidate.replace);
+          return candidate && Is.string(candidate.newText) && Range4.is(candidate.insert) && Range4.is(candidate.replace);
         }
         InsertReplaceEdit2.is = is;
       })(InsertReplaceEdit || (exports3.InsertReplaceEdit = InsertReplaceEdit = {}));
@@ -4221,7 +4221,7 @@ var require_main2 = __commonJS({
       (function(Hover2) {
         function is(value) {
           var candidate = value;
-          return !!candidate && Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) || MarkedString.is(candidate.contents) || Is.typedArray(candidate.contents, MarkedString.is)) && (value.range === void 0 || Range3.is(value.range));
+          return !!candidate && Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) || MarkedString.is(candidate.contents) || Is.typedArray(candidate.contents, MarkedString.is)) && (value.range === void 0 || Range4.is(value.range));
         }
         Hover2.is = is;
       })(Hover || (exports3.Hover = Hover = {}));
@@ -4342,7 +4342,7 @@ var require_main2 = __commonJS({
         DocumentSymbol2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate && Is.string(candidate.name) && Is.number(candidate.kind) && Range3.is(candidate.range) && Range3.is(candidate.selectionRange) && (candidate.detail === void 0 || Is.string(candidate.detail)) && (candidate.deprecated === void 0 || Is.boolean(candidate.deprecated)) && (candidate.children === void 0 || Array.isArray(candidate.children)) && (candidate.tags === void 0 || Array.isArray(candidate.tags));
+          return candidate && Is.string(candidate.name) && Is.number(candidate.kind) && Range4.is(candidate.range) && Range4.is(candidate.selectionRange) && (candidate.detail === void 0 || Is.string(candidate.detail)) && (candidate.deprecated === void 0 || Is.boolean(candidate.deprecated)) && (candidate.children === void 0 || Array.isArray(candidate.children)) && (candidate.tags === void 0 || Array.isArray(candidate.tags));
         }
         DocumentSymbol2.is = is;
       })(DocumentSymbol || (exports3.DocumentSymbol = DocumentSymbol = {}));
@@ -4419,7 +4419,7 @@ var require_main2 = __commonJS({
         CodeLens2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(candidate.range) && (Is.undefined(candidate.command) || Command.is(candidate.command));
+          return Is.defined(candidate) && Range4.is(candidate.range) && (Is.undefined(candidate.command) || Command.is(candidate.command));
         }
         CodeLens2.is = is;
       })(CodeLens || (exports3.CodeLens = CodeLens = {}));
@@ -4443,7 +4443,7 @@ var require_main2 = __commonJS({
         DocumentLink2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
+          return Is.defined(candidate) && Range4.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
         }
         DocumentLink2.is = is;
       })(DocumentLink || (exports3.DocumentLink = DocumentLink = {}));
@@ -4455,7 +4455,7 @@ var require_main2 = __commonJS({
         SelectionRange2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.range) && (candidate.parent === void 0 || SelectionRange2.is(candidate.parent));
+          return Is.objectLiteral(candidate) && Range4.is(candidate.range) && (candidate.parent === void 0 || SelectionRange2.is(candidate.parent));
         }
         SelectionRange2.is = is;
       })(SelectionRange || (exports3.SelectionRange = SelectionRange = {}));
@@ -4514,7 +4514,7 @@ var require_main2 = __commonJS({
         InlineValueText2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate !== void 0 && candidate !== null && Range3.is(candidate.range) && Is.string(candidate.text);
+          return candidate !== void 0 && candidate !== null && Range4.is(candidate.range) && Is.string(candidate.text);
         }
         InlineValueText2.is = is;
       })(InlineValueText || (exports3.InlineValueText = InlineValueText = {}));
@@ -4526,7 +4526,7 @@ var require_main2 = __commonJS({
         InlineValueVariableLookup2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate !== void 0 && candidate !== null && Range3.is(candidate.range) && Is.boolean(candidate.caseSensitiveLookup) && (Is.string(candidate.variableName) || candidate.variableName === void 0);
+          return candidate !== void 0 && candidate !== null && Range4.is(candidate.range) && Is.boolean(candidate.caseSensitiveLookup) && (Is.string(candidate.variableName) || candidate.variableName === void 0);
         }
         InlineValueVariableLookup2.is = is;
       })(InlineValueVariableLookup || (exports3.InlineValueVariableLookup = InlineValueVariableLookup = {}));
@@ -4538,7 +4538,7 @@ var require_main2 = __commonJS({
         InlineValueEvaluatableExpression2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate !== void 0 && candidate !== null && Range3.is(candidate.range) && (Is.string(candidate.expression) || candidate.expression === void 0);
+          return candidate !== void 0 && candidate !== null && Range4.is(candidate.range) && (Is.string(candidate.expression) || candidate.expression === void 0);
         }
         InlineValueEvaluatableExpression2.is = is;
       })(InlineValueEvaluatableExpression || (exports3.InlineValueEvaluatableExpression = InlineValueEvaluatableExpression = {}));
@@ -4550,7 +4550,7 @@ var require_main2 = __commonJS({
         InlineValueContext2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(value.stoppedLocation);
+          return Is.defined(candidate) && Range4.is(value.stoppedLocation);
         }
         InlineValueContext2.is = is;
       })(InlineValueContext || (exports3.InlineValueContext = InlineValueContext = {}));
@@ -4587,7 +4587,7 @@ var require_main2 = __commonJS({
         InlayHint2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Position.is(candidate.position) && (Is.string(candidate.label) || Is.typedArray(candidate.label, InlayHintLabelPart.is)) && (candidate.kind === void 0 || InlayHintKind.is(candidate.kind)) && candidate.textEdits === void 0 || Is.typedArray(candidate.textEdits, TextEdit2.is) && (candidate.tooltip === void 0 || Is.string(candidate.tooltip) || MarkupContent.is(candidate.tooltip)) && (candidate.paddingLeft === void 0 || Is.boolean(candidate.paddingLeft)) && (candidate.paddingRight === void 0 || Is.boolean(candidate.paddingRight));
+          return Is.objectLiteral(candidate) && Position2.is(candidate.position) && (Is.string(candidate.label) || Is.typedArray(candidate.label, InlayHintLabelPart.is)) && (candidate.kind === void 0 || InlayHintKind.is(candidate.kind)) && candidate.textEdits === void 0 || Is.typedArray(candidate.textEdits, TextEdit2.is) && (candidate.tooltip === void 0 || Is.string(candidate.tooltip) || MarkupContent.is(candidate.tooltip)) && (candidate.paddingLeft === void 0 || Is.boolean(candidate.paddingLeft)) && (candidate.paddingRight === void 0 || Is.boolean(candidate.paddingRight));
         }
         InlayHint2.is = is;
       })(InlayHint || (exports3.InlayHint = InlayHint = {}));
@@ -4776,7 +4776,7 @@ var require_main2 = __commonJS({
             var lineOffsets = this.getLineOffsets();
             var low = 0, high = lineOffsets.length;
             if (high === 0) {
-              return Position.create(0, offset);
+              return Position2.create(0, offset);
             }
             while (low < high) {
               var mid = Math.floor((low + high) / 2);
@@ -4787,7 +4787,7 @@ var require_main2 = __commonJS({
               }
             }
             var line = low - 1;
-            return Position.create(line, offset - lineOffsets[line]);
+            return Position2.create(line, offset - lineOffsets[line]);
           };
           FullTextDocument2.prototype.offsetAt = function(position) {
             var lineOffsets = this.getLineOffsets();
@@ -6685,8 +6685,8 @@ var require_protocolCodeAction = __commonJS({
   "../../node_modules/.pnpm/vscode-languageclient@9.0.1/node_modules/vscode-languageclient/lib/common/protocolCodeAction.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
-    var vscode9 = require("vscode");
-    var ProtocolCodeAction = class extends vscode9.CodeAction {
+    var vscode10 = require("vscode");
+    var ProtocolCodeAction = class extends vscode10.CodeAction {
       constructor(title, data) {
         super(title);
         this.data = data;
@@ -6702,7 +6702,7 @@ var require_protocolDiagnostic = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.ProtocolDiagnostic = exports2.DiagnosticCode = void 0;
-    var vscode9 = require("vscode");
+    var vscode10 = require("vscode");
     var Is = require_is();
     var DiagnosticCode;
     (function(DiagnosticCode2) {
@@ -6712,7 +6712,7 @@ var require_protocolDiagnostic = __commonJS({
       }
       DiagnosticCode2.is = is;
     })(DiagnosticCode || (exports2.DiagnosticCode = DiagnosticCode = {}));
-    var ProtocolDiagnostic = class extends vscode9.Diagnostic {
+    var ProtocolDiagnostic = class extends vscode10.Diagnostic {
       constructor(range, message, severity, data) {
         super(range, message, severity);
         this.data = data;
@@ -10716,7 +10716,7 @@ var require_notebook = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.NotebookDocumentSyncFeature = void 0;
-    var vscode9 = require("vscode");
+    var vscode10 = require("vscode");
     var minimatch = require_minimatch();
     var proto = require_main3();
     var UUID = require_uuid();
@@ -10771,9 +10771,9 @@ var require_notebook = __commonJS({
         c2p2.asNotebookCell = asNotebookCell;
         function asNotebookCellKind(kind) {
           switch (kind) {
-            case vscode9.NotebookCellKind.Markup:
+            case vscode10.NotebookCellKind.Markup:
               return proto.NotebookCellKind.Markup;
-            case vscode9.NotebookCellKind.Code:
+            case vscode10.NotebookCellKind.Code:
               return proto.NotebookCellKind.Code;
           }
         }
@@ -11024,25 +11024,25 @@ var require_notebook = __commonJS({
         this.notebookDidOpen = /* @__PURE__ */ new Set();
         this.disposables = [];
         this.selector = client2.protocol2CodeConverter.asDocumentSelector($NotebookDocumentSyncOptions.asDocumentSelector(options));
-        vscode9.workspace.onDidOpenNotebookDocument((notebookDocument) => {
+        vscode10.workspace.onDidOpenNotebookDocument((notebookDocument) => {
           this.notebookDidOpen.add(notebookDocument.uri.toString());
           this.didOpen(notebookDocument);
         }, void 0, this.disposables);
-        for (const notebookDocument of vscode9.workspace.notebookDocuments) {
+        for (const notebookDocument of vscode10.workspace.notebookDocuments) {
           this.notebookDidOpen.add(notebookDocument.uri.toString());
           this.didOpen(notebookDocument);
         }
-        vscode9.workspace.onDidChangeNotebookDocument((event) => this.didChangeNotebookDocument(event), void 0, this.disposables);
+        vscode10.workspace.onDidChangeNotebookDocument((event) => this.didChangeNotebookDocument(event), void 0, this.disposables);
         if (this.options.save === true) {
-          vscode9.workspace.onDidSaveNotebookDocument((notebookDocument) => this.didSave(notebookDocument), void 0, this.disposables);
+          vscode10.workspace.onDidSaveNotebookDocument((notebookDocument) => this.didSave(notebookDocument), void 0, this.disposables);
         }
-        vscode9.workspace.onDidCloseNotebookDocument((notebookDocument) => {
+        vscode10.workspace.onDidCloseNotebookDocument((notebookDocument) => {
           this.didClose(notebookDocument);
           this.notebookDidOpen.delete(notebookDocument.uri.toString());
         }, void 0, this.disposables);
       }
       getState() {
-        for (const notebook of vscode9.workspace.notebookDocuments) {
+        for (const notebook of vscode10.workspace.notebookDocuments) {
           const matchingCells = this.getMatchingCells(notebook);
           if (matchingCells !== void 0) {
             return { kind: "document", id: "$internal", registrations: true, matches: true };
@@ -11054,10 +11054,10 @@ var require_notebook = __commonJS({
         return "notebook";
       }
       handles(textDocument) {
-        return vscode9.languages.match(this.selector, textDocument) > 0;
+        return vscode10.languages.match(this.selector, textDocument) > 0;
       }
       didOpenNotebookCellTextDocument(notebookDocument, cell) {
-        if (vscode9.languages.match(this.selector, cell.document) === 0) {
+        if (vscode10.languages.match(this.selector, cell.document) === 0) {
           return;
         }
         if (!this.notebookDidOpen.has(notebookDocument.uri.toString())) {
@@ -11088,7 +11088,7 @@ var require_notebook = __commonJS({
         }
       }
       didChangeNotebookCellTextDocument(notebookDocument, event) {
-        if (vscode9.languages.match(this.selector, event.document) === 0) {
+        if (vscode10.languages.match(this.selector, event.document) === 0) {
           return;
         }
         this.doSendChange({
@@ -11361,7 +11361,7 @@ var require_notebook = __commonJS({
         this.client = client2;
         this.registrations = /* @__PURE__ */ new Map();
         this.registrationType = proto.NotebookDocumentSyncRegistrationType.type;
-        vscode9.workspace.onDidOpenTextDocument((textDocument) => {
+        vscode10.workspace.onDidOpenTextDocument((textDocument) => {
           if (textDocument.uri.scheme !== _NotebookDocumentSyncFeature.CellScheme) {
             return;
           }
@@ -11375,7 +11375,7 @@ var require_notebook = __commonJS({
             }
           }
         });
-        vscode9.workspace.onDidChangeTextDocument((event) => {
+        vscode10.workspace.onDidChangeTextDocument((event) => {
           if (event.contentChanges.length === 0) {
             return;
           }
@@ -11393,7 +11393,7 @@ var require_notebook = __commonJS({
             }
           }
         });
-        vscode9.workspace.onDidCloseTextDocument((textDocument) => {
+        vscode10.workspace.onDidCloseTextDocument((textDocument) => {
           if (textDocument.uri.scheme !== _NotebookDocumentSyncFeature.CellScheme) {
             return;
           }
@@ -11458,7 +11458,7 @@ var require_notebook = __commonJS({
         if (textDocument.uri.scheme !== _NotebookDocumentSyncFeature.CellScheme) {
           return false;
         }
-        if (this.dedicatedChannel !== void 0 && vscode9.languages.match(this.dedicatedChannel, textDocument) > 0) {
+        if (this.dedicatedChannel !== void 0 && vscode10.languages.match(this.dedicatedChannel, textDocument) > 0) {
           return true;
         }
         for (const provider of this.registrations.values()) {
@@ -11478,7 +11478,7 @@ var require_notebook = __commonJS({
       }
       findNotebookDocumentAndCell(textDocument) {
         const uri = textDocument.uri.toString();
-        for (const notebookDocument of vscode9.workspace.notebookDocuments) {
+        for (const notebookDocument of vscode10.workspace.notebookDocuments) {
           for (const cell of notebookDocument.getCells()) {
             if (cell.document.uri.toString() === uri) {
               return [notebookDocument, cell];
@@ -13994,7 +13994,7 @@ var require_semanticTokens = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.SemanticTokensFeature = void 0;
-    var vscode9 = require("vscode");
+    var vscode10 = require("vscode");
     var vscode_languageserver_protocol_1 = require_main3();
     var features_1 = require_features();
     var Is = require_is();
@@ -14072,7 +14072,7 @@ var require_semanticTokens = __commonJS({
         const selector = options.documentSelector;
         const fullProvider = Is.boolean(options.full) ? options.full : options.full !== void 0;
         const hasEditProvider = options.full !== void 0 && typeof options.full !== "boolean" && options.full.delta === true;
-        const eventEmitter = new vscode9.EventEmitter();
+        const eventEmitter = new vscode10.EventEmitter();
         const documentProvider = fullProvider ? {
           onDidChangeSemanticTokens: eventEmitter.event,
           provideDocumentSemanticTokens: (document, token) => {
@@ -14144,12 +14144,12 @@ var require_semanticTokens = __commonJS({
         const legend = client2.protocol2CodeConverter.asSemanticTokensLegend(options.legend);
         const documentSelector = client2.protocol2CodeConverter.asDocumentSelector(selector);
         if (documentProvider !== void 0) {
-          disposables.push(vscode9.languages.registerDocumentSemanticTokensProvider(documentSelector, documentProvider, legend));
+          disposables.push(vscode10.languages.registerDocumentSemanticTokensProvider(documentSelector, documentProvider, legend));
         }
         if (rangeProvider !== void 0) {
-          disposables.push(vscode9.languages.registerDocumentRangeSemanticTokensProvider(documentSelector, rangeProvider, legend));
+          disposables.push(vscode10.languages.registerDocumentRangeSemanticTokensProvider(documentSelector, rangeProvider, legend));
         }
-        return [new vscode9.Disposable(() => disposables.forEach((item) => item.dispose())), { range: rangeProvider, full: documentProvider, onDidChangeSemanticTokensEmitter: eventEmitter }];
+        return [new vscode10.Disposable(() => disposables.forEach((item) => item.dispose())), { range: rangeProvider, full: documentProvider, onDidChangeSemanticTokensEmitter: eventEmitter }];
       }
     };
     exports2.SemanticTokensFeature = SemanticTokensFeature;
@@ -17000,12 +17000,12 @@ var require_comparator = __commonJS({
           if (this.value === "") {
             return true;
           }
-          return new Range3(comp.value, options).test(this.value);
+          return new Range4(comp.value, options).test(this.value);
         } else if (comp.operator === "") {
           if (comp.value === "") {
             return true;
           }
-          return new Range3(this.value, options).test(comp.semver);
+          return new Range4(this.value, options).test(comp.semver);
         }
         options = parseOptions(options);
         if (options.includePrerelease && (this.value === "<0.0.0-0" || comp.value === "<0.0.0-0")) {
@@ -17038,7 +17038,7 @@ var require_comparator = __commonJS({
     var cmp = require_cmp();
     var debug = require_debug();
     var SemVer = require_semver();
-    var Range3 = require_range();
+    var Range4 = require_range();
   }
 });
 
@@ -17047,7 +17047,7 @@ var require_range = __commonJS({
   "../../node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/range.js"(exports2, module2) {
     "use strict";
     var SPACE_CHARACTERS = /\s+/g;
-    var Range3 = class _Range {
+    var Range4 = class _Range {
       constructor(range, options) {
         options = parseOptions(options);
         if (range instanceof _Range) {
@@ -17185,7 +17185,7 @@ var require_range = __commonJS({
         return false;
       }
     };
-    module2.exports = Range3;
+    module2.exports = Range4;
     var LRU = require_lrucache();
     var cache = new LRU();
     var parseOptions = require_parse_options();
@@ -17423,10 +17423,10 @@ var require_range = __commonJS({
 var require_satisfies = __commonJS({
   "../../node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/satisfies.js"(exports2, module2) {
     "use strict";
-    var Range3 = require_range();
+    var Range4 = require_range();
     var satisfies = (version, range, options) => {
       try {
-        range = new Range3(range, options);
+        range = new Range4(range, options);
       } catch (er) {
         return false;
       }
@@ -20745,6 +20745,8 @@ __export(dist_exports, {
   createFormatter: () => createFormatter,
   default: () => dist_default,
   format: () => format,
+  formatFilesParallel: () => formatFilesParallel,
+  formatFilesStream: () => formatFilesStream,
   formatRange: () => formatRange,
   loadConfig: () => loadConfig
 });
@@ -20767,6 +20769,87 @@ function loadConfig(filePath) {
   const loader = new ConfigLoader();
   return loader.loadConfig(filePath);
 }
+async function formatFilesParallel(files, options = {}) {
+  const { concurrency = 4, config = {}, write = false, onProgress, onError } = options;
+  const fs4 = await import("fs/promises");
+  const formatter = new HoloScriptFormatter(config);
+  const startTime = Date.now();
+  const result = {
+    total: files.length,
+    changed: 0,
+    errors: 0,
+    changedFiles: [],
+    errorFiles: [],
+    durationMs: 0
+  };
+  let completed = 0;
+  async function processFile(filePath) {
+    try {
+      const source = await fs4.readFile(filePath, "utf-8");
+      const fileType = filePath.endsWith(".hsplus") ? "hsplus" : "holo";
+      const formatted = formatter.format(source, fileType);
+      if (formatted.changed) {
+        if (write) {
+          await fs4.writeFile(filePath, formatted.formatted, "utf-8");
+        }
+        result.changed++;
+        result.changedFiles.push(filePath);
+      }
+      if (formatted.errors.length > 0) {
+        result.errors++;
+        result.errorFiles.push(filePath);
+        if (onError) {
+          onError(filePath, new Error(formatted.errors[0].message));
+        }
+      }
+    } catch (err) {
+      result.errors++;
+      result.errorFiles.push(filePath);
+      if (onError) {
+        onError(filePath, err instanceof Error ? err : new Error(String(err)));
+      }
+    } finally {
+      completed++;
+      if (onProgress) {
+        onProgress(completed, files.length, filePath);
+      }
+    }
+  }
+  const batches = [];
+  for (let i = 0; i < files.length; i += concurrency) {
+    batches.push(files.slice(i, i + concurrency));
+  }
+  for (const batch of batches) {
+    await Promise.all(batch.map(processFile));
+  }
+  result.durationMs = Date.now() - startTime;
+  return result;
+}
+async function* formatFilesStream(files, config = {}) {
+  const fs4 = await import("fs/promises");
+  const formatter = new HoloScriptFormatter(config);
+  for (const filePath of files) {
+    try {
+      const source = await fs4.readFile(filePath, "utf-8");
+      const fileType = filePath.endsWith(".hsplus") ? "hsplus" : "holo";
+      const result = formatter.format(source, fileType);
+      yield { file: filePath, result };
+    } catch (err) {
+      yield {
+        file: filePath,
+        result: {
+          formatted: "",
+          changed: false,
+          errors: [{
+            message: err instanceof Error ? err.message : String(err),
+            line: 0,
+            column: 0
+          }]
+        }
+      };
+    }
+  }
+}
 var DEFAULT_CONFIG, HoloScriptFormatter, dist_default;
 var init_dist = __esm({
   "../formatter/dist/index.js"() {
@@ -20782,6 +20865,9 @@ var init_dist = __esm({
       semicolons: false,
       singleQuote: false,
       sortImports: true,
+      importSortOrder: "grouped",
+      importGroupOrder: ["builtin", "external", "internal", "relative"],
+      importGroupSeparator: true,
       maxBlankLines: 1,
       blankLineBeforeComposition: true
     };
@@ -21000,13 +21086,71 @@ ${indent}{`;
         if (importLines.length === 0) {
           return source;
         }
-        const sortedImports = importLines.sort((a, b) => a.localeCompare(b));
+        let sortedImports;
+        if (this.config.importSortOrder === "grouped") {
+          sortedImports = this.sortImportsGrouped(importLines);
+        } else {
+          sortedImports = importLines.sort((a, b) => a.localeCompare(b));
+        }
         const result = [...sortedImports];
         if (hasBlankLineAfterImports) {
           result.push("");
         }
         result.push(...otherLines);
         return result.join("\n");
+      }
+      /**
+       * Sort imports into groups: builtin, external, internal, relative
+       */
+      sortImportsGrouped(imports) {
+        const groups = {
+          builtin: [],
+          external: [],
+          internal: [],
+          relative: []
+        };
+        for (const line of imports) {
+          const category = this.categorizeImport(line);
+          groups[category].push(line);
+        }
+        for (const key of Object.keys(groups)) {
+          groups[key].sort((a, b) => a.localeCompare(b));
+        }
+        const result = [];
+        const order = this.config.importGroupOrder;
+        for (let i = 0; i < order.length; i++) {
+          const groupKey = order[i];
+          const groupImports = groups[groupKey];
+          if (groupImports.length > 0) {
+            if (result.length > 0 && this.config.importGroupSeparator) {
+              result.push("");
+            }
+            result.push(...groupImports);
+          }
+        }
+        return result;
+      }
+      /**
+       * Categorize an import line
+       */
+      categorizeImport(line) {
+        const match = line.match(/from\s+["']([^"']+)["']/) || line.match(/import\s+["']([^"']+)["']/) || line.match(/@import\s+["']([^"']+)["']/);
+        if (!match) {
+          return "external";
+        }
+        const modulePath = match[1];
+        if (modulePath.startsWith(".")) {
+          return "relative";
+        }
+        if (modulePath.startsWith("@holoscript/") || modulePath.startsWith("@hololand/")) {
+          return "internal";
+        }
+        const builtins = ["fs", "path", "os", "util", "events", "stream", "http", "https", "crypto", "buffer", "url", "querystring", "zlib", "child_process", "cluster", "dgram", "dns", "net", "readline", "tls", "vm", "assert", "console", "timers", "worker_threads"];
+        const moduleBaseName = modulePath.split("/")[0];
+        if (builtins.includes(moduleBaseName) || modulePath.startsWith("node:")) {
+          return "builtin";
+        }
+        return "external";
       }
       normalizeWhitespace(source, rawRanges = []) {
         return source.split("\n").map((line, i) => {
@@ -21043,7 +21187,7 @@ __export(extension_exports, {
 module.exports = __toCommonJS(extension_exports);
 var path4 = __toESM(require("path"));
 var fs3 = __toESM(require("fs"));
-var vscode8 = __toESM(require("vscode"));
+var vscode9 = __toESM(require("vscode"));
 var import_vscode = require("vscode");
 var import_node = __toESM(require_node3());
 
@@ -28261,6 +28405,318 @@ var McpOrchestratorClient = class {
   }
 };
 
+// src/semanticTokensProvider.ts
+var vscode8 = __toESM(require("vscode"));
+var TOKEN_TYPES = [
+  "namespace",
+  // composition names
+  "class",
+  // object/template names
+  "type",
+  // type annotations
+  "parameter",
+  // function parameters
+  "variable",
+  // variables and state refs
+  "property",
+  // object properties
+  "function",
+  // functions
+  "decorator",
+  // traits (@grabbable)
+  "keyword",
+  // keywords
+  "string",
+  // string literals
+  "number",
+  // numeric literals
+  "operator",
+  // operators
+  "comment",
+  // comments
+  "enumMember"
+  // enum values, constants
+];
+var TOKEN_MODIFIERS = [
+  "declaration",
+  // definition site
+  "definition",
+  // same as declaration
+  "readonly",
+  // const values
+  "static",
+  // static trait
+  "async",
+  // async operations
+  "modification",
+  // mutation
+  "documentation",
+  // doc comments
+  "defaultLibrary"
+  // built-in traits/keywords
+];
+var SEMANTIC_TOKENS_LEGEND = new vscode8.SemanticTokensLegend(
+  [...TOKEN_TYPES],
+  [...TOKEN_MODIFIERS]
+);
+var KEYWORDS = /* @__PURE__ */ new Set([
+  "composition",
+  "object",
+  "template",
+  "spatial_group",
+  "environment",
+  "state",
+  "logic",
+  "using",
+  "import",
+  "from",
+  "if",
+  "else",
+  "for",
+  "while",
+  "return",
+  "spawn",
+  "emit",
+  "true",
+  "false",
+  "null",
+  "let",
+  "const",
+  "function"
+]);
+var BUILTIN_TRAITS = /* @__PURE__ */ new Set([
+  "physics",
+  "static",
+  "kinematic",
+  "collidable",
+  "grabbable",
+  "throwable",
+  "draggable",
+  "visible",
+  "invisible",
+  "audio",
+  "spatial_audio",
+  "climbable",
+  "interactable",
+  "glowing",
+  "animated",
+  "billboard",
+  "occluder",
+  "navmesh",
+  "trigger"
+]);
+var EVENT_HANDLERS = /* @__PURE__ */ new Set([
+  "on_click",
+  "on_hover",
+  "on_enter",
+  "on_exit",
+  "on_grab",
+  "on_release",
+  "on_collision",
+  "on_trigger",
+  "on_update"
+]);
+var COMMON_PROPERTIES = /* @__PURE__ */ new Set([
+  "position",
+  "rotation",
+  "scale",
+  "color",
+  "opacity",
+  "geometry",
+  "model",
+  "material",
+  "texture",
+  "skybox",
+  "ambient_light",
+  "mass",
+  "velocity",
+  "friction",
+  "restitution"
+]);
+function tokenize(text) {
+  const tokens = [];
+  const lines = text.split("\n");
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    const line = lines[lineIndex];
+    let pos = 0;
+    while (pos < line.length) {
+      const wsMatch = line.slice(pos).match(/^[ \t]+/);
+      if (wsMatch) {
+        pos += wsMatch[0].length;
+        continue;
+      }
+      if (line.slice(pos).startsWith("//")) {
+        tokens.push({
+          line: lineIndex,
+          startChar: pos,
+          length: line.length - pos,
+          tokenType: TOKEN_TYPES.indexOf("comment"),
+          tokenModifiers: 0
+        });
+        break;
+      }
+      if (line.slice(pos).startsWith("/*")) {
+        const endPos = line.indexOf("*/", pos + 2);
+        const len = endPos >= 0 ? endPos + 2 - pos : line.length - pos;
+        tokens.push({
+          line: lineIndex,
+          startChar: pos,
+          length: len,
+          tokenType: TOKEN_TYPES.indexOf("comment"),
+          tokenModifiers: 0
+        });
+        pos += len;
+        continue;
+      }
+      const traitMatch = line.slice(pos).match(/^@([a-zA-Z_][a-zA-Z0-9_]*)/);
+      if (traitMatch) {
+        const traitName = traitMatch[1];
+        const isBuiltin = BUILTIN_TRAITS.has(traitName);
+        tokens.push({
+          line: lineIndex,
+          startChar: pos,
+          length: traitMatch[0].length,
+          tokenType: TOKEN_TYPES.indexOf("decorator"),
+          tokenModifiers: isBuiltin ? 1 << TOKEN_MODIFIERS.indexOf("defaultLibrary") : 0
+        });
+        pos += traitMatch[0].length;
+        continue;
+      }
+      const stringMatch = line.slice(pos).match(/^"(?:[^"\\]|\\.)*"|^'(?:[^'\\]|\\.)*'/);
+      if (stringMatch) {
+        tokens.push({
+          line: lineIndex,
+          startChar: pos,
+          length: stringMatch[0].length,
+          tokenType: TOKEN_TYPES.indexOf("string"),
+          tokenModifiers: 0
+        });
+        pos += stringMatch[0].length;
+        continue;
+      }
+      const numberMatch = line.slice(pos).match(/^-?(?:0x[0-9a-fA-F]+|\d+\.?\d*(?:[eE][+-]?\d+)?)/);
+      if (numberMatch) {
+        tokens.push({
+          line: lineIndex,
+          startChar: pos,
+          length: numberMatch[0].length,
+          tokenType: TOKEN_TYPES.indexOf("number"),
+          tokenModifiers: 0
+        });
+        pos += numberMatch[0].length;
+        continue;
+      }
+      const identMatch = line.slice(pos).match(/^[a-zA-Z_][a-zA-Z0-9_]*/);
+      if (identMatch) {
+        const word = identMatch[0];
+        let tokenType;
+        let modifiers = 0;
+        if (KEYWORDS.has(word)) {
+          tokenType = TOKEN_TYPES.indexOf("keyword");
+          modifiers = 1 << TOKEN_MODIFIERS.indexOf("defaultLibrary");
+        } else if (word === "composition" || word === "namespace") {
+          tokenType = TOKEN_TYPES.indexOf("namespace");
+          modifiers = 1 << TOKEN_MODIFIERS.indexOf("declaration");
+        } else if (word === "object" || word === "template") {
+          tokenType = TOKEN_TYPES.indexOf("class");
+          modifiers = 1 << TOKEN_MODIFIERS.indexOf("declaration");
+        } else if (EVENT_HANDLERS.has(word)) {
+          tokenType = TOKEN_TYPES.indexOf("function");
+          modifiers = 1 << TOKEN_MODIFIERS.indexOf("defaultLibrary");
+        } else if (COMMON_PROPERTIES.has(word)) {
+          tokenType = TOKEN_TYPES.indexOf("property");
+          modifiers = 0;
+        } else {
+          const prevChar = pos > 0 ? line[pos - 1] : "";
+          const colonBefore = line.slice(0, pos).trim().endsWith(":");
+          if (colonBefore) {
+            tokenType = TOKEN_TYPES.indexOf("variable");
+          } else {
+            const afterIdent = line.slice(pos + word.length).trimStart();
+            if (afterIdent.startsWith(":")) {
+              tokenType = TOKEN_TYPES.indexOf("property");
+            } else {
+              tokenType = TOKEN_TYPES.indexOf("variable");
+            }
+          }
+        }
+        tokens.push({
+          line: lineIndex,
+          startChar: pos,
+          length: word.length,
+          tokenType,
+          tokenModifiers: modifiers
+        });
+        pos += word.length;
+        continue;
+      }
+      const opMatch = line.slice(pos).match(/^(?:=>|->|&&|\|\||[+\-*/%<>=!&|^~?:])/);
+      if (opMatch) {
+        tokens.push({
+          line: lineIndex,
+          startChar: pos,
+          length: opMatch[0].length,
+          tokenType: TOKEN_TYPES.indexOf("operator"),
+          tokenModifiers: 0
+        });
+        pos += opMatch[0].length;
+        continue;
+      }
+      pos++;
+    }
+  }
+  return tokens;
+}
+var HoloScriptSemanticTokensProvider = class {
+  /**
+   * Provide semantic tokens for the entire document
+   */
+  provideDocumentSemanticTokens(document, _token) {
+    const text = document.getText();
+    const tokens = tokenize(text);
+    const builder = new vscode8.SemanticTokensBuilder(SEMANTIC_TOKENS_LEGEND);
+    for (const tok of tokens) {
+      builder.push(
+        tok.line,
+        tok.startChar,
+        tok.length,
+        tok.tokenType,
+        tok.tokenModifiers
+      );
+    }
+    return builder.build();
+  }
+};
+var HoloScriptSemanticTokensRangeProvider = class {
+  /**
+   * Provide semantic tokens for a specific range
+   */
+  provideDocumentRangeSemanticTokens(document, range, _token) {
+    const startLine = Math.max(0, range.start.line - 5);
+    const endLine = Math.min(document.lineCount - 1, range.end.line + 5);
+    const rangeWithContext = new vscode8.Range(
+      new vscode8.Position(startLine, 0),
+      new vscode8.Position(endLine, document.lineAt(endLine).text.length)
+    );
+    const text = document.getText(rangeWithContext);
+    const tokens = tokenize(text);
+    const builder = new vscode8.SemanticTokensBuilder(SEMANTIC_TOKENS_LEGEND);
+    for (const tok of tokens) {
+      const docLine = tok.line + startLine;
+      if (docLine >= range.start.line && docLine <= range.end.line) {
+        builder.push(
+          docLine,
+          tok.startChar,
+          tok.length,
+          tok.tokenType,
+          tok.tokenModifiers
+        );
+      }
+    }
+    return builder.build();
+  }
+};
+
 // src/extension.ts
 var client;
 function activate(context) {
@@ -28317,15 +28773,15 @@ function activate(context) {
   context.subscriptions.push(
     import_vscode.commands.registerCommand("holoscript.openExamples", async () => {
       const examplesPath = path4.join(context.extensionPath, "..", "..", "examples", "quickstart");
-      const uri = vscode8.Uri.file(examplesPath);
+      const uri = vscode9.Uri.file(examplesPath);
       try {
         if (fs3.existsSync(examplesPath)) {
           await import_vscode.commands.executeCommand("vscode.openFolder", uri, { forceNewWindow: false });
         } else {
-          vscode8.env.openExternal(vscode8.Uri.parse("https://github.com/brianonbased-dev/holoscript/tree/main/examples/quickstart"));
+          vscode9.env.openExternal(vscode9.Uri.parse("https://github.com/brianonbased-dev/holoscript/tree/main/examples/quickstart"));
         }
       } catch {
-        vscode8.env.openExternal(vscode8.Uri.parse("https://github.com/brianonbased-dev/holoscript/tree/main/examples/quickstart"));
+        vscode9.env.openExternal(vscode9.Uri.parse("https://github.com/brianonbased-dev/holoscript/tree/main/examples/quickstart"));
       }
     })
   );
@@ -28336,7 +28792,7 @@ function activate(context) {
   );
   context.subscriptions.push(
     import_vscode.commands.registerCommand("holoscript.openDocumentation", () => {
-      vscode8.env.openExternal(vscode8.Uri.parse("https://holoscript.net/guides/"));
+      vscode9.env.openExternal(vscode9.Uri.parse("https://holoscript.net/guides/"));
     })
   );
   context.subscriptions.push(
@@ -28373,7 +28829,7 @@ function activate(context) {
   );
   context.subscriptions.push(
     import_vscode.commands.registerCommand("holoscript.createFirstScene", async () => {
-      const workspaceFolder = vscode8.workspace.workspaceFolders?.[0];
+      const workspaceFolder = vscode9.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
         import_vscode.window.showWarningMessage("Open a folder first to create HoloScript files.");
         return;
@@ -28404,7 +28860,7 @@ function activate(context) {
 `;
       try {
         fs3.writeFileSync(filePath, defaultContent, "utf8");
-        const doc = await vscode8.workspace.openTextDocument(filePath);
+        const doc = await vscode9.workspace.openTextDocument(filePath);
         await import_vscode.window.showTextDocument(doc);
         import_vscode.window.showInformationMessage(`Created ${filename}.holo! \u{1F389} Try adding more objects.`);
       } catch (err) {
@@ -28475,7 +28931,7 @@ function activate(context) {
   });
   context.subscriptions.push(SmartAssetEditorProvider.register(context));
   const holohubProvider = new HoloHubTreeDataProvider();
-  vscode8.window.registerTreeDataProvider("holohub.assets", holohubProvider);
+  vscode9.window.registerTreeDataProvider("holohub.assets", holohubProvider);
   context.subscriptions.push(
     import_vscode.commands.registerCommand("holoscript.holohub.importAsset", async (item) => {
       const assetName = item?.label || "Asset";
@@ -28488,11 +28944,11 @@ function activate(context) {
     const formatter = (init_dist(), __toCommonJS(dist_exports));
     const { loadConfig: loadConfig2 } = formatter;
     context.subscriptions.push(
-      vscode8.languages.registerDocumentFormattingEditProvider(
+      vscode9.languages.registerDocumentFormattingEditProvider(
         ["holoscript", "holoscriptplus"],
         {
           provideDocumentFormattingEdits(document) {
-            const config = vscode8.workspace.getConfiguration("holoscript");
+            const config = vscode9.workspace.getConfiguration("holoscript");
             const timeout = config.get("formatOnSaveTimeout", 1e3);
             return new Promise((resolve) => {
               const timer = setTimeout(() => {
@@ -28513,11 +28969,11 @@ function activate(context) {
                     resolve([]);
                     return;
                   }
-                  const fullRange = new vscode8.Range(
+                  const fullRange = new vscode9.Range(
                     document.positionAt(0),
                     document.positionAt(text.length)
                   );
-                  resolve([vscode8.TextEdit.replace(fullRange, result.formatted)]);
+                  resolve([vscode9.TextEdit.replace(fullRange, result.formatted)]);
                 } catch (err) {
                   console.error("HoloScript: Formatting failed:", err);
                   clearTimeout(timer);
@@ -28525,8 +28981,8 @@ function activate(context) {
                 }
               };
               if (document.lineCount > 1e3) {
-                vscode8.window.withProgress({
-                  location: vscode8.ProgressLocation.Notification,
+                vscode9.window.withProgress({
+                  location: vscode9.ProgressLocation.Notification,
                   title: "Formatting HoloScript...",
                   cancellable: false
                 }, async () => {
@@ -28539,7 +28995,7 @@ function activate(context) {
           }
         }
       ),
-      vscode8.languages.registerDocumentRangeFormattingEditProvider(
+      vscode9.languages.registerDocumentRangeFormattingEditProvider(
         ["holoscript", "holoscriptplus"],
         {
           provideDocumentRangeFormattingEdits(document, range) {
@@ -28554,7 +29010,7 @@ function activate(context) {
               };
               const result = fmtr.formatRange(text, rangeParams, fileType);
               if (!result.changed) return [];
-              return [vscode8.TextEdit.replace(range, result.formatted)];
+              return [vscode9.TextEdit.replace(range, result.formatted)];
             } catch (err) {
               console.error("HoloScript: Range formatting failed:", err);
               return [];
@@ -28568,13 +29024,28 @@ function activate(context) {
     console.warn("HoloScript: Formatter package not found or failed to load:", err);
   }
   context.subscriptions.push(
-    vscode8.languages.registerCompletionItemProvider(
+    vscode9.languages.registerCompletionItemProvider(
       ["holoscript", "holoscriptplus"],
       new HoloScriptCompletionItemProvider(),
       "@"
       // Trigger character
     )
   );
+  context.subscriptions.push(
+    vscode9.languages.registerDocumentSemanticTokensProvider(
+      ["holoscript", "holoscriptplus"],
+      new HoloScriptSemanticTokensProvider(),
+      SEMANTIC_TOKENS_LEGEND
+    )
+  );
+  context.subscriptions.push(
+    vscode9.languages.registerDocumentRangeSemanticTokensProvider(
+      ["holoscript", "holoscriptplus"],
+      new HoloScriptSemanticTokensRangeProvider(),
+      SEMANTIC_TOKENS_LEGEND
+    )
+  );
+  console.log("HoloScript: Semantic tokens provider registered.");
 }
 function isHoloScriptFile(document) {
   const fileName = document.fileName.toLowerCase();

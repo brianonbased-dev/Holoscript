@@ -87,7 +87,13 @@
       "Bash(cmd /c \"set BITQUERY_API_KEY=ory_at_WbZbCUiTda38G0i0oNrg2H4lKhW6L-lFUzYIzWftrKo.fMoOsS_LQGWKYBT2ayuyuAW4uThU4ZQM2OmLlp5cIys && npx tsx test-drb-clanker.ts\")",
       "Bash($env:BITQUERY_API_KEY=\"ory_at_WbZbCUiTda38G0i0oNrg2H4lKhW6L-lFUzYIzWftrKo.fMoOsS_LQGWKYBT2ayuyuAW4uThU4ZQM2OmLlp5cIys\")",
       "Bash(start \"\" \"C:\\\\Users\\\\josep\\\\Documents\\\\GitHub\\\\HoloScript\\\\examples\\\\browser-preview.html\")",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(pnpm tsc:*)",
+      "WebFetch(domain:w3c.github.io)",
+      "WebFetch(domain:azure.github.io)",
+      "WebFetch(domain:openusd.org)",
+      "Bash(git status:*)",
+      "Bash(git push:*)"
     ]
   }
 }

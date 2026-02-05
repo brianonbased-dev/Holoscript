@@ -1,0 +1,173 @@
+/**
+ * HoloScript 3D Product Viewer
+ * 
+ * E-commerce product visualization with:
+ * - 360° rotation
+ * - Zoom controls
+ * - Color variants
+ * - AR placement preview
+ */
+
+composition "Product Viewer" {
+  environment {
+    skybox: "studio"
+    ambient_light: 0.8
+    fog: false
+  }
+  
+  // Main product display
+  object "Product" {
+    geometry: 'model/sneaker.glb'  // Replace with your model
+    position: [0, 1, 0]
+    scale: [1, 1, 1]
+    
+    @grabbable
+    @scalable
+    
+    state {
+      currentColor: 'white'
+      rotationSpeed: 0
+      isAutoRotating: true
+    }
+    
+    animation autoRotate {
+      property: 'rotation.y'
+      from: 0
+      to: 360
+      duration: 10000
+      loop: infinite
+      easing: 'linear'
+    }
+    
+    onGrab: {
+      this.isAutoRotating = false
+      this.stopAnimation('autoRotate')
+    }
+    
+    onRelease: {
+      this.isAutoRotating = true
+      this.playAnimation('autoRotate')
+    }
+  }
+  
+  // Pedestal
+  object "Pedestal" {
+    geometry: 'cylinder'
+    position: [0, 0.25, 0]
+    scale: [0.8, 0.5, 0.8]
+    color: '#2a2a2a'
+    material: {
+      metalness: 0.8
+      roughness: 0.2
+    }
+  }
+  
+  // Color selector buttons
+  spatial_group "ColorPicker" {
+    position: [-2, 1, 0]
+    
+    object "White" @pointable {
+      geometry: 'sphere'
+      scale: [0.15, 0.15, 0.15]
+      position: [0, 0.4, 0]
+      color: '#ffffff'
+      
+      onPoint: {
+        scene.findById('Product').setColor('#ffffff')
+        haptic.feedback('light')
+      }
+    }
+    
+    object "Black" @pointable {
+      geometry: 'sphere'
+      scale: [0.15, 0.15, 0.15]
+      position: [0, 0, 0]
+      color: '#1a1a1a'
+      
+      onPoint: {
+        scene.findById('Product').setColor('#1a1a1a')
+        haptic.feedback('light')
+      }
+    }
+    
+    object "Red" @pointable {
+      geometry: 'sphere'
+      scale: [0.15, 0.15, 0.15]
+      position: [0, -0.4, 0]
+      color: '#ff3333'
+      
+      onPoint: {
+        scene.findById('Product').setColor('#ff3333')
+        haptic.feedback('light')
+      }
+    }
+  }
+  
+  // Info panel
+  object "InfoPanel" @billboard {
+    geometry: 'plane'
+    position: [2, 1.5, 0]
+    scale: [1.5, 1, 1]
+    
+    content: {
+      title: 'Premium Sneaker'
+      price: '$129.99'
+      description: 'Lightweight, breathable design'
+    }
+  }
+  
+  // AR mode button
+  object "ARButton" @pointable {
+    geometry: 'cube'
+    position: [0, 0.5, 2]
+    scale: [0.3, 0.1, 0.1]
+    color: '#4CAF50'
+    
+    label: 'View in AR'
+    
+    onPoint: {
+      ar.startPlacement('Product')
+      haptic.feedback('medium')
+    }
+  }
+  
+  // Zoom controls
+  object "ZoomIn" @pointable {
+    geometry: 'cone'
+    position: [1.5, 0.5, 1.5]
+    scale: [0.1, 0.15, 0.1]
+    color: '#333333'
+    
+    onPoint: {
+      const product = scene.findById('Product')
+      product.scale = product.scale.map(s => s * 1.2)
+    }
+  }
+  
+  object "ZoomOut" @pointable {
+    geometry: 'cone'
+    position: [1.5, 0.5, 1.5]
+    rotation: [180, 0, 0]
+    scale: [0.1, 0.15, 0.1]
+    color: '#333333'
+    
+    onPoint: {
+      const product = scene.findById('Product')
+      product.scale = product.scale.map(s => s * 0.8)
+    }
+  }
+  
+  logic {
+    // Analytics tracking
+    on_product_interact(product) {
+      analytics.track('product_interaction', {
+        productId: product.id,
+        action: 'rotate'
+      })
+    }
+    
+    on_ar_start() {
+      analytics.track('ar_session_start')
+    }
+  }
+}
