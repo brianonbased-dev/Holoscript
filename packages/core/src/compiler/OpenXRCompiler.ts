@@ -272,11 +272,17 @@ export class OpenXRCompiler {
     if (this.options.renderBackend === 'vulkan') {
       this.emit('// Vulkan graphics binding');
       this.emit('XrGraphicsBindingVulkanKHR graphicsBinding{XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR};');
-      this.emit('// TODO: populate graphicsBinding with VkInstance, VkPhysicalDevice, VkDevice, etc.');
+      this.emit('graphicsBinding.instance = vkInstance;');
+      this.emit('graphicsBinding.physicalDevice = vkPhysicalDevice;');
+      this.emit('graphicsBinding.device = vkDevice;');
+      this.emit('graphicsBinding.queueFamilyIndex = graphicsQueueFamilyIndex;');
+      this.emit('graphicsBinding.queueIndex = 0;');
     } else {
       this.emit('// OpenGL ES graphics binding');
       this.emit('XrGraphicsBindingOpenGLESAndroidKHR graphicsBinding{XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR};');
-      this.emit('// TODO: populate graphicsBinding with EGLDisplay, EGLContext, EGLConfig');
+      this.emit('graphicsBinding.display = eglDisplay;');
+      this.emit('graphicsBinding.config = eglConfig;');
+      this.emit('graphicsBinding.context = eglContext;');
     }
     this.emit('');
 

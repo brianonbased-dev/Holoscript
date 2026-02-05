@@ -743,8 +743,8 @@ export class HoloCompositionParser {
         } else if (this.current().type.startsWith('UI_')) {
           composition.objects.push(this.parseSpatialObject(this.current().value.toLowerCase()));
         } else if (this.check('IDENTIFIER') && this.isPrimitiveShape(this.current().value)) {
-          // TODO: Handle primitive#id or primitive #id { } syntax
-          // composition.objects.push(this.parseShapeDeclaration());
+          // Handle primitive#id or primitive #id { } syntax
+          composition.objects.push(this.parsePrimitiveObject());
         } else if (this.check('NPC')) {
           composition.npcs.push(this.parseNPC());
         } else if (this.check('SHAPE')) {
@@ -2177,6 +2177,71 @@ export class HoloCompositionParser {
 
   private isPrimitiveShape(value: string): boolean {
     return PRIMITIVE_SHAPES.has(value.toLowerCase());
+  }
+
+  /**
+   * Parse primitive#id or primitive #id { } syntax
+   * Examples:
+   *   cube#myCube { position: [0, 1, 0] }
+   *   sphere #ball { color: "red" }
+   */
+  private parsePrimitiveObject(): HoloObject {
+    const primitiveType = this.current().value.toLowerCase();
+    this.advance(); // consume primitive name
+
+    let id = `${primitiveType}_${Date.now()}`; // default auto-generated id
+
+    // Check for #id syntax (either attached like cube#id or separate like cube #id)
+    if (this.check('HASH') || (this.check('IDENTIFIER') && this.previous().value.includes('#'))) {
+      if (this.check('HASH')) {
+        this.advance(); // consume #
+        id = this.expectIdentifier();
+      } else {
+        // Handle cube#id where it was tokenized together
+        const prevValue = this.previous().value;
+        if (prevValue.includes('#')) {
+          const parts = prevValue.split('#');
+          if (parts.length === 2 && parts[1]) {
+            id = parts[1];
+          }
+        }
+      }
+    } else if (this.check('STRING')) {
+      id = this.parseValue() as string;
+    } else if (this.check('IDENTIFIER') && !this.check('LBRACE')) {
+      // cube myId { ... }
+      id = this.expectIdentifier();
+    }
+
+    this.pushContext(`${primitiveType} "${id}"`);
+
+    const obj: HoloObject = {
+      type: 'Object',
+      id,
+      geometry: primitiveType as any,
+      properties: {},
+      traits: [],
+      events: [],
+      children: [],
+    };
+
+    // Parse body if present
+    if (this.check('LBRACE')) {
+      this.expect('LBRACE');
+      this.skipNewlines();
+
+      while (!this.check('RBRACE') && !this.isAtEnd()) {
+        this.skipNewlines();
+        if (this.check('RBRACE')) break;
+        this.parseObjectMember(obj);
+        this.skipNewlines();
+      }
+
+      this.expect('RBRACE');
+    }
+
+    this.popContext();
+    return obj;
   }
 
   private advance(): Token {

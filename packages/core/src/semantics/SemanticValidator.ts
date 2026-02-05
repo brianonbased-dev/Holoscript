@@ -153,7 +153,8 @@ export class SemanticValidator {
       if (!methodNode) {
         this.addError(node, `Object "${node.id}" is missing required method "${methodName}" defined in semantic "${definition.name}".`, 'error');
       } else {
-        // TODO: Deep signature validation once MethodNode is fully typed in AdvancedTypeSystem
+        // Deep method signature validation
+        this.validateMethodSignature(node, methodNode, methodName, signature, definition.name);
       }
     }
   }
@@ -174,6 +175,66 @@ export class SemanticValidator {
 
   private formatType(type: HoloScriptType): string {
     return (this.typeChecker as any).formatType(type);
+  }
+
+  private validateMethodSignature(
+    node: HSPlusNode,
+    methodNode: any,
+    methodName: string,
+    expectedSignature: { params: Array<{ name: string; type: string }>; returnType: string },
+    semanticName: string
+  ): void {
+    // Validate parameter count (only if method explicitly declares params)
+    const methodParams = methodNode.params || [];
+    const hasExplicitParams = Array.isArray(methodNode.params);
+    
+    if (hasExplicitParams && methodParams.length !== expectedSignature.params.length) {
+      this.addError(
+        node,
+        `Method "${methodName}" in "${node.id}" has ${methodParams.length} parameters, but semantic "${semanticName}" requires ${expectedSignature.params.length}.`,
+        'error'
+      );
+      return;
+    }
+
+    // Only validate parameter types if method has explicit type annotations
+    if (hasExplicitParams) {
+      for (let i = 0; i < expectedSignature.params.length; i++) {
+        const expected = expectedSignature.params[i];
+        const actual = methodParams[i];
+        const actualType = actual?.type || actual?.typeAnnotation;
+        
+        // Skip validation if actual type is not specified
+        if (!actualType) continue;
+        
+        const expectedType = this.resolveType(expected.type);
+        const actualResolvedType = this.resolveType(actualType);
+
+        if (expectedType && actualResolvedType && expected.type !== 'any' && actualType !== 'any') {
+          const expectedKind = expectedType.kind === 'primitive' ? expectedType.name : expected.type;
+          const actualKind = actualResolvedType.kind === 'primitive' ? actualResolvedType.name : actualType;
+          if (expectedKind !== actualKind) {
+            this.addError(
+              node,
+              `Parameter "${expected.name}" in method "${methodName}" should be type "${expected.type}", but found "${actualType}".`,
+              'warning'
+            );
+          }
+        }
+      }
+    }
+
+    // Validate return type (only if method has explicit return type annotation)
+    const methodReturnType = methodNode.returnType;
+    if (methodReturnType && expectedSignature.returnType !== 'any' && methodReturnType !== 'any') {
+      if (expectedSignature.returnType !== methodReturnType) {
+        this.addError(
+          node,
+          `Method "${methodName}" should return "${expectedSignature.returnType}", but declares "${methodReturnType}".`,
+          'warning'
+        );
+      }
+    }
   }
 
   private findMethod(node: HSPlusNode, name: string): any {
