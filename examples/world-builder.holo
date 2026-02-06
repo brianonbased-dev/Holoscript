@@ -1,131 +1,50 @@
-// HoloScript Killer Demo: World Builder Sandbox
-// A complete VR world-building experience in ~100 lines
-// Shows: templates, spatial groups, reactive state, physics, networking
+// World Builder Example
+// Interactive scene construction demo
 
-composition "World Builder Sandbox" {
-  environment {
-    skybox: "gradient"
-    ambient_light: 0.5
-    gravity: -9.81
-    fog: { color: "#88aaff", density: 0.005 }
-  }
+@world {
+  backgroundColor: "#1a1a2e"
+  ambient: 0.5
+  shadows: true
+}
 
-  @state {
-    selected_tool: "cube"
-    grid_snap: true
-    object_count: 0
-    build_mode: true
-  }
+// Main building platform
+object "platform" @collidable {
+  position: [0, 0, 0]
+  scale: [10, 0.2, 10]
+  color: "#2d2d44"
+  geometry: "cube"
+  material: "concrete"
+}
 
-  // Buildable block templates
-  template "BuildBlock" {
-    @grabbable(snap_to_hand: true)
-    @physics(mass: 1)
-    @collidable
-    @stackable(snap_distance: 0.1)
-    @networked
-    
-    scale: 0.5
-    
-    on_grab: {
-      haptic_feedback("dominant", 0.3)
-      this.color = blend(this.color, "#ffffff", 0.3)
-    }
-    
-    on_release: {
-      if (@state.grid_snap) {
-        this.position = snap_to_grid(this.position, 0.5)
-      }
-      this.color = this.base_color
-      @state.object_count++
-    }
-  }
+// Grabbable building blocks
+orb "block_red" @grabbable @collidable {
+  position: [-2, 1, 0]
+  scale: [0.5, 0.5, 0.5]
+  color: "#ff4444"
+  geometry: "cube"
+  material: "plastic"
+}
 
-  template "ToolButton" {
-    @clickable
-    @hoverable
-    @glowing(intensity: 0.5)
-    
-    on_hover_enter: { this.scale = 1.2; this.glow_intensity = 1.5 }
-    on_hover_exit: { this.scale = 1.0; this.glow_intensity = 0.5 }
-  }
+orb "block_blue" @grabbable @collidable {
+  position: [0, 1, 0]
+  scale: [0.5, 0.5, 0.5]
+  color: "#4444ff"
+  geometry: "cube"
+  material: "plastic"
+}
 
-  // Tool palette (floating UI)
-  spatial_group "ToolPalette" {
-    position: [-1.5, 1.2, -1]
-    rotation: [0, 30, 0]
-    @world_locked
-    
-    object "CubeTool" using "ToolButton" {
-      position: [0, 0, 0]
-      model: "primitives/cube.glb"
-      color: "#ff6b6b"
-      on_click: { @state.selected_tool = "cube"; spawn_block("cube") }
-    }
-    
-    object "SphereTool" using "ToolButton" {
-      position: [0.3, 0, 0]
-      model: "primitives/sphere.glb"
-      color: "#4ecdc4"
-      on_click: { @state.selected_tool = "sphere"; spawn_block("sphere") }
-    }
-    
-    object "CylinderTool" using "ToolButton" {
-      position: [0.6, 0, 0]
-      model: "primitives/cylinder.glb"
-      color: "#ffe66d"
-      on_click: { @state.selected_tool = "cylinder"; spawn_block("cylinder") }
-    }
-    
-    object "GridToggle" using "ToolButton" {
-      position: [0.3, -0.3, 0]
-      model: "icons/grid.glb"
-      color: @state.grid_snap ? "#00ff00" : "#666666"
-      on_click: { @state.grid_snap = !@state.grid_snap }
-    }
-    
-    object "CountDisplay" {
-      @billboard
-      position: [0.3, 0.3, 0]
-      text: "Objects: ${@state.object_count}"
-    }
-  }
+orb "block_green" @grabbable @collidable {
+  position: [2, 1, 0]
+  scale: [0.5, 0.5, 0.5]
+  color: "#44ff44"
+  geometry: "cube"
+  material: "plastic"
+}
 
-  // Build platform with grid
-  object "BuildPlatform" {
-    @collidable
-    position: [0, 0, 0]
-    model: "platform_grid.glb"
-    scale: [10, 0.1, 10]
-    material: "grid_holographic"
-  }
-
-  // Spawn zone for new blocks
-  object "SpawnPoint" {
-    @trigger
-    position: [0, 1.5, -0.8]
-    visible: false
-  }
-
-  logic {
-    function "spawn_block" {
-      let block = spawn "BuildBlock" at SpawnPoint.position
-      block.model = "primitives/${shape}.glb"
-      block.base_color = random_color()
-      block.color = block.base_color
-      play_sound("spawn.wav", SpawnPoint.position)
-    }
-    
-    on_scene_load {
-      play_ambient("creative_ambient.mp3")
-    }
-    
-    when @state.object_count > 50 {
-      notify("You're building something amazing!")
-    }
-    
-    when @state.object_count > 100 {
-      notify("Master builder status unlocked!")
-    }
-  }
+// Tool palette
+object "palette" {
+  position: [-4, 1.5, -2]
+  scale: [1, 2, 0.1]
+  color: "#333344"
+  geometry: "cube"
 }

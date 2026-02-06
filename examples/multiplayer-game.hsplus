@@ -1,146 +1,64 @@
-/**
- * HoloScript Multiplayer Game Example
- * 
- * A simple networked game where players can throw balls at targets.
- * Demonstrates:
- * - @networked sync
- * - @grabbable physics objects
- * - Score tracking
- * - Haptic feedback
- */
+// Multiplayer Game
+// Networked game environment
 
-// Shared event bus for game events
-eventBus GameEvents
-
-// Networked player representation
-object Player @networked @tracked {
-  geometry: 'capsule'
-  scale: [0.4, 1.6, 0.4]
-  color: '#00ffff'
-  
-  @networked position
-  @networked rotation
-  
-  state {
-    score: 0
-    name: 'Player'
-    isReady: false
-  }
+@world {
+  backgroundColor: "#0a0a1a"
+  ambient: 0.4
+  shadows: true
 }
 
-// Throwable ball with physics
-object Ball @grabbable @networked @collidable {
-  geometry: 'sphere'
-  scale: [0.15, 0.15, 0.15]
-  color: '#ff6600'
-  
-  physics: {
-    type: 'dynamic'
-    mass: 0.5
-    restitution: 0.7
-  }
-  
-  @networked position
-  @networked velocity
-  
-  state {
-    thrownBy: null
-    isActive: true
-  }
-  
-  onGrab: {
-    haptic.feedback('light')
-    network.claim(this)
-    this.thrownBy = player.id
-  }
-  
-  onRelease: {
-    haptic.feedback('medium')
-    network.sync(this.position, this.velocity)
-  }
+// Arena floor
+cylinder#arena @collidable {
+  position: [0, 0, 0]
+  color: "#1a1a2e"
+  scale: [8, 0.2, 8]
 }
 
-// Target that awards points
-object Target @collidable @destructible {
-  geometry: 'cylinder'
-  scale: [0.3, 0.1, 0.3]
-  color: '#00ff00'
-  
-  state {
-    points: 10
-    isHit: false
-  }
-  
-  onTriggerEnter: (other) => {
-    if (other.type === 'Ball' && !this.isHit) {
-      this.isHit = true
-      audio.play('hit-sound.mp3')
-      
-      GameEvents.emit('targetHit', {
-        targetId: this.id,
-        playerId: other.thrownBy,
-        points: this.points
-      })
-      
-      // Respawn after delay
-      setTimeout(() => {
-        this.isHit = false
-        this.position = randomSpawnPosition()
-      }, 3000)
-    }
-  }
+// Player 1 spawn
+cylinder#spawn1 @glowing {
+  position: [-4, 0.1, 0]
+  color: "#0066ff"
+  scale: [0.8, 0.1, 0.8]
 }
 
-// Score display
-object Scoreboard @billboard {
-  geometry: 'plane'
-  scale: [2, 1, 1]
-  position: [0, 3, -5]
-  
-  state {
-    scores: {}
-  }
-  
-  GameEvents.on('targetHit', (data) => {
-    this.scores[data.playerId] = 
-      (this.scores[data.playerId] || 0) + data.points
-    this.updateDisplay()
-  })
+// Player 2 spawn
+cylinder#spawn2 @glowing {
+  position: [4, 0.1, 0]
+  color: "#ff6600"
+  scale: [0.8, 0.1, 0.8]
 }
 
-// Ball spawner
-object BallSpawner @pointable {
-  geometry: 'cube'
-  scale: [0.5, 0.5, 0.5]
+// Shared ball
+sphere#gameBall @grabbable @throwable @collidable {
   position: [0, 1, 0]
-  color: '#ffff00'
-  
-  onPoint: {
-    haptic.feedback('light')
-    spawnBall(this.position)
-  }
+  color: "#ffffff"
+  size: 0.3
 }
 
-// Helper functions
-function randomSpawnPosition() {
-  return [
-    Math.random() * 10 - 5,
-    Math.random() * 3 + 1,
-    -5 - Math.random() * 5
-  ]
+// Goal 1
+box#goal1 @collidable @glowing {
+  position: [-6, 1, 0]
+  color: "#0066ff"
+  scale: [0.5, 2, 2]
 }
 
-function spawnBall(position) {
-  const ball = instantiate('Ball', {
-    position: [position[0], position[1] + 0.5, position[2]]
-  })
-  network.spawn(ball)
+// Goal 2
+box#goal2 @collidable @glowing {
+  position: [6, 1, 0]
+  color: "#ff6600"
+  scale: [0.5, 2, 2]
 }
 
-// Initialize game
-execute {
-  // Spawn initial targets
-  for (let i = 0; i < 5; i++) {
-    instantiate('Target', { position: randomSpawnPosition() })
-  }
+// Center barrier
+box#barrier @collidable {
+  position: [0, 0.5, 0]
+  color: "#4a4a6a"
+  scale: [0.2, 1, 4]
+}
+
+// Scoreboard
+box#scoreboard {
+  position: [0, 4, -5]
+  color: "#222233"
+  scale: [3, 1, 0.1]
 }

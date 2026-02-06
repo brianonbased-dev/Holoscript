@@ -19,6 +19,8 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest run --passWithNoTests",
+    "test:live": "tsx src/run-live-tests.ts",
+    "test:e2e": "tsx src/e2e/MCPServerE2E.ts",
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {

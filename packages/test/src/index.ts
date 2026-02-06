@@ -9,6 +9,8 @@ export { VisualTestRunner, type VisualTestConfig } from './VisualTestRunner';
 export { SceneTester, type SceneTestOptions } from './SceneTester';
 export * from './visual'; // Export visual testing framework
 export * from './coverage'; // Export coverage tracking framework
+export * from './e2e'; // Export E2E testing framework
+export * from './observability'; // Export runtime observability
 
 // ============================================================================
 // Types

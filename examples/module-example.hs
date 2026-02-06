@@ -1,57 +1,35 @@
-// HoloScript Module System Example
-// Demonstrates import/export functionality
+// Module Example
+// Demonstrates modular composition
 
-// Import from other modules
-import { Vector3, Color } from "holoscript-math"
-import DataProcessor from "data-utils"
-
-// Export functions for other modules to use
-export function "createInteractiveOrb" {
-  object "dynamicOrb" {
-    name: name
-    position: position
-    color: "#00ffff"
-    glow: true
-    interactive: true
-    onClick: handleClick
-  }
-  return dynamicOrb
+environment {
+  skybox: "sunset"
+  ambient_light: 0.5
 }
 
-export function "handleClick" {
-  pulse this with {
-    color: "#ff0000"
-    duration: 500
-  }
-  emit "orb:clicked" with { target: this.name }
+object "main_module" {
+  geometry: "cube"
+  color: "#4a4a6a"
+  position: { x: 0, y: 1, z: 0 }
+  scale: { x: 1, y: 1, z: 1 }
 }
 
-// Private helper (not exported)
-function "validatePosition" : boolean {
-  return pos.x != null && pos.y != null && pos.z != null
+object "sub_module_a" {
+  geometry: "sphere"
+  color: "#ff6b6b"
+  position: { x: -2, y: 1, z: 0 }
+  scale: { x: 0.5, y: 0.5, z: 0.5 }
 }
 
-// Export constants
-export const ORB_DEFAULTS = {
-  color: "#00ffff",
-  glow: true,
-  size: 1,
-  interactive: true
+object "sub_module_b" {
+  geometry: "sphere"
+  color: "#4ecdc4"
+  position: { x: 2, y: 1, z: 0 }
+  scale: { x: 0.5, y: 0.5, z: 0.5 }
 }
 
-// Export a class-like building
-export building InteractiveScene {
-  orbs: []
-  connections: []
-
-  function "addOrb" {
-    const newOrb = createInteractiveOrb(config.name, config.position)
-    push this.orbs with newOrb
-  }
-
-  function "connectAll" {
-    for (i = 0; i < length(this.orbs) - 1; i++) {
-      connect this.orbs[i] to this.orbs[i + 1] as "data"
-    }
-  }
+object "connector_ab" {
+  geometry: "cylinder"
+  color: "#888888"
+  position: { x: 0, y: 1, z: 0 }
+  scale: { x: 0.05, y: 4, z: 0.05 }
 }

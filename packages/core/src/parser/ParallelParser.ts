@@ -13,6 +13,7 @@
 
 import { cpus } from 'os';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { EventEmitter } from 'events';
 import { WorkerPool, createWorkerPool, WorkerPoolStats } from './WorkerPool';
 import { HoloScriptPlusParser } from './HoloScriptPlusParser';
@@ -97,7 +98,21 @@ export class ParallelParser extends EventEmitter {
     };
 
     // Worker script path - adjust based on build output
-    this.workerPath = path.join(__dirname, 'ParseWorker.js');
+    // Use import.meta.url for ESM compatibility
+    this.workerPath = path.join(this.getCurrentDir(), 'ParseWorker.js');
+  }
+
+  /**
+   * Get current directory in ESM-compatible way
+   */
+  private getCurrentDir(): string {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      return path.dirname(__filename);
+    } catch {
+      // Fallback for CommonJS or test environments
+      return __dirname;
+    }
   }
 
   /**

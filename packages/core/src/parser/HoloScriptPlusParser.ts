@@ -2648,6 +2648,19 @@ export class HoloScriptPlusParser {
       return this.parseBlockContent();
     }
 
+    // Handle hash color literals: #fff, #ff0000, #rgba, etc.
+    if (token.type === 'HASH') {
+      this.advance();
+      // The next token should be an identifier or number containing the hex color
+      const nextToken = this.current();
+      if (nextToken.type === 'IDENTIFIER' || nextToken.type === 'NUMBER') {
+        const hexValue = this.advance().value;
+        return `#${hexValue}`;
+      }
+      // Handle cases where the hex digits were tokenized differently
+      return `#`;
+    }
+
     // @ts-expect-error - THIS token type may not be in the union
     if (token.type === 'THIS') {
         this.advance();

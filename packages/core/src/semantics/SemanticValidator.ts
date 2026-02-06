@@ -153,8 +153,18 @@ export class SemanticValidator {
       if (!methodNode) {
         this.addError(node, `Object "${node.id}" is missing required method "${methodName}" defined in semantic "${definition.name}".`, 'error');
       } else {
+        // Convert signature to expected format
+        const convertedSignature = {
+          params: signature.params.map((p: any, i: number) => ({ 
+            name: `param${i}`, 
+            type: typeof p === 'string' ? p : ((p as any).kind === 'primitive' ? (p as any).name : 'any') 
+          })),
+          returnType: typeof signature.returnType === 'string' 
+            ? signature.returnType 
+            : ((signature.returnType as any)?.kind === 'primitive' ? (signature.returnType as any).name : 'any')
+        };
         // Deep method signature validation
-        this.validateMethodSignature(node, methodNode, methodName, signature, definition.name);
+        this.validateMethodSignature(node, methodNode, methodName, convertedSignature, definition.name);
       }
     }
   }

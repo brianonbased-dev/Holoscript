@@ -1,17 +1,14 @@
-// HoloScript Hello World Example
-// A simple greeting orb that displays a welcome message
+// Hello World
+// The simplest HoloScript example
 
-object "greeting" {
-  message: "Hello, HoloScript World!"
+environment {
+  skybox: "clear"
+  ambient_light: 0.6
+}
+
+object "hello_cube" {
+  geometry: "cube"
   color: "#00ffff"
-  glow: true
-  position: { x: 0, y: 1.5, z: -2 }
+  position: { x: 0, y: 1, z: 0 }
+  scale: { x: 1, y: 1, z: 1 }
 }
-
-function "displayGreeting" {
-  show greeting
-  pulse greeting with duration 1000
-}
-
-// Execute on load
-execute displayGreeting

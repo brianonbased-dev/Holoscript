@@ -1,93 +1,51 @@
-/**
- * HoloScript+ VR Interactions Example
- *
- * Demonstrates all 9 VR traits and reactive state features
- */
+// VR Interactions Example
+// Demonstrates interactive VR elements
 
-// @state - Define reactive state
-@state {
-  count: 0
-  color: "#ff0000"
-  scale: 1
+@world {
+  backgroundColor: "#1a1a2e"
+  ambient: 0.5
+  shadows: "high"
 }
 
-// Main scene container
-scene {
-  // @grabbable - Pick up and move objects
-  orb#mainOrb {
-    position: [0, 0, -2]
-    color: ${state.color}
-    scale: ${state.scale}
-    @grabbable(snap_to_hand: true, haptic_on_grab: 0.7)
-    @hoverable(scale_on_hover: 1.2, glow: true)
-    @pointable(highlight_on_point: true)
-    @on_grab => count += 1
-    @on_release => play_sound("bounce.wav")
-  }
-
-  // @throwable - Physics-based throwing with bounce
-  cube#bounceCube {
-    position: [1, 0, -2]
-    color: "#0000ff"
-    @grabbable
-    @throwable(velocity_multiplier: 2, bounce: true, bounce_factor: 0.8)
-    @breakable(break_velocity: 10, fragments: 5, respawn: true, respawn_delay: 3s)
-  }
-
-  // @scalable - Two-handed pinch to scale
-  sphere#scalableSphere {
-    position: [-1, 0, -2]
-    color: "#00ff00"
-    @grabbable(two_handed: true)
-    @scalable(min_scale: 0.5, max_scale: 5, uniform: true)
-    @on_trigger_enter => haptic_feedback(dominant_hand(), 0.5)
-  }
-
-  // @rotatable - Spin objects with hand rotation
-  cylinder#spinner {
-    position: [0, 1, -2]
-    color: "#ffff00"
-    @grabbable
-    @rotatable(axis: "y", snap_angles: [0, 90, 180, 270])
-  }
-
-  // @stackable - Stack objects together
-  panel#stackPanel {
-    position: [0, -1, -2]
-    width: 0.5
-    height: 0.3
-    @stackable(stack_axis: "y", stack_offset: 0.1, max_stack: 5)
-    @grabbable
-    
-    // Nested stackable item
-    button#stackBtn {
-      text: "Click me (${state.count})"
-      @snappable(snap_distance: 0.1, magnetic: true)
-      @on_click => state.count = 0
-    }
-  }
-
-  // Conditional rendering based on state
-  @if state.count > 5
-  text#highScore {
-    position: [0, 2, -2]
-    value: "Great job! You grabbed ${state.count} times!"
-    color: "#00ff00"
-  }
-
-  // Loop to create multiple objects
-  @for i in range(0, 3)
-  cube#gridCube_${i} {
-    position: ${[i * 0.5, 0, -1]}
-    color: ${i % 2 == 0 ? "#ff0000" : "#0000ff"}
-    scale: 0.3
-    @grabbable
-    @hoverable(highlight_color: "#ffffff")
-  }
+// Grabbable sphere
+orb#mainOrb @grabbable @throwable {
+  position: [0, 1.5, 0]
+  color: "#00ffff"
+  size: 0.5
 }
 
-// TypeScript companion for advanced logic
-@import "./scene.logic.ts" as SceneLogic
+// Throwable cube
+box#throwBlock @grabbable @throwable {
+  position: [-2, 1, 0]
+  color: "#ff6b6b"
+  scale: [0.4, 0.4, 0.4]
+}
 
-@on_mount => SceneLogic.initialize(state)
-@on_update(delta) => SceneLogic.update(state, delta)
+// Pointable button
+box#startButton @pointable {
+  position: [2, 1.2, -2]
+  color: "#00ff88"
+  scale: [0.5, 0.2, 0.1]
+}
+
+// Interactive panel
+box#panel @hoverable {
+  position: [0, 1.5, -3]
+  color: "#2d2d44"
+  scale: [2, 1.5, 0.05]
+}
+
+// Physics ball
+sphere#ball @grabbable {
+  position: [0, 3, 2]
+  color: "#ffaa00"
+  size: 0.3
+}
+
+// Floor
+plane#floor {
+  position: [0, 0, 0]
+  rotation: [-90, 0, 0]
+  scale: [10, 10, 1]
+  color: "#222233"
+}

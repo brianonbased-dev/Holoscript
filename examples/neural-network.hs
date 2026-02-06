@@ -1,55 +1,56 @@
-// HoloScript Neural Network Visualization
-// Visualize a simple neural network with connections
+// Neural Network Visualization
+// Visual representation of AI layers
 
-object "inputLayer" {
-  neurons: 784
-  color: "#4CAF50"
-  position: { x: -3, y: 2, z: 0 }
-  label: "Input Layer (28x28 pixels)"
+environment {
+  skybox: "digital"
+  ambient_light: 0.4
 }
 
-object "hiddenLayer1" {
-  neurons: 256
-  color: "#2196F3"
-  position: { x: -1, y: 2, z: 0 }
-  label: "Hidden Layer 1"
+object "input_layer" {
+  geometry: "cube"
+  color: "#00aaff"
+  position: { x: -3, y: 1.5, z: 0 }
+  scale: { x: 0.5, y: 2, z: 0.5 }
 }
 
-object "hiddenLayer2" {
-  neurons: 128
-  color: "#9C27B0"
-  position: { x: 1, y: 2, z: 0 }
-  label: "Hidden Layer 2"
+object "hidden_layer_1" {
+  geometry: "cube"
+  color: "#00ff88"
+  position: { x: -1, y: 1.5, z: 0 }
+  scale: { x: 0.5, y: 2.5, z: 0.5 }
 }
 
-object "outputLayer" {
-  neurons: 10
-  color: "#FF5722"
-  position: { x: 3, y: 2, z: 0 }
-  label: "Output Layer (0-9 digits)"
+object "hidden_layer_2" {
+  geometry: "cube"
+  color: "#ffaa00"
+  position: { x: 1, y: 1.5, z: 0 }
+  scale: { x: 0.5, y: 2.5, z: 0.5 }
 }
 
-// Connect layers with weighted connections
-connection { from: "inputLayer", to: "hiddenLayer1", type: "weights_1" }
-connection { from: "hiddenLayer1", to: "hiddenLayer2", type: "weights_2" }
-connection { from: "hiddenLayer2", to: "outputLayer", type: "weights_3" }
-
-function "trainNetwork" : object {
-  forward_pass data
-  calculate_loss
-  backward_pass
-  update_weights
-  return metrics
+object "output_layer" {
+  geometry: "cube"
+  color: "#ff0088"
+  position: { x: 3, y: 1.5, z: 0 }
+  scale: { x: 0.5, y: 1.5, z: 0.5 }
 }
 
-function "visualizeActivations" {
-  highlight layer with color "gold"
-  show layer.neurons as particles
+object "connection_1" {
+  geometry: "cylinder"
+  color: "#444444"
+  position: { x: -2, y: 1.5, z: 0 }
+  scale: { x: 0.02, y: 2, z: 0.02 }
 }
 
-// Training loop
-stream trainingData {
-  source: dataset
-  through: [normalize, batch, shuffle]
-  to: trainNetwork
+object "connection_2" {
+  geometry: "cylinder"
+  color: "#444444"
+  position: { x: 0, y: 1.5, z: 0 }
+  scale: { x: 0.02, y: 2, z: 0.02 }
+}
+
+object "connection_3" {
+  geometry: "cylinder"
+  color: "#444444"
+  position: { x: 2, y: 1.5, z: 0 }
+  scale: { x: 0.02, y: 2, z: 0.02 }
 }

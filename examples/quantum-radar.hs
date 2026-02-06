@@ -1,95 +1,49 @@
-// HoloScript Quantum Radar
-// Visualizes the agent mesh network in 3D holographic space.
-// Agents are orbs, messages are pulses along curved connections.
+// Quantum Radar
+// Scanning and detection visualization
 
-// Council agents - primary command nodes
-object "ceo" {
-  geometry: octahedron
-  size: 4
+environment {
+  skybox: "night"
+  ambient_light: 0.3
+}
+
+object "radar_base" {
+  geometry: "cylinder"
+  color: "#2a2a4a"
+  position: { x: 0, y: 0.5, z: 0 }
+  scale: { x: 2, y: 1, z: 2 }
+}
+
+object "radar_dish" {
+  geometry: "sphere"
+  color: "#4a4a6a"
+  position: { x: 0, y: 1.5, z: 0 }
+  scale: { x: 1.5, y: 0.5, z: 1.5 }
+}
+
+object "scan_ring_1" {
+  geometry: "torus"
+  color: "#00ff88"
+  position: { x: 0, y: 0.1, z: 0 }
+  scale: { x: 3, y: 3, z: 0.05 }
+}
+
+object "scan_ring_2" {
+  geometry: "torus"
   color: "#00ffff"
-  position: { x: 0, y: 0, z: 0 }
-  label: "CEO"
-  @trait(animated, type="float", speed=1.5)
-  @trait(animated, type="rotate", speed=0.5)
-  @trait(material, preset="hologram", wireframe=true, emissive="#00ffff", emissiveIntensity=0.5)
-  @trait(hoverable, highlight_intensity=2.0)
-  @trait(neural_link, model="brittney-v4.gguf", temperature=0.7)
+  position: { x: 0, y: 0.1, z: 0 }
+  scale: { x: 5, y: 5, z: 0.05 }
 }
 
-object "builder" {
-  geometry: octahedron
-  size: 4
-  color: "#00ffff"
-  position: { x: 30, y: 10, z: 20 }
-  label: "BUILDER"
-  @trait(animated, type="float", speed=1.5)
-  @trait(animated, type="rotate", speed=0.3)
-  @trait(material, preset="hologram", wireframe=true, emissive="#00ffff", emissiveIntensity=0.5)
-  @trait(hoverable, highlight_intensity=2.0)
+object "scan_ring_3" {
+  geometry: "torus"
+  color: "#0088ff"
+  position: { x: 0, y: 0.1, z: 0 }
+  scale: { x: 7, y: 7, z: 0.05 }
 }
 
-object "futurist" {
-  geometry: octahedron
-  size: 4
-  color: "#00ffff"
-  position: { x: -30, y: -10, z: 20 }
-  label: "FUTURIST"
-  @trait(animated, type="float", speed=1.5)
-  @trait(animated, type="rotate", speed=0.3)
-  @trait(material, preset="hologram", wireframe=true, emissive="#00ffff", emissiveIntensity=0.5)
-  @trait(hoverable, highlight_intensity=2.0)
-}
-
-object "vision" {
-  geometry: octahedron
-  size: 4
-  color: "#00ffff"
-  position: { x: 0, y: 20, z: -30 }
-  label: "VISION"
-  @trait(animated, type="float", speed=1.5)
-  @trait(animated, type="rotate", speed=0.3)
-  @trait(material, preset="hologram", wireframe=true, emissive="#00ffff", emissiveIntensity=0.5)
-  @trait(hoverable, highlight_intensity=2.0)
-}
-
-// Shield spheres around council nodes
-object "ceoShield" {
-  geometry: sphere
-  size: 8
-  color: "#00ffff"
-  position: { x: 0, y: 0, z: 0 }
-  @trait(material, wireframe=true, transparent=true, opacity=0.1)
-}
-
-// Mesh connections between council agents
-connection { from: "ceo", to: "builder", type: "command_channel" }
-connection { from: "ceo", to: "futurist", type: "strategy_channel" }
-connection { from: "ceo", to: "vision", type: "perception_channel" }
-connection { from: "builder", to: "futurist", type: "sync_channel" }
-connection { from: "vision", to: "builder", type: "insight_channel" }
-
-// Spatial event pulse stream
-stream spatialEvents {
-  source: "/api/mesh/spatial"
-  interval: 1000
-  through: [filterEvents, mapToPulse]
-  to: renderPulse
-}
-
-function "filterEvents" : array {
-  return events.slice(-20)
-}
-
-function "mapToPulse" : object {
-  return {
-    start: ceo.position,
-    end: event.position,
-    intensity: event.intensity
-  }
-}
-
-function "renderPulse" {
-  animate pulse along curve from pulse.start to pulse.end
-  duration: 0.5
-  color: "#00ffff"
+object "target_blip" {
+  geometry: "sphere"
+  color: "#ff0000"
+  position: { x: 3, y: 0.3, z: 2 }
+  scale: { x: 0.2, y: 0.2, z: 0.2 }
 }
