@@ -536,8 +536,6 @@ export class AssetManifest {
    */
   static fromJSON(data: AssetManifestData): AssetManifest {
     const manifest = new AssetManifest(data.config);
-    manifest.createdAt = data.createdAt;
-    manifest.modifiedAt = data.modifiedAt;
 
     // Add assets
     for (const asset of Object.values(data.assets)) {
@@ -548,6 +546,11 @@ export class AssetManifest {
     for (const group of data.groups) {
       manifest.createGroup(group);
     }
+
+    // Restore original timestamps AFTER adding assets/groups
+    // (addAsset/createGroup update modifiedAt, so we restore it here)
+    manifest.createdAt = data.createdAt;
+    manifest.modifiedAt = data.modifiedAt;
 
     return manifest;
   }
