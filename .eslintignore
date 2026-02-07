@@ -1,0 +1,9 @@
+# Ignore benchmark package (has type resolution issues)
+packages/benchmark/
+
+# Ignore build outputs
+**/dist/
+**/node_modules/
+
+# Ignore generated files
+**/*.d.ts
