@@ -14,9 +14,22 @@ import { eventBus, emit, on } from '../events.js';
 import { storage } from '../storage.js';
 import { device, isVRCapable } from '../device.js';
 import { createLoop, nextFrame } from '../timing.js';
-import { PhysicsWorld } from '../physics/PhysicsWorld';
+import { PhysicsWorld, type CollisionEvent, type RigidbodyConfig } from '../physics/PhysicsWorld';
 import { TraitSystem } from '../traits/TraitSystem';
-import { GrabbableTrait, ThrowableTrait } from '../traits/InteractionTraits';
+import { 
+  GrabbableTrait, 
+  ThrowableTrait, 
+  CollidableTrait,
+  PhysicsTrait,
+  GravityTrait,
+  TriggerTrait,
+  PointableTrait,
+  HoverableTrait,
+  ClickableTrait,
+  DraggableTrait,
+  ScalableTrait,
+  calculateThrowVelocity
+} from '../traits/InteractionTraits';
 import { InputManager } from '../input/InputManager';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -49,6 +62,22 @@ interface LoadedComposition {
   logic: CompositionLogic;
   environment: EnvironmentConfig;
   objects: ParsedObject[];
+  imports: ModuleImport[];
+  templates: Map<string, ParsedTemplate>;
+}
+
+interface ModuleImport {
+  source: string;
+  specifiers: Array<{ imported: string; local?: string }>;
+}
+
+interface ParsedTemplate {
+  name: string;
+  geometry?: string;
+  color?: string;
+  traits: string[];
+  state?: Record<string, unknown>;
+  properties: Map<string, unknown>;
 }
 
 interface ParsedObject {
@@ -230,11 +259,53 @@ function extractFromHoloAST(ast: HoloComposition): LoadedComposition {
     }
   }
   
+  // Extract imports
+  const imports: ModuleImport[] = [];
+  for (const imp of ast.imports || []) {
+    imports.push({
+      source: imp.source,
+      specifiers: imp.specifiers.map(s => ({
+        imported: s.imported,
+        local: s.local,
+      })),
+    });
+  }
+  
+  // Extract templates
+  const templates = new Map<string, ParsedTemplate>();
+  for (const template of ast.templates || []) {
+    const properties = new Map<string, unknown>();
+    if (template.properties) {
+      for (const prop of template.properties) {
+        properties.set(prop.key, prop.value);
+      }
+    }
+    
+    const geometry = template.properties?.find((p: { key: string }) => p.key === 'geometry')?.value as string | undefined;
+    const color = template.properties?.find((p: { key: string }) => p.key === 'color')?.value as string | undefined;
+    
+    // Extract trait names (may be objects or strings)
+    const traitNames: string[] = (template.traits || []).map((t: unknown) => 
+      typeof t === 'string' ? t : (t as { name?: string })?.name || String(t)
+    );
+    
+    templates.set(template.name, {
+      name: template.name,
+      geometry,
+      color,
+      traits: traitNames,
+      state: (template as any).state,
+      properties,
+    });
+  }
+  
   return {
     state,
     environment,
     objects,
     logic: extractLogicFromAST(ast),
+    imports,
+    templates,
   };
 }
 
@@ -314,6 +385,8 @@ function extractFromHsPlusAST(ast: unknown): LoadedComposition {
       frameHandlers: [],
       keyboardHandlers: new Map(),
     },
+    imports: [],
+    templates: new Map(),
   };
 }
 
@@ -337,6 +410,192 @@ function extractScale(scale: unknown): { x: number; y: number; z: number } {
   }
   return { x: 1, y: 1, z: 1 };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODULE LOADER
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface LoadedModule {
+  source: string;
+  exports: Record<string, unknown>;
+  templates?: Map<string, ParsedTemplate>;
+}
+
+/**
+ * Module loader for HoloScript @import directives
+ * Handles loading external .holo, .hsplus, .ts, and .js files
+ */
+class ModuleLoader {
+  private cache: Map<string, LoadedModule> = new Map();
+  private basePath: string;
+  private preloaded: Map<string, Record<string, unknown>> = new Map();
+  
+  constructor(basePath: string = '') {
+    this.basePath = basePath;
+  }
+  
+  /**
+   * Register a pre-loaded module (for bundled modules)
+   */
+  register(source: string, exports: Record<string, unknown>): void {
+    this.preloaded.set(source, exports);
+  }
+  
+  /**
+   * Load all imports from a composition
+   */
+  async loadImports(imports: ModuleImport[]): Promise<Map<string, LoadedModule>> {
+    const loaded = new Map<string, LoadedModule>();
+    
+    for (const imp of imports) {
+      try {
+        const module = await this.loadModule(imp.source);
+        loaded.set(imp.source, module);
+      } catch (error) {
+        console.warn(`[HoloScript] Failed to load module "${imp.source}":`, error);
+      }
+    }
+    
+    return loaded;
+  }
+  
+  /**
+   * Load a single module
+   */
+  async loadModule(source: string): Promise<LoadedModule> {
+    // Check cache
+    if (this.cache.has(source)) {
+      return this.cache.get(source)!;
+    }
+    
+    // Check preloaded
+    if (this.preloaded.has(source)) {
+      const module: LoadedModule = {
+        source,
+        exports: this.preloaded.get(source)!,
+      };
+      this.cache.set(source, module);
+      return module;
+    }
+    
+    // Determine module type from extension
+    const ext = source.split('.').pop()?.toLowerCase();
+    
+    let module: LoadedModule;
+    
+    switch (ext) {
+      case 'holo':
+      case 'hsplus':
+      case 'hs':
+        module = await this.loadHoloModule(source);
+        break;
+      case 'ts':
+      case 'js':
+        module = await this.loadJSModule(source);
+        break;
+      default:
+        // Try as JavaScript module
+        module = await this.loadJSModule(source);
+    }
+    
+    this.cache.set(source, module);
+    return module;
+  }
+  
+  /**
+   * Load a HoloScript module (.holo, .hsplus, .hs)
+   */
+  private async loadHoloModule(source: string): Promise<LoadedModule> {
+    const resolvedPath = this.resolvePath(source);
+    const response = await fetch(resolvedPath);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${source}: ${response.status}`);
+    }
+    
+    const content = await response.text();
+    const fileType = source.endsWith('.holo') ? 'holo' : 'hsplus';
+    const composition = loadComposition(content, fileType);
+    
+    // Export templates and state as module exports
+    const exports: Record<string, unknown> = { ...composition.state };
+    
+    // Export templates
+    for (const [name, template] of composition.templates) {
+      exports[name] = template;
+    }
+    
+    return {
+      source,
+      exports,
+      templates: composition.templates,
+    };
+  }
+  
+  /**
+   * Load a JavaScript/TypeScript module
+   */
+  private async loadJSModule(source: string): Promise<LoadedModule> {
+    const resolvedPath = this.resolvePath(source);
+    
+    try {
+      // Use dynamic import for ES modules
+      const module = await import(/* webpackIgnore: true */ resolvedPath);
+      return {
+        source,
+        exports: module,
+      };
+    } catch (error) {
+      // Fallback to script loading for non-module scripts
+      const exports = await this.loadViaScript(resolvedPath);
+      return {
+        source,
+        exports,
+      };
+    }
+  }
+  
+  /**
+   * Load via script tag fallback
+   */
+  private loadViaScript(path: string): Promise<Record<string, unknown>> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = path;
+      script.type = 'module';
+      
+      script.onload = () => {
+        // Assume exports are attached to window
+        const exportName = path.split('/').pop()?.replace(/\.[^.]+$/, '');
+        const exports = (window as any)[exportName || 'module'] || {};
+        resolve(exports);
+      };
+      
+      script.onerror = () => reject(new Error(`Failed to load script: ${path}`));
+      document.head.appendChild(script);
+    });
+  }
+  
+  /**
+   * Resolve relative path
+   */
+  private resolvePath(source: string): string {
+    if (source.startsWith('http://') || source.startsWith('https://') || source.startsWith('/')) {
+      return source;
+    }
+    return this.basePath ? `${this.basePath}/${source}` : source;
+  }
+  
+  /**
+   * Clear module cache
+   */
+  clearCache(): void {
+    this.cache.clear();
+  }
+}
+
+// Global module loader instance
+const moduleLoader = new ModuleLoader();
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -486,10 +745,19 @@ class BrowserRuntime implements HoloScriptRuntime {
     // Physics
     this.physicsWorld = new PhysicsWorld({ gravity: [0, -9.82, 0] });
     
-    // Traits
+    // Traits - register all interaction traits
     this.traitSystem = new TraitSystem(this.physicsWorld);
     this.traitSystem.register(GrabbableTrait);
     this.traitSystem.register(ThrowableTrait);
+    this.traitSystem.register(CollidableTrait);
+    this.traitSystem.register(PhysicsTrait);
+    this.traitSystem.register(GravityTrait);
+    this.traitSystem.register(TriggerTrait);
+    this.traitSystem.register(PointableTrait);
+    this.traitSystem.register(HoverableTrait);
+    this.traitSystem.register(ClickableTrait);
+    this.traitSystem.register(DraggableTrait);
+    this.traitSystem.register(ScalableTrait);
     
     // Input
     this.inputManager = new InputManager(this.scene, this.camera, this.renderer.domElement);
@@ -502,7 +770,7 @@ class BrowserRuntime implements HoloScriptRuntime {
     window.addEventListener('keyup', this.handleKeyUp.bind(this));
   }
   
-  load(source: string): void {
+  async load(source: string): Promise<void> {
     try {
       console.log('[HoloScript] Loading source:', source.substring(0, 100) + '...');
       
@@ -515,8 +783,36 @@ class BrowserRuntime implements HoloScriptRuntime {
       console.log('[HoloScript] Loaded composition:', this.composition);
       console.log('[HoloScript] Number of objects:', this.composition?.objects?.length || 0);
       
+      // Load module imports
+      if (this.composition.imports.length > 0) {
+        console.log('[HoloScript] Loading imports:', this.composition.imports.map(i => i.source));
+        const modules = await moduleLoader.loadImports(this.composition.imports);
+        
+        // Make imported templates available
+        for (const [modSource, module] of modules) {
+          if (module.templates) {
+            for (const [name, template] of module.templates) {
+              this.composition.templates.set(name, template);
+            }
+          }
+          
+          // Make other exports available in state
+          const matchingImport: ModuleImport | undefined = this.composition.imports.find((i) => i.source === modSource);
+          if (matchingImport) {
+            for (const spec of matchingImport.specifiers) {
+              const exportName: string = spec.imported;
+              const localName: string = spec.local || spec.imported;
+              if (module.exports[exportName] !== undefined) {
+                this.state[localName] = module.exports[exportName];
+              }
+            }
+          }
+        }
+        console.log('[HoloScript] Modules loaded:', modules.size);
+      }
+      
       // Initialize state
-      this.state = { ...this.composition.state };
+      this.state = { ...this.state, ...this.composition.state };
       
       // Apply environment (only if managing scene environment fully)
       if (this.config.mode !== 'manual') {

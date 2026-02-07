@@ -406,15 +406,145 @@ export class HoloScriptRuntime {
   }
 
   private buildSceneGraph(ast: ParsedAST): SceneGraph {
-    // Convert AST to scene graph
+    const objects: import('./types.js').SceneNode[] = [];
+    const environment: import('./types.js').EnvironmentConfig = {
+      skybox: 'default',
+      ambientLight: 0.5,
+      gravity: { x: 0, y: -9.81, z: 0 },
+    };
+    
+    // Extract composition name
+    let sceneName = 'Scene';
+    
+    // Process AST body
+    for (const node of ast.body || []) {
+      const nodeAny = node as Record<string, unknown>;
+      
+      // Handle composition node (root)
+      if (nodeAny.type === 'Composition' || nodeAny.type === 'composition') {
+        sceneName = (nodeAny.name as string) || 'Scene';
+        
+        // Extract environment
+        if (nodeAny.environment) {
+          const env = nodeAny.environment as Record<string, unknown>;
+          const props = (env.properties as Array<{ key: string; value: unknown }>) || [];
+          
+          for (const prop of props) {
+            if (prop.key === 'skybox') environment.skybox = prop.value as string;
+            if (prop.key === 'ambient_light' || prop.key === 'ambientLight') {
+              environment.ambientLight = prop.value as number;
+            }
+            if (prop.key === 'gravity') {
+              const g = prop.value as number[];
+              if (Array.isArray(g)) {
+                environment.gravity = { x: g[0] || 0, y: g[1] || -9.81, z: g[2] || 0 };
+              }
+            }
+          }
+        }
+        
+        // Extract objects
+        const compositionObjects = (nodeAny.objects as Array<Record<string, unknown>>) || [];
+        for (const obj of compositionObjects) {
+          objects.push(this.convertObject(obj));
+        }
+        
+        // Extract spatial groups
+        const spatialGroups = (nodeAny.spatialGroups as Array<Record<string, unknown>>) || [];
+        for (const group of spatialGroups) {
+          const groupObjects = (group.objects as Array<Record<string, unknown>>) || [];
+          for (const obj of groupObjects) {
+            objects.push(this.convertObject(obj));
+          }
+        }
+        
+        continue;
+      }
+      
+      // Handle standalone object nodes
+      if (nodeAny.type === 'object' || nodeAny.type === 'orb' || nodeAny.type === 'Object') {
+        objects.push(this.convertObject(nodeAny));
+      }
+    }
+    
     return {
-      name: 'Scene',
-      objects: [],
-      environment: {
-        skybox: 'default',
-        ambientLight: 0.5,
-        gravity: { x: 0, y: -9.81, z: 0 },
-      },
+      name: sceneName,
+      objects,
+      environment,
+    };
+  }
+  
+  private convertObject(obj: Record<string, unknown>): import('./types.js').SceneNode {
+    const props = (obj.properties as Array<{ key: string; value: unknown }>) || [];
+    const propsMap: Record<string, unknown> = {};
+    
+    for (const prop of props) {
+      propsMap[prop.key] = prop.value;
+    }
+    
+    // Extract position
+    const posValue = propsMap.position;
+    let position: [number, number, number] = [0, 0, 0];
+    if (Array.isArray(posValue)) {
+      position = [posValue[0] || 0, posValue[1] || 0, posValue[2] || 0];
+    } else if (typeof posValue === 'object' && posValue) {
+      const p = posValue as { x?: number; y?: number; z?: number };
+      position = [p.x || 0, p.y || 0, p.z || 0];
+    }
+    
+    // Extract rotation
+    const rotValue = propsMap.rotation;
+    let rotation: [number, number, number] = [0, 0, 0];
+    if (Array.isArray(rotValue)) {
+      rotation = [rotValue[0] || 0, rotValue[1] || 0, rotValue[2] || 0];
+    } else if (typeof rotValue === 'object' && rotValue) {
+      const r = rotValue as { x?: number; y?: number; z?: number };
+      rotation = [r.x || 0, r.y || 0, r.z || 0];
+    }
+    
+    // Extract scale
+    const scaleValue = propsMap.scale;
+    let scale: [number, number, number] | number = 1;
+    if (typeof scaleValue === 'number') {
+      scale = scaleValue;
+    } else if (Array.isArray(scaleValue)) {
+      scale = [scaleValue[0] || 1, scaleValue[1] || 1, scaleValue[2] || 1];
+    } else if (typeof scaleValue === 'object' && scaleValue) {
+      const s = scaleValue as { x?: number; y?: number; z?: number };
+      scale = [s.x || 1, s.y || 1, s.z || 1];
+    }
+    
+    // Extract geometry type
+    const geometry = (propsMap.geometry || propsMap.type || 'box') as string;
+    
+    // Extract traits
+    const traits: string[] = [];
+    if (Array.isArray(obj.traits)) {
+      for (const trait of obj.traits) {
+        if (typeof trait === 'string') {
+          traits.push(trait);
+        } else if (typeof trait === 'object' && trait && (trait as { name?: string }).name) {
+          traits.push((trait as { name: string }).name);
+        }
+      }
+    }
+    
+    // Remove position, rotation, scale from properties
+    delete propsMap.position;
+    delete propsMap.rotation;
+    delete propsMap.scale;
+    delete propsMap.geometry;
+    
+    return {
+      id: (obj.name as string) || `object_${Math.random().toString(36).substring(7)}`,
+      name: (obj.name as string) || 'Object',
+      type: geometry,
+      position,
+      rotation,
+      scale,
+      properties: propsMap,
+      traits,
+      children: [],
     };
   }
 

@@ -221,9 +221,28 @@ export {
 } from './browser/BrowserRuntime.js';
 
 // Physics and Traits
-export { PhysicsWorld } from './physics/PhysicsWorld.js';
+export { 
+  PhysicsWorld,
+  type CollisionEvent,
+  type RigidbodyConfig,
+  type CollisionCallback,
+  type PhysicsOptions,
+} from './physics/PhysicsWorld.js';
 export { TraitSystem, type TraitHandler, type TraitContext } from './traits/TraitSystem.js';
-export { GrabbableTrait, ThrowableTrait } from './traits/InteractionTraits.js';
+export { 
+  GrabbableTrait, 
+  ThrowableTrait,
+  CollidableTrait,
+  PhysicsTrait,
+  GravityTrait,
+  TriggerTrait,
+  PointableTrait,
+  HoverableTrait,
+  ClickableTrait,
+  DraggableTrait,
+  ScalableTrait,
+  calculateThrowVelocity,
+} from './traits/InteractionTraits.js';
 
 /**
  * Initialize the runtime and register globals
