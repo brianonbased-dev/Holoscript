@@ -33,10 +33,13 @@ export interface TextTo3DResult {
 
 export interface TextTo3DProvider {
   name: string;
-  generateModel(description: string, opts?: {
-    style?: 'realistic' | 'cartoon' | 'low-poly' | 'pbr';
-    format?: 'glb' | 'gltf';
-  }): Promise<TextTo3DResult>;
+  generateModel(
+    description: string,
+    opts?: {
+      style?: 'realistic' | 'cartoon' | 'low-poly' | 'pbr';
+      format?: 'glb' | 'gltf';
+    }
+  ): Promise<TextTo3DResult>;
 }
 
 // =============================================================================
@@ -55,10 +58,13 @@ export class MeshyProvider implements TextTo3DProvider {
     }
   }
 
-  async generateModel(description: string, opts?: {
-    style?: 'realistic' | 'cartoon' | 'low-poly' | 'pbr';
-    format?: 'glb' | 'gltf';
-  }): Promise<TextTo3DResult> {
+  async generateModel(
+    description: string,
+    opts?: {
+      style?: 'realistic' | 'cartoon' | 'low-poly' | 'pbr';
+      format?: 'glb' | 'gltf';
+    }
+  ): Promise<TextTo3DResult> {
     const start = Date.now();
 
     // Step 1: Submit text-to-3D job
@@ -81,7 +87,7 @@ export class MeshyProvider implements TextTo3DProvider {
       throw new Error(`Meshy submit failed (${submitResponse.status}): ${err}`);
     }
 
-    const { result: jobId } = await submitResponse.json() as { result: string };
+    const { result: jobId } = (await submitResponse.json()) as { result: string };
 
     // Step 2: Poll for completion (max 5 minutes)
     const maxPollMs = 300_000;
@@ -98,7 +104,7 @@ export class MeshyProvider implements TextTo3DProvider {
 
       if (!statusResponse.ok) continue;
 
-      const job = await statusResponse.json() as {
+      const job = (await statusResponse.json()) as {
         status: string;
         model_urls?: { glb?: string; gltf?: string };
         thumbnail_url?: string;
@@ -146,10 +152,13 @@ export class TripoProvider implements TextTo3DProvider {
     }
   }
 
-  async generateModel(description: string, _opts?: {
-    style?: 'realistic' | 'cartoon' | 'low-poly' | 'pbr';
-    format?: 'glb' | 'gltf';
-  }): Promise<TextTo3DResult> {
+  async generateModel(
+    description: string,
+    _opts?: {
+      style?: 'realistic' | 'cartoon' | 'low-poly' | 'pbr';
+      format?: 'glb' | 'gltf';
+    }
+  ): Promise<TextTo3DResult> {
     const start = Date.now();
 
     // Step 1: Submit task
@@ -170,7 +179,7 @@ export class TripoProvider implements TextTo3DProvider {
       throw new Error(`Tripo submit failed (${submitResponse.status}): ${err}`);
     }
 
-    const { data } = await submitResponse.json() as { data: { task_id: string } };
+    const { data } = (await submitResponse.json()) as { data: { task_id: string } };
     const taskId = data.task_id;
 
     // Step 2: Poll for completion
@@ -188,7 +197,7 @@ export class TripoProvider implements TextTo3DProvider {
 
       if (!statusResponse.ok) continue;
 
-      const result = await statusResponse.json() as {
+      const result = (await statusResponse.json()) as {
         data: {
           status: string;
           output?: { model?: string };
@@ -298,15 +307,17 @@ export async function textTo3DToHolo(opts: TextTo3DHoloOptions): Promise<TextTo3
 // =============================================================================
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function sanitizeName(description: string): string {
-  return description
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_|_$/g, '')
-    .slice(0, 40) || 'generated_object';
+  return (
+    description
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 40) || 'generated_object'
+  );
 }
 
 function mergeTraitsIntoHolo(
@@ -317,7 +328,7 @@ function mergeTraitsIntoHolo(
 ): string {
   if (traits.length === 0) return baseHolo;
 
-  const traitAnnotations = traits.map(t => `@${t}`).join(' ');
+  const traitAnnotations = traits.map((t) => `@${t}`).join(' ');
 
   // Try to inject traits into existing object declaration
   const objectPattern = new RegExp(`(object\\s+"${objectName}")(\\s*\\{)`);

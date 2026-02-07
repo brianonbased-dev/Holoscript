@@ -9,10 +9,7 @@
  * @version 1.0.0
  */
 
-import {
-  DeprecationRegistry,
-  createDeprecationRegistry,
-} from '../deprecation';
+import { DeprecationRegistry, createDeprecationRegistry } from '../deprecation';
 
 /**
  * Migration rule defining how to transform deprecated code

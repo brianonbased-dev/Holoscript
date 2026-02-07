@@ -223,9 +223,6 @@ export type VRTraitName =
   | 'subtitle'
   | 'screen_reader'
   // Gaussian Splatting & Volumetric
-   
-   
-   
   | 'point_cloud'
   | 'photogrammetry'
   // WebGPU Compute

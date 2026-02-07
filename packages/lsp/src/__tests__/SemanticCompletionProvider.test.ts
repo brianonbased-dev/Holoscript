@@ -40,7 +40,7 @@ describe('SemanticCompletionProvider', () => {
     it('should handle initialization with mock adapter', async () => {
       // Create a mock search service that will be used
       mockAdapter.getEmbeddings.mockResolvedValue([0.1, 0.2, 0.3]);
-      
+
       const provider = new SemanticCompletionProvider(mockAdapter as any);
       // This may fail due to semantic search internals, but should not throw unhandled
       try {
@@ -98,7 +98,7 @@ describe('SemanticCompletionProvider with search results', () => {
   it('should format completion items correctly when results exist', async () => {
     // This tests the expected structure of completion items
     // In real usage, the search service would return matches
-    
+
     // Verify completion item structure expectations
     const expectedStructure = {
       label: expect.any(String),

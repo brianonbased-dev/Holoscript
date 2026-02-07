@@ -12,7 +12,7 @@ vi.mock('pg', () => {
   const connect = vi.fn();
   const end = vi.fn();
   const on = vi.fn();
-  
+
   return {
     Pool: vi.fn(() => ({ query, connect, end, on })),
     __getMocks: () => ({ query, connect, end, on }),
@@ -36,14 +36,14 @@ describe('PostgresHoloAdapter', () => {
     vi.clearAllMocks();
     // Reset the PostgresPool singleton
     (PostgresPool as any).instance = undefined;
-    
+
     // Get mock references
     const mocks = (pg as any).__getMocks();
     mockQuery = mocks.query;
     mockConnect = mocks.connect;
     mockEnd = mocks.end;
     mockOn = mocks.on;
-    
+
     // Create a fresh adapter for each test
     adapter = new PostgresHoloAdapter({ connectionString: 'postgres://test' });
   });
@@ -80,7 +80,7 @@ describe('PostgresHoloAdapter', () => {
       mockQuery.mockResolvedValue({ rows: mockRows });
 
       const result = await adapter.query('SELECT * FROM users');
-      
+
       expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM users', undefined);
       expect(result).toEqual(mockRows);
     });
@@ -90,11 +90,8 @@ describe('PostgresHoloAdapter', () => {
       mockQuery.mockResolvedValue({ rows: mockRows });
 
       const result = await adapter.query('SELECT * FROM users WHERE id = $1', [1]);
-      
-      expect(mockQuery).toHaveBeenCalledWith(
-        'SELECT * FROM users WHERE id = $1',
-        [1]
-      );
+
+      expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM users WHERE id = $1', [1]);
       expect(result).toEqual(mockRows);
     });
 
@@ -137,12 +134,7 @@ describe('PostgresHoloAdapter', () => {
     it('should use default agentId when not provided', async () => {
       mockQuery.mockResolvedValue({ rows: [] });
 
-      await adapter.saveExecution(
-        'script-123',
-        'code',
-        'success',
-        10
-      );
+      await adapter.saveExecution('script-123', 'code', 'success', 10);
 
       expect(mockQuery).toHaveBeenCalledWith(
         expect.any(String),
@@ -168,26 +160,19 @@ describe('PostgresHoloAdapter', () => {
     it('should handle save errors gracefully without throwing', async () => {
       mockQuery.mockRejectedValue(new Error('Save failed'));
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       // Should not throw
       await expect(
         adapter.saveExecution('id', 'code', 'error', 100, undefined, 'error msg')
       ).resolves.toBeUndefined();
-      
+
       consoleSpy.mockRestore();
     });
 
     it('should save execution with error message', async () => {
       mockQuery.mockResolvedValue({ rows: [] });
 
-      await adapter.saveExecution(
-        'script-err',
-        'bad code',
-        'error',
-        5,
-        undefined,
-        'Syntax error'
-      );
+      await adapter.saveExecution('script-err', 'bad code', 'error', 5, undefined, 'Syntax error');
 
       expect(mockQuery).toHaveBeenCalledWith(
         expect.any(String),
@@ -201,7 +186,7 @@ describe('PostgresPool', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (PostgresPool as any).instance = undefined;
-    
+
     // Get mock references
     const mocks = (pg as any).__getMocks();
     mockQuery = mocks.query;
@@ -213,7 +198,7 @@ describe('PostgresPool', () => {
   it('should be a singleton', () => {
     const pool1 = PostgresPool.getInstance({ connectionString: 'postgres://test1' });
     const pool2 = PostgresPool.getInstance({ connectionString: 'postgres://test2' });
-    
+
     // Pool constructor should only be called once (singleton pattern)
     expect(pg.Pool).toHaveBeenCalledTimes(1);
     expect(pool1).toBe(pool2);

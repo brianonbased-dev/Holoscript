@@ -6,7 +6,7 @@ export class PostgresPool {
 
   private constructor(config?: PoolConfig) {
     this.pool = new Pool(config);
-    
+
     this.pool.on('error', (err) => {
       console.error('Unexpected error on idle client', err);
     });
@@ -19,7 +19,10 @@ export class PostgresPool {
     return PostgresPool.instance;
   }
 
-  public async query<T extends QueryResultRow = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+  public async query<T extends QueryResultRow = any>(
+    text: string,
+    params?: any[]
+  ): Promise<QueryResult<T>> {
     const _start = Date.now();
     try {
       const res = await this.pool.query(text, params);
@@ -33,7 +36,7 @@ export class PostgresPool {
   public async getClient() {
     return await this.pool.connect();
   }
-  
+
   public async end() {
     await this.pool.end();
   }

@@ -368,7 +368,7 @@ export interface HoloSpatialGroup extends HoloNode {
   properties: HoloGroupProperty[];
   objects: HoloObjectDecl[];
   groups?: HoloSpatialGroup[]; // nested groups
-  body?: HoloStatement[];      // logic statements inside the group
+  body?: HoloStatement[]; // logic statements inside the group
 }
 
 export interface HoloGroupProperty extends HoloNode {

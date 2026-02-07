@@ -722,18 +722,31 @@ export class HoloCompositionParser {
               this.skipBlock();
             }
           }
-        } else if (this.check('IDENTIFIER') && this.current().value === 'orb') {
-          composition.objects.push(this.parseOrbDeclaration());
-        } else if (this.check('OBJECT')) {
-          composition.objects.push(this.parseObject());
-        } else if (this.check('IDENTIFIER') && this.isPrimitiveShape(this.current().value)) {
-          composition.objects.push(this.parsePrimitiveObject());
-        } else if (this.check('TEMPLATE')) {
-          composition.templates.push(this.parseTemplate());
-        } else if (this.check('LIGHT')) {
-          composition.lights.push(this.parseLight());
-        } else if (this.check('AUDIO')) {
-          composition.audio.push(this.parseAudio());
+        } else if (this.check('SPATIAL_GROUP')) {
+          composition.spatialGroups.push(this.parseSpatialGroup());
+        } else if (this.check('LOGIC')) {
+          composition.logic = this.parseLogic();
+        } else if (this.check('IMPORT')) {
+          composition.imports.push(this.parseImport());
+        } else if (this.check('USING')) {
+          const u = this.parseUsing();
+          if (u) composition.imports.push(u);
+        } else if (this.check('SHAPE')) {
+          composition.shapes.push(this.parseShape());
+        } else if (this.check('NPC')) {
+          composition.npcs.push(this.parseNPC());
+        } else if (this.check('QUEST')) {
+          composition.quests.push(this.parseQuest());
+        } else if (this.check('ABILITY')) {
+          composition.abilities.push(this.parseAbility());
+        } else if (this.check('DIALOGUE')) {
+          composition.dialogues.push(this.parseDialogue());
+        } else if (this.check('STATE_MACHINE')) {
+          composition.stateMachines.push(this.parseStateMachine());
+        } else if (this.check('ACHIEVEMENT')) {
+          composition.achievements.push(this.parseAchievement());
+        } else if (this.check('TALENT_TREE')) {
+          composition.talentTrees.push(this.parseTalentTree());
         } else if (this.check('COMMENT' as any) || this.check('LINE_COMMENT' as any)) {
           this.advance(); // skip comments
         } else {
@@ -1806,7 +1819,9 @@ export class HoloCompositionParser {
     } else if (this.check('IDENTIFIER')) {
       name = this.expectIdentifier();
     } else {
-      this.error(`Expected string or identifier for spatial_group name, got ${this.current().type}`);
+      this.error(
+        `Expected string or identifier for spatial_group name, got ${this.current().type}`
+      );
       name = 'unknown';
     }
 
@@ -2280,7 +2295,7 @@ export class HoloCompositionParser {
       'UI',
       'TRANSITION',
       'ELEMENT',
-      'ON_ERROR'
+      'ON_ERROR',
     ];
     if (keywordsAsIdentifiers.includes(this.current().type)) {
       this.advance();

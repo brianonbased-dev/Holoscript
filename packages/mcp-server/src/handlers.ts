@@ -855,9 +855,8 @@ async function handleGenerate3DObject(args: Record<string, unknown>) {
 
   try {
     // Dynamic import to avoid loading heavy deps when not needed
-    const { MeshyProvider, TripoProvider, textTo3DToHolo } = await import(
-      '../../../cli/src/importers/text-to-3d-importer'
-    );
+    const { MeshyProvider, TripoProvider, textTo3DToHolo } =
+      await import('../../../cli/src/importers/text-to-3d-importer');
 
     let provider;
     if (providerName === 'tripo') {

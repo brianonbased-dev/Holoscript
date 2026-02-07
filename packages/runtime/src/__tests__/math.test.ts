@@ -268,7 +268,7 @@ describe('Math Utilities', () => {
       // Run multiple times and check that order changes at least sometimes
       const original = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
       let changedCount = 0;
-      
+
       for (let i = 0; i < 20; i++) {
         const copy = [...original];
         shuffle(copy);
@@ -276,7 +276,7 @@ describe('Math Utilities', () => {
           changedCount++;
         }
       }
-      
+
       // Should have changed at least once (very high probability)
       expect(changedCount).toBeGreaterThan(0);
     });

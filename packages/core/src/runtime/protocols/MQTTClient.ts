@@ -325,7 +325,7 @@ export class MQTTClient {
     if (handlers) {
       for (const handler of handlers) {
         try {
-          (handler)(...args);
+          handler(...args);
         } catch (error) {
           console.error(`Error in MQTT event handler for ${event}:`, error);
         }

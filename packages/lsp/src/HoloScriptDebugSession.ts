@@ -10,10 +10,7 @@ import {
   Variable,
 } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
-import {
-  HoloScriptDebugger,
-  type StackFrame as HoloStackFrame,
-} from '@holoscript/core';
+import { HoloScriptDebugger, type StackFrame as HoloStackFrame } from '@holoscript/core';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
   /** An absolute path to the "program" to debug. */

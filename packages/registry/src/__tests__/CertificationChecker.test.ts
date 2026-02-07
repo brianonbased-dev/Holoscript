@@ -92,7 +92,7 @@ describe('CertificationChecker', () => {
         'src/index.ts': 'export const hello = "world";',
         'README.md': '# Test Package\n\nA description',
       });
-      
+
       const checker = new CertificationChecker(pkg, files);
       const result = await checker.check();
 
@@ -106,11 +106,11 @@ describe('CertificationChecker', () => {
     it('should include all four category results', async () => {
       const pkg = createMockPackage();
       const files = createMockFiles({ 'src/index.ts': 'export {}' });
-      
+
       const checker = new CertificationChecker(pkg, files);
       const result = await checker.check();
 
-      const categoryNames = result.categories.map(c => c.name);
+      const categoryNames = result.categories.map((c) => c.name);
       expect(categoryNames).toContain('codeQuality');
       expect(categoryNames).toContain('documentation');
       expect(categoryNames).toContain('security');
@@ -123,7 +123,7 @@ describe('CertificationChecker', () => {
         'src/index.ts': 'export {};',
         'README.md': '# Package\n\nDescription here with enough content to pass.',
         'CHANGELOG.md': '# Changelog\n\n## 1.0.0\n- Initial release',
-        'LICENSE': 'MIT License',
+        LICENSE: 'MIT License',
         '__tests__/test.ts': 'test("works", () => {});',
         '.eslintrc.json': '{}',
       });
@@ -163,8 +163,8 @@ describe('CertificationChecker', () => {
       const checker = new CertificationChecker(pkg, typedFiles);
       const result = await checker.check();
 
-      const codeQuality = result.categories.find(c => c.name === 'codeQuality');
-      const typing = codeQuality?.checks.find(c => c.name === 'typing');
+      const codeQuality = result.categories.find((c) => c.name === 'codeQuality');
+      const typing = codeQuality?.checks.find((c) => c.name === 'typing');
       expect(typing?.score).toBeGreaterThan(20);
     });
 
@@ -178,8 +178,8 @@ describe('CertificationChecker', () => {
       const checker = new CertificationChecker(pkg, jsFiles);
       const result = await checker.check();
 
-      const codeQuality = result.categories.find(c => c.name === 'codeQuality');
-      const typing = codeQuality?.checks.find(c => c.name === 'typing');
+      const codeQuality = result.categories.find((c) => c.name === 'codeQuality');
+      const typing = codeQuality?.checks.find((c) => c.name === 'typing');
       expect(typing?.score).toBe(0);
     });
 
@@ -193,8 +193,8 @@ describe('CertificationChecker', () => {
       const checker = new CertificationChecker(pkg, filesWithLint);
       const result = await checker.check();
 
-      const codeQuality = result.categories.find(c => c.name === 'codeQuality');
-      const linting = codeQuality?.checks.find(c => c.name === 'linting');
+      const codeQuality = result.categories.find((c) => c.name === 'codeQuality');
+      const linting = codeQuality?.checks.find((c) => c.name === 'linting');
       expect(linting?.passed).toBe(true);
       expect(linting?.score).toBe(25);
     });
@@ -209,8 +209,8 @@ describe('CertificationChecker', () => {
       const checker = new CertificationChecker(pkg, files);
       const result = await checker.check();
 
-      const codeQuality = result.categories.find(c => c.name === 'codeQuality');
-      const linting = codeQuality?.checks.find(c => c.name === 'linting');
+      const codeQuality = result.categories.find((c) => c.name === 'codeQuality');
+      const linting = codeQuality?.checks.find((c) => c.name === 'linting');
       expect(linting?.passed).toBe(true);
     });
 
@@ -224,8 +224,8 @@ describe('CertificationChecker', () => {
       const checker = new CertificationChecker(pkg, filesWithTests);
       const result = await checker.check();
 
-      const codeQuality = result.categories.find(c => c.name === 'codeQuality');
-      const coverage = codeQuality?.checks.find(c => c.name === 'testCoverage');
+      const codeQuality = result.categories.find((c) => c.name === 'codeQuality');
+      const coverage = codeQuality?.checks.find((c) => c.name === 'testCoverage');
       expect(coverage?.score).toBeGreaterThan(0);
     });
 
@@ -239,7 +239,7 @@ describe('CertificationChecker', () => {
       const result = await checker.check();
 
       const testIssue = result.issues.find(
-        i => i.check === 'testCoverage' && i.severity === 'error'
+        (i) => i.check === 'testCoverage' && i.severity === 'error'
       );
       expect(testIssue).toBeDefined();
       expect(testIssue?.message).toContain('No test files');
@@ -256,8 +256,8 @@ describe('CertificationChecker', () => {
       const checker = new CertificationChecker(pkg, filesWithReadme);
       const result = await checker.check();
 
-      const docs = result.categories.find(c => c.name === 'documentation');
-      const readme = docs?.checks.find(c => c.name === 'readme');
+      const docs = result.categories.find((c) => c.name === 'documentation');
+      const readme = docs?.checks.find((c) => c.name === 'readme');
       expect(readme?.score).toBeGreaterThan(0);
     });
 
@@ -270,22 +270,22 @@ describe('CertificationChecker', () => {
       const checker = new CertificationChecker(pkg, files);
       const result = await checker.check();
 
-      const docs = result.categories.find(c => c.name === 'documentation');
-      const changelog = docs?.checks.find(c => c.name === 'changelog');
+      const docs = result.categories.find((c) => c.name === 'documentation');
+      const changelog = docs?.checks.find((c) => c.name === 'changelog');
       expect(changelog?.score).toBeGreaterThan(0);
     });
 
     it('should give score for LICENSE', async () => {
       const pkg = createMockPackage();
       const files = createMockFiles({
-        'LICENSE': 'MIT License\n\nCopyright (c) 2024',
+        LICENSE: 'MIT License\n\nCopyright (c) 2024',
       });
 
       const checker = new CertificationChecker(pkg, files);
       const result = await checker.check();
 
-      const docs = result.categories.find(c => c.name === 'documentation');
-      const license = docs?.checks.find(c => c.name === 'license');
+      const docs = result.categories.find((c) => c.name === 'documentation');
+      const license = docs?.checks.find((c) => c.name === 'license');
       expect(license?.score).toBeGreaterThan(0);
     });
   });
@@ -298,7 +298,7 @@ describe('CertificationChecker', () => {
         'src/utils.ts': 'export function util() {}',
         'README.md': '# Package\n\nComplete documentation with API reference.',
         'CHANGELOG.md': '# Changelog\n\n## 1.0.0\n- Initial',
-        'LICENSE': 'MIT',
+        LICENSE: 'MIT',
         '__tests__/test.ts': 'test("works");',
         '.eslintrc.json': '{}',
       });
@@ -309,7 +309,7 @@ describe('CertificationChecker', () => {
       // Score should be calculated
       expect(result.score).toBeGreaterThanOrEqual(0);
       expect(result.maxScore).toBeGreaterThan(0);
-      
+
       // Percentage calculation
       const scorePercent = (result.score / result.maxScore) * 100;
       expect(scorePercent).toBeGreaterThanOrEqual(0);
@@ -353,7 +353,7 @@ describe('CertificationChecker', () => {
       const checker = new CertificationChecker(pkg, files);
       const result = await checker.check();
 
-      const issuesWithSuggestions = result.issues.filter(i => i.fixSuggestion);
+      const issuesWithSuggestions = result.issues.filter((i) => i.fixSuggestion);
       expect(issuesWithSuggestions.length).toBeGreaterThan(0);
     });
 
@@ -366,7 +366,7 @@ describe('CertificationChecker', () => {
       const checker = new CertificationChecker(pkg, files);
       const result = await checker.check();
 
-      const severities = result.issues.map(i => i.severity);
+      const severities = result.issues.map((i) => i.severity);
       for (const severity of severities) {
         expect(['error', 'warning', 'info']).toContain(severity);
       }

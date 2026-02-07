@@ -311,7 +311,7 @@ describe('Spread Operator (...) - Sprint 1', () => {
 
       expect(result.success).toBe(true);
       const firstChild = result.ast.children?.[0];
-      const itemsProp = (firstChild)?.properties?.items;
+      const itemsProp = firstChild?.properties?.items;
 
       // Should have array with mixed elements and spread
       expect(Array.isArray(itemsProp)).toBe(true);
@@ -324,7 +324,7 @@ describe('Spread Operator (...) - Sprint 1', () => {
 
       expect(result.success).toBe(true);
       const firstChild = result.ast.children?.[0];
-      const config = (firstChild)?.properties?.config;
+      const config = firstChild?.properties?.config;
 
       // Should have object with spread key
       expect(config).toBeDefined();
@@ -337,7 +337,7 @@ describe('Spread Operator (...) - Sprint 1', () => {
 
       expect(result.success).toBe(true);
       const firstChild = result.ast.children?.[0];
-      const data = (firstChild)?.properties?.data;
+      const data = firstChild?.properties?.data;
 
       if (Array.isArray(data) && data[0]?.type === 'spread') {
         expect(data[0]).toHaveProperty('argument');
@@ -460,7 +460,7 @@ describe('Spread Operator (...) - Sprint 1', () => {
 
       expect(result.success).toBe(true);
       const firstChild = result.ast.children?.[0];
-      const data = (firstChild)?.properties?.data;
+      const data = firstChild?.properties?.data;
 
       // Should be a call expression with spread arguments
       expect(data).toBeDefined();
@@ -522,7 +522,7 @@ describe('Spread Operator (...) - Sprint 1', () => {
 
       expect(result.success).toBe(true);
       const firstChild = result.ast.children?.[0];
-      const handler = (firstChild)?.properties?.handler;
+      const handler = firstChild?.properties?.handler;
 
       expect(handler.type).toBe('arrow_function');
       expect(handler.params).toHaveLength(1);

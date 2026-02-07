@@ -127,21 +127,95 @@ More comprehensive than generate_scene - creates production-ready structure.`,
 // =============================================================================
 
 const KNOWN_TRAITS = new Set([
-  'grabbable', 'throwable', 'holdable', 'clickable', 'hoverable', 'draggable',
-  'selectable', 'focusable', 'pointable', 'scalable', 'rotatable', 'snappable',
-  'collidable', 'physics', 'rigid', 'kinematic', 'trigger', 'gravity', 'buoyant',
-  'glowing', 'emissive', 'transparent', 'reflective', 'animated', 'billboard',
-  'sprite', 'instanced', 'pulse', 'outline', 'spinning', 'floating', 'look_at', 'proximity',
-  'networked', 'synced', 'persistent', 'owned', 'host_only', 'local_only',
-  'stackable', 'attachable', 'equippable', 'consumable', 'destructible',
-  'respawnable', 'breakable', 'character', 'patrol',
-  'anchor', 'tracked', 'world_locked', 'hand_tracked', 'eye_tracked', 'head_tracked',
-  'spatial_audio', 'ambient', 'voice_activated', 'music_reactive', 'reverb_zone', 'voice_proximity',
-  'state', 'reactive', 'observable', 'computed', 'persistent_state',
-  'teleport', 'ui_panel', 'particle_system', 'weather', 'day_night', 'lod',
-  'hand_tracking', 'haptic', 'portal', 'mirror',
-  'behavior_tree', 'emotion', 'goal_oriented', 'perception', 'memory',
-  'cloth', 'soft_body', 'fluid', 'buoyancy', 'rope', 'wind', 'joint', 'rigidbody', 'destruction',
+  'grabbable',
+  'throwable',
+  'holdable',
+  'clickable',
+  'hoverable',
+  'draggable',
+  'selectable',
+  'focusable',
+  'pointable',
+  'scalable',
+  'rotatable',
+  'snappable',
+  'collidable',
+  'physics',
+  'rigid',
+  'kinematic',
+  'trigger',
+  'gravity',
+  'buoyant',
+  'glowing',
+  'emissive',
+  'transparent',
+  'reflective',
+  'animated',
+  'billboard',
+  'sprite',
+  'instanced',
+  'pulse',
+  'outline',
+  'spinning',
+  'floating',
+  'look_at',
+  'proximity',
+  'networked',
+  'synced',
+  'persistent',
+  'owned',
+  'host_only',
+  'local_only',
+  'stackable',
+  'attachable',
+  'equippable',
+  'consumable',
+  'destructible',
+  'respawnable',
+  'breakable',
+  'character',
+  'patrol',
+  'anchor',
+  'tracked',
+  'world_locked',
+  'hand_tracked',
+  'eye_tracked',
+  'head_tracked',
+  'spatial_audio',
+  'ambient',
+  'voice_activated',
+  'music_reactive',
+  'reverb_zone',
+  'voice_proximity',
+  'state',
+  'reactive',
+  'observable',
+  'computed',
+  'persistent_state',
+  'teleport',
+  'ui_panel',
+  'particle_system',
+  'weather',
+  'day_night',
+  'lod',
+  'hand_tracking',
+  'haptic',
+  'portal',
+  'mirror',
+  'behavior_tree',
+  'emotion',
+  'goal_oriented',
+  'perception',
+  'memory',
+  'cloth',
+  'soft_body',
+  'fluid',
+  'buoyancy',
+  'rope',
+  'wind',
+  'joint',
+  'rigidbody',
+  'destruction',
 ]);
 
 // Trait compatibility rules
@@ -190,7 +264,9 @@ export async function handleBrittneyLiteTool(
 
 function handleExplainError(args: Record<string, unknown>) {
   const code = args.code as string;
-  const providedErrors = args.errors as Array<{ message: string; line?: number; column?: number }> | undefined;
+  const providedErrors = args.errors as
+    | Array<{ message: string; line?: number; column?: number }>
+    | undefined;
 
   // Parse to find errors if not provided
   let errors = providedErrors || [];
@@ -234,10 +310,13 @@ function handleExplainError(args: Record<string, unknown>) {
       const trait = traitMatch?.[1] || '';
       const suggestion = findSimilarTrait(trait);
       explanation.explanation = `The trait @${trait} doesn't exist in HoloScript's 56-trait system.`;
-      explanation.fix = suggestion ? `Use @${suggestion} instead` : 'Check available traits with list_traits tool';
+      explanation.fix = suggestion
+        ? `Use @${suggestion} instead`
+        : 'Check available traits with list_traits tool';
       explanation.fixCode = suggestion ? `@${suggestion}` : undefined;
     } else if (msg.includes('unexpected') || msg.includes('syntax')) {
-      explanation.explanation = 'There\'s a syntax error - likely a missing brace, bracket, or keyword.';
+      explanation.explanation =
+        "There's a syntax error - likely a missing brace, bracket, or keyword.";
       explanation.fix = 'Check for matching { }, [ ], and correct keyword spelling.';
     } else if (msg.includes('missing')) {
       explanation.explanation = 'A required element is missing from the code.';
@@ -300,7 +379,10 @@ function handleFixCode(args: Record<string, unknown>) {
   // Fix 4: Missing composition wrapper for .holo-style code
   if (fixed.includes('template ') && !fixed.includes('composition ')) {
     if (fixed.match(/^template\s+"/m)) {
-      fixed = `composition "Scene" {\n${fixed.split('\n').map((l) => '  ' + l).join('\n')}\n}`;
+      fixed = `composition "Scene" {\n${fixed
+        .split('\n')
+        .map((l) => '  ' + l)
+        .join('\n')}\n}`;
       fixes.push('Wrapped in composition block');
     }
   }
@@ -321,7 +403,7 @@ function handleFixCode(args: Record<string, unknown>) {
     } else {
       const parser = new HoloScriptPlusParser();
       const result = parser.parse(fixed);
-      isValid = !(result.errors?.length);
+      isValid = !result.errors?.length;
     }
   } catch {
     isValid = false;
@@ -344,7 +426,12 @@ function handleFixCode(args: Record<string, unknown>) {
 function handleReview(args: Record<string, unknown>) {
   const code = args.code as string;
   const focus = (args.focus as string) || 'all';
-  const issues: Array<{ severity: string; category: string; message: string; suggestion?: string }> = [];
+  const issues: Array<{
+    severity: string;
+    category: string;
+    message: string;
+    suggestion?: string;
+  }> = [];
 
   const lines = code.split('\n');
   const traitMatches = [...code.matchAll(/@(\w+)/g)].map((m) => m[1]);
@@ -480,11 +567,12 @@ function handleReview(args: Record<string, unknown>) {
       uniqueTraits: uniqueTraits.size,
       templates: (code.match(/template\s+"/g) || []).length,
     },
-    grade: issues.filter((i) => i.severity === 'error').length === 0
-      ? issues.filter((i) => i.severity === 'warning').length === 0
-        ? 'A'
-        : 'B'
-      : 'C',
+    grade:
+      issues.filter((i) => i.severity === 'error').length === 0
+        ? issues.filter((i) => i.severity === 'warning').length === 0
+          ? 'A'
+          : 'B'
+        : 'C',
   };
 }
 

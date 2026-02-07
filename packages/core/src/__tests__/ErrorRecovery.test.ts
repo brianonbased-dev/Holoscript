@@ -28,7 +28,7 @@ describe('Parser Error Recovery', () => {
     expect(result.ast.children.length).toBeGreaterThan(0);
 
     // Should have parsed Valid1
-    const valid1 = result.ast.children.find((n) => (n).id === 'Valid1');
+    const valid1 = result.ast.children.find((n) => n.id === 'Valid1');
     expect(valid1).toBeDefined();
 
     // Should have attempted to parse Invalid (might be partial)
@@ -36,7 +36,7 @@ describe('Parser Error Recovery', () => {
     // expect(invalid).toBeDefined();
 
     // CRITICAL: Should have parsed Valid2 after recovery
-    const valid2 = result.ast.children.find((n) => (n).id === 'Valid2');
+    const valid2 = result.ast.children.find((n) => n.id === 'Valid2');
     expect(valid2).toBeDefined();
   });
 

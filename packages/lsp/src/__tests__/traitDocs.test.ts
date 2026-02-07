@@ -36,10 +36,9 @@ describe('TraitDocs', () => {
       ];
 
       for (const [key, doc] of Object.entries(TRAIT_DOCS)) {
-        expect(
-          validCategories,
-          `${key} has invalid category: ${doc.category}`
-        ).toContain(doc.category);
+        expect(validCategories, `${key} has invalid category: ${doc.category}`).toContain(
+          doc.category
+        );
       }
     });
 
@@ -79,7 +78,10 @@ describe('TraitDocs', () => {
           expect(method.name, `${key} method missing name`).toBeDefined();
           expect(method.signature, `${key}.${method.name} missing signature`).toBeDefined();
           expect(method.description, `${key}.${method.name} missing description`).toBeDefined();
-          expect(Array.isArray(method.parameters), `${key}.${method.name} params should be array`).toBe(true);
+          expect(
+            Array.isArray(method.parameters),
+            `${key}.${method.name} params should be array`
+          ).toBe(true);
         }
       }
     });
@@ -115,13 +117,13 @@ describe('TraitDocs', () => {
     });
 
     it('rigidbody should have mass property', () => {
-      const massProperty = TRAIT_DOCS.rigidbody.properties.find(p => p.name === 'mass');
+      const massProperty = TRAIT_DOCS.rigidbody.properties.find((p) => p.name === 'mass');
       expect(massProperty).toBeDefined();
       expect(massProperty?.type).toBe('number');
     });
 
     it('rigidbody should have applyForce method', () => {
-      const method = TRAIT_DOCS.rigidbody.methods.find(m => m.name === 'applyForce');
+      const method = TRAIT_DOCS.rigidbody.methods.find((m) => m.name === 'applyForce');
       expect(method).toBeDefined();
       expect(method?.signature).toContain('Vec3');
     });
@@ -157,8 +159,8 @@ describe('TraitDocs', () => {
       for (const [key, doc] of Object.entries(TRAIT_DOCS)) {
         // Most examples should reference the trait annotation
         // This is a soft check - some may not include it directly
-        const hasAnnotation = doc.example.includes(doc.annotation) || 
-                              doc.example.includes(doc.annotation.substring(1));
+        const hasAnnotation =
+          doc.example.includes(doc.annotation) || doc.example.includes(doc.annotation.substring(1));
         // Just log but don't fail - not all examples need the annotation
         if (!hasAnnotation) {
           // console.log(`${key} example may not include its annotation`);
@@ -169,17 +171,17 @@ describe('TraitDocs', () => {
 
   describe('Category counts', () => {
     it('should have traits in physics category', () => {
-      const physicsTraits = Object.values(TRAIT_DOCS).filter(d => d.category === 'physics');
+      const physicsTraits = Object.values(TRAIT_DOCS).filter((d) => d.category === 'physics');
       expect(physicsTraits.length).toBeGreaterThan(0);
     });
 
     it('should have traits in rendering category', () => {
-      const renderingTraits = Object.values(TRAIT_DOCS).filter(d => d.category === 'rendering');
+      const renderingTraits = Object.values(TRAIT_DOCS).filter((d) => d.category === 'rendering');
       expect(renderingTraits.length).toBeGreaterThan(0);
     });
 
     it('should have traits in input category', () => {
-      const inputTraits = Object.values(TRAIT_DOCS).filter(d => d.category === 'input');
+      const inputTraits = Object.values(TRAIT_DOCS).filter((d) => d.category === 'input');
       expect(inputTraits.length).toBeGreaterThan(0);
     });
   });
@@ -187,10 +189,7 @@ describe('TraitDocs', () => {
   describe('Documentation quality', () => {
     it('should have meaningful descriptions (> 20 chars)', () => {
       for (const [key, doc] of Object.entries(TRAIT_DOCS)) {
-        expect(
-          doc.description.length,
-          `${key} description too short`
-        ).toBeGreaterThan(20);
+        expect(doc.description.length, `${key} description too short`).toBeGreaterThan(20);
       }
     });
 
@@ -217,7 +216,7 @@ describe('TraitDoc type structure', () => {
       properties: [],
       methods: [],
       events: [],
-      example: 'orb test { @test }'
+      example: 'orb test { @test }',
     };
 
     expect(doc.name).toBe('TestTrait');
@@ -230,7 +229,7 @@ describe('TraitDoc type structure', () => {
       type: 'number',
       description: 'A test property',
       default: '1.0',
-      required: false
+      required: false,
     };
 
     expect(prop.name).toBe('testProp');
@@ -243,7 +242,7 @@ describe('TraitDoc type structure', () => {
       signature: 'testMethod(): void',
       description: 'A test method',
       parameters: [],
-      returns: 'void'
+      returns: 'void',
     };
 
     expect(method.signature).toContain('testMethod');
@@ -253,7 +252,7 @@ describe('TraitDoc type structure', () => {
     const event: EventDoc = {
       name: 'onTest',
       description: 'Fired on test',
-      payload: '{ value: number }'
+      payload: '{ value: number }',
     };
 
     expect(event.name).toBe('onTest');

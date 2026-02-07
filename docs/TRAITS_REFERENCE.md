@@ -1324,11 +1324,11 @@ object Crystal @glowing(intensity: 2.0, color: '#ff00ff') {
 }
 ```
 
-| Config      | Type   | Default     | Description                   |
-| ----------- | ------ | ----------- | ----------------------------- |
-| `intensity` | number | 1.0         | Glow brightness (0-10)        |
-| `color`     | string | object color| Glow color (optional override)|
-| `pulse`     | boolean| false       | Enable pulsing effect         |
+| Config      | Type    | Default      | Description                    |
+| ----------- | ------- | ------------ | ------------------------------ |
+| `intensity` | number  | 1.0          | Glow brightness (0-10)         |
+| `color`     | string  | object color | Glow color (optional override) |
+| `pulse`     | boolean | false        | Enable pulsing effect          |
 
 ---
 
@@ -1368,10 +1368,10 @@ object Fan @spinning(axis: 'y', speed: 2.0) {
 }
 ```
 
-| Config  | Type   | Default | Description                    |
-| ------- | ------ | ------- | ------------------------------ |
-| `axis`  | string | 'y'     | Rotation axis ('x', 'y', 'z')  |
-| `speed` | number | 1.0     | Rotations per second           |
+| Config  | Type   | Default | Description                   |
+| ------- | ------ | ------- | ----------------------------- |
+| `axis`  | string | 'y'     | Rotation axis ('x', 'y', 'z') |
+| `speed` | number | 1.0     | Rotations per second          |
 
 ---
 
@@ -1389,10 +1389,10 @@ object Orb @floating(amplitude: 0.5, speed: 0.5) {
 }
 ```
 
-| Config      | Type   | Default | Description              |
-| ----------- | ------ | ------- | ------------------------ |
-| `amplitude` | number | 0.2     | Float height in meters   |
-| `speed`     | number | 1.0     | Float cycle speed        |
+| Config      | Type   | Default | Description            |
+| ----------- | ------ | ------- | ---------------------- |
+| `amplitude` | number | 0.2     | Float height in meters |
+| `speed`     | number | 1.0     | Float cycle speed      |
 
 ---
 
@@ -1411,9 +1411,9 @@ object Label @billboard(lock_y: true) {
 }
 ```
 
-| Config   | Type    | Default | Description                     |
-| -------- | ------- | ------- | ------------------------------- |
-| `lock_y` | boolean | false   | Only rotate on Y axis           |
+| Config   | Type    | Default | Description           |
+| -------- | ------- | ------- | --------------------- |
+| `lock_y` | boolean | false   | Only rotate on Y axis |
 
 ---
 
@@ -1432,12 +1432,12 @@ object Beacon @pulse(property: 'scale', min: 0.8, max: 1.2) {
 }
 ```
 
-| Config     | Type   | Default | Description                     |
-| ---------- | ------ | ------- | ------------------------------- |
+| Config     | Type   | Default | Description                                     |
+| ---------- | ------ | ------- | ----------------------------------------------- |
 | `property` | string | 'color' | Property to pulse ('scale', 'color', 'opacity') |
-| `min`      | number | 0.5     | Minimum value                   |
-| `max`      | number | 1.0     | Maximum value                   |
-| `speed`    | number | 1.0     | Pulse cycles per second         |
+| `min`      | number | 0.5     | Minimum value                                   |
+| `max`      | number | 1.0     | Maximum value                                   |
+| `speed`    | number | 1.0     | Pulse cycles per second                         |
 
 ---
 
@@ -1456,11 +1456,11 @@ object Character @animated(loop: true, blend: 0.3) {
 }
 ```
 
-| Config      | Type    | Default | Description             |
-| ----------- | ------- | ------- | ----------------------- |
-| `animation` | string  | 'idle'  | Default animation name  |
-| `loop`      | boolean | true    | Loop animation          |
-| `blend`     | number  | 0.2     | Blend time in seconds   |
+| Config      | Type    | Default | Description            |
+| ----------- | ------- | ------- | ---------------------- |
+| `animation` | string  | 'idle'  | Default animation name |
+| `loop`      | boolean | true    | Loop animation         |
+| `blend`     | number  | 0.2     | Blend time in seconds  |
 
 **Events:**
 
@@ -1483,11 +1483,11 @@ object Turret @look_at(target: 'Player', axis: 'y', speed: 2.0) {
 }
 ```
 
-| Config   | Type   | Default  | Description               |
-| -------- | ------ | -------- | ------------------------- |
+| Config   | Type   | Default  | Description                  |
+| -------- | ------ | -------- | ---------------------------- |
 | `target` | string | 'camera' | Target object ID or 'camera' |
-| `axis`   | string | 'all'    | Rotation constraint       |
-| `speed`  | number | 5.0      | Rotation speed            |
+| `axis`   | string | 'all'    | Rotation constraint          |
+| `speed`  | number | 5.0      | Rotation speed               |
 
 ---
 
@@ -1505,10 +1505,10 @@ object Selected @outline(color: '#ff0', width: 3) {
 }
 ```
 
-| Config  | Type   | Default | Description         |
-| ------- | ------ | ------- | ------------------- |
-| `color` | string | '#fff'  | Outline color       |
-| `width` | number | 2       | Outline width (px)  |
+| Config  | Type   | Default | Description        |
+| ------- | ------ | ------- | ------------------ |
+| `color` | string | '#fff'  | Outline color      |
+| `width` | number | 2       | Outline width (px) |
 
 ---
 
@@ -1526,10 +1526,10 @@ object Sensor @proximity(range: 10, target: 'Player') {
 }
 ```
 
-| Config   | Type   | Default | Description              |
-| -------- | ------ | ------- | ------------------------ |
-| `range`  | number | 5       | Detection radius (meters)|
-| `target` | string | 'all'   | Target type to detect    |
+| Config   | Type   | Default | Description               |
+| -------- | ------ | ------- | ------------------------- |
+| `range`  | number | 5       | Detection radius (meters) |
+| `target` | string | 'all'   | Target type to detect     |
 
 **Events:**
 
@@ -1555,10 +1555,10 @@ object TeleportPad @teleport(fade_duration: 0.5) {
 }
 ```
 
-| Config          | Type          | Default | Description            |
-| --------------- | ------------- | ------- | ---------------------- |
-| `destination`   | array/string  | null    | Target position or ID  |
-| `fade_duration` | number        | 0.3     | Fade transition time   |
+| Config          | Type         | Default | Description           |
+| --------------- | ------------ | ------- | --------------------- |
+| `destination`   | array/string | null    | Target position or ID |
+| `fade_duration` | number       | 0.3     | Fade transition time  |
 
 ---
 
@@ -1577,12 +1577,12 @@ object Menu @ui_panel(curved: true, follow_gaze: true) {
 }
 ```
 
-| Config        | Type    | Default | Description           |
-| ------------- | ------- | ------- | --------------------- |
-| `width`       | number  | 512     | Panel width (px)      |
-| `height`      | number  | 512     | Panel height (px)     |
-| `curved`      | boolean | false   | Curved panel surface  |
-| `follow_gaze` | boolean | false   | Panel follows user    |
+| Config        | Type    | Default | Description          |
+| ------------- | ------- | ------- | -------------------- |
+| `width`       | number  | 512     | Panel width (px)     |
+| `height`      | number  | 512     | Panel height (px)    |
+| `curved`      | boolean | false   | Curved panel surface |
+| `follow_gaze` | boolean | false   | Panel follows user   |
 
 ---
 
@@ -1600,11 +1600,11 @@ object Fire @particle_system(rate: 100, lifetime: 2.0) {
 }
 ```
 
-| Config     | Type   | Default | Description              |
-| ---------- | ------ | ------- | ------------------------ |
-| `preset`   | string | null    | Built-in preset name     |
-| `rate`     | number | 50      | Particles per second     |
-| `lifetime` | number | 1.0     | Particle lifetime (sec)  |
+| Config     | Type   | Default | Description             |
+| ---------- | ------ | ------- | ----------------------- |
+| `preset`   | string | null    | Built-in preset name    |
+| `rate`     | number | 50      | Particles per second    |
+| `lifetime` | number | 1.0     | Particle lifetime (sec) |
 
 ---
 
@@ -1644,11 +1644,11 @@ object Sun @day_night(start_time: 12, speed: 1.0) {
 }
 ```
 
-| Config           | Type   | Default | Description           |
-| ---------------- | ------ | ------- | --------------------- |
-| `cycle_duration` | number | 1200    | Full cycle time (sec) |
-| `start_time`     | number | 6       | Starting hour (0-24)  |
-| `speed`          | number | 1.0     | Cycle speed multiplier|
+| Config           | Type   | Default | Description            |
+| ---------------- | ------ | ------- | ---------------------- |
+| `cycle_duration` | number | 1200    | Full cycle time (sec)  |
+| `start_time`     | number | 6       | Starting hour (0-24)   |
+| `speed`          | number | 1.0     | Cycle speed multiplier |
 
 ---
 
@@ -1663,10 +1663,10 @@ object Building @lod {
 }
 ```
 
-| Config      | Type  | Default       | Description              |
-| ----------- | ----- | ------------- | ------------------------ |
-| `levels`    | array | []            | Model paths per LOD      |
-| `distances` | array | [10, 30, 60]  | Switch distances (meters)|
+| Config      | Type  | Default      | Description               |
+| ----------- | ----- | ------------ | ------------------------- |
+| `levels`    | array | []           | Model paths per LOD       |
+| `distances` | array | [10, 30, 60] | Switch distances (meters) |
 
 ---
 
@@ -1680,9 +1680,9 @@ object Interactive @hand_tracking {
 }
 ```
 
-| Config     | Type  | Default              | Description            |
-| ---------- | ----- | -------------------- | ---------------------- |
-| `gestures` | array | ['pinch', 'grab']    | Recognized gestures    |
+| Config     | Type  | Default           | Description         |
+| ---------- | ----- | ----------------- | ------------------- |
+| `gestures` | array | ['pinch', 'grab'] | Recognized gestures |
 
 **Events:**
 
@@ -1707,11 +1707,11 @@ object Button @haptic(pattern: 'pulse', intensity: 0.8) {
 }
 ```
 
-| Config      | Type   | Default   | Description              |
-| ----------- | ------ | --------- | ------------------------ |
-| `intensity` | number | 0.5       | Vibration strength (0-1) |
-| `duration`  | number | 100       | Duration in milliseconds |
-| `pattern`   | string | 'single'  | 'single', 'pulse', 'buzz'|
+| Config      | Type   | Default  | Description               |
+| ----------- | ------ | -------- | ------------------------- |
+| `intensity` | number | 0.5      | Vibration strength (0-1)  |
+| `duration`  | number | 100      | Duration in milliseconds  |
+| `pattern`   | string | 'single' | 'single', 'pulse', 'buzz' |
 
 ---
 

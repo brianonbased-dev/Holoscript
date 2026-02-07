@@ -419,7 +419,10 @@ export class AICompletionProvider {
   /**
    * Parse error fix suggestions
    */
-  private parseErrorFixSuggestions(response: string, _context: CompletionContext): CompletionItem[] {
+  private parseErrorFixSuggestions(
+    response: string,
+    _context: CompletionContext
+  ): CompletionItem[] {
     const codePattern = /```(?:hsplus|hs|holo)?\s*([\s\S]*?)```/g;
     const matches = [...response.matchAll(codePattern)];
 

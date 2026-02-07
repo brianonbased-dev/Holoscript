@@ -215,7 +215,7 @@ describe('Benchmark Metrics', () => {
       const metrics: BenchmarkMetrics = {
         name: 'precise',
         hz: 123456.789,
-        period: 0.008100,
+        period: 0.0081,
         samples: 1000,
         min: 0.007,
         max: 0.009,

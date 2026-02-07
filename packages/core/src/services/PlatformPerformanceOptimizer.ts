@@ -422,9 +422,7 @@ export class PlatformPerformanceOptimizer {
    */
   async runBenchmark(
     name: string,
-    renderFunc: (
-      iterations: number
-    ) => Promise<{
+    renderFunc: (iterations: number) => Promise<{
       fps: number;
       gpuTime: number;
       cpuTime: number;

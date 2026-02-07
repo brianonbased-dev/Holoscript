@@ -173,8 +173,7 @@ export class SemanticValidator {
         const convertedSignature = {
           params: signature.params.map((p: any, i: number) => ({
             name: `param${i}`,
-            type:
-              typeof p === 'string' ? p : (p).kind === 'primitive' ? (p).name : 'any',
+            type: typeof p === 'string' ? p : p.kind === 'primitive' ? p.name : 'any',
           })),
           returnType:
             typeof signature.returnType === 'string'

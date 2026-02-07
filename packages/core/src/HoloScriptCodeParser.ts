@@ -1532,7 +1532,7 @@ export class HoloScriptCodeParser {
    */
   private parseScale(): ScaleNode | null {
     this.expect('keyword', 'scale');
-    const magnitude = (this.expectIdentifier() || 'standard');
+    const magnitude = this.expectIdentifier() || 'standard';
 
     const multipliers: Record<string, number> = {
       galactic: 1000000,

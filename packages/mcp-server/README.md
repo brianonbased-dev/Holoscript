@@ -27,48 +27,48 @@ Add to your MCP configuration (Claude Code, Cursor, Copilot, etc.):
 
 ### Core Tools (15) - Parsing, Validation, Generation
 
-| Tool                  | Description                                    |
-| --------------------- | ---------------------------------------------- |
-| `parse_hs`            | Parse .hs or .hsplus code into AST             |
-| `parse_holo`          | Parse .holo composition files                  |
-| `validate_holoscript` | Validate syntax with AI-friendly error messages |
-| `list_traits`         | List all 56 VR traits by category              |
-| `explain_trait`       | Get detailed trait documentation                |
-| `suggest_traits`      | Suggest traits from natural language            |
-| `generate_object`     | Generate objects from descriptions              |
-| `generate_scene`      | Generate complete compositions                  |
-| `get_syntax_reference`| Syntax documentation lookup                     |
-| `get_examples`        | Code examples for common patterns               |
-| `explain_code`        | Plain English code explanation                  |
-| `analyze_code`        | Complexity and best-practice analysis           |
-| `render_preview`      | Generate preview images/GIFs                    |
-| `create_share_link`   | Create shareable playground links               |
-| `convert_format`      | Convert between .hs, .hsplus, .holo             |
+| Tool                   | Description                                     |
+| ---------------------- | ----------------------------------------------- |
+| `parse_hs`             | Parse .hs or .hsplus code into AST              |
+| `parse_holo`           | Parse .holo composition files                   |
+| `validate_holoscript`  | Validate syntax with AI-friendly error messages |
+| `list_traits`          | List all 56 VR traits by category               |
+| `explain_trait`        | Get detailed trait documentation                |
+| `suggest_traits`       | Suggest traits from natural language            |
+| `generate_object`      | Generate objects from descriptions              |
+| `generate_scene`       | Generate complete compositions                  |
+| `get_syntax_reference` | Syntax documentation lookup                     |
+| `get_examples`         | Code examples for common patterns               |
+| `explain_code`         | Plain English code explanation                  |
+| `analyze_code`         | Complexity and best-practice analysis           |
+| `render_preview`       | Generate preview images/GIFs                    |
+| `create_share_link`    | Create shareable playground links               |
+| `convert_format`       | Convert between .hs, .hsplus, .holo             |
 
 ### Graph Understanding Tools (6) - Visual Architecture
 
-| Tool                      | Description                                    |
-| ------------------------- | ---------------------------------------------- |
-| `holo_parse_to_graph`     | Parse .holo into graph (nodes, edges, flows)   |
-| `holo_visualize_flow`     | ASCII flow diagram of event/action chains      |
-| `holo_get_node_connections`| All connections for a specific node            |
-| `holo_design_graph`       | Design graph architecture from description     |
-| `holo_diff_graphs`        | Compare two .holo files as graph diffs         |
-| `holo_suggest_connections`| Suggest missing connections and flows           |
+| Tool                        | Description                                  |
+| --------------------------- | -------------------------------------------- |
+| `holo_parse_to_graph`       | Parse .holo into graph (nodes, edges, flows) |
+| `holo_visualize_flow`       | ASCII flow diagram of event/action chains    |
+| `holo_get_node_connections` | All connections for a specific node          |
+| `holo_design_graph`         | Design graph architecture from description   |
+| `holo_diff_graphs`          | Compare two .holo files as graph diffs       |
+| `holo_suggest_connections`  | Suggest missing connections and flows        |
 
 ### IDE Tools (9) - Editor Integration
 
-| Tool                 | Description                                     |
-| -------------------- | ----------------------------------------------- |
-| `hs_scan_project`    | Scan workspace for all HoloScript files/assets  |
-| `hs_diagnostics`     | LSP-style diagnostics with quick fixes          |
-| `hs_autocomplete`    | Context-aware completions (traits, properties)  |
-| `hs_refactor`        | Rename, extract template, organize imports      |
-| `hs_docs`            | Inline documentation for traits/keywords        |
-| `hs_code_action`     | Position-aware code actions (lightbulb)         |
-| `hs_hover`           | Hover information (tooltips)                    |
-| `hs_go_to_definition`| Find symbol definitions across files            |
-| `hs_find_references` | Find all references to a symbol                 |
+| Tool                  | Description                                    |
+| --------------------- | ---------------------------------------------- |
+| `hs_scan_project`     | Scan workspace for all HoloScript files/assets |
+| `hs_diagnostics`      | LSP-style diagnostics with quick fixes         |
+| `hs_autocomplete`     | Context-aware completions (traits, properties) |
+| `hs_refactor`         | Rename, extract template, organize imports     |
+| `hs_docs`             | Inline documentation for traits/keywords       |
+| `hs_code_action`      | Position-aware code actions (lightbulb)        |
+| `hs_hover`            | Hover information (tooltips)                   |
+| `hs_go_to_definition` | Find symbol definitions across files           |
+| `hs_find_references`  | Find all references to a symbol                |
 
 ### Brittney-Lite AI Tools (4) - Free AI Assistant
 

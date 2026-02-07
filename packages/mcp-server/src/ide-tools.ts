@@ -54,7 +54,10 @@ export interface CompletionItem {
 // TRAIT DOCUMENTATION (inline)
 // =============================================================================
 
-const traitDocs: Record<string, { description: string; params?: Record<string, string>; example: string }> = {
+const traitDocs: Record<
+  string,
+  { description: string; params?: Record<string, string>; example: string }
+> = {
   grabbable: {
     description: 'Makes object grabbable by VR controllers or hand tracking.',
     params: {
@@ -83,17 +86,28 @@ const traitDocs: Record<string, { description: string; params?: Record<string, s
   },
   physics: {
     description: 'Adds physics simulation (gravity, momentum, collisions).',
-    params: { mass: 'Mass in kg (default: 1.0)', friction: 'Friction 0-1 (default: 0.5)', restitution: 'Bounciness 0-1 (default: 0.3)' },
+    params: {
+      mass: 'Mass in kg (default: 1.0)',
+      friction: 'Friction 0-1 (default: 0.5)',
+      restitution: 'Bounciness 0-1 (default: 0.3)',
+    },
     example: `orb crate {\n  @physics(mass: 10, friction: 0.8)\n  @collidable\n}`,
   },
   networked: {
     description: 'Synchronizes object state across network for multiplayer.',
-    params: { sync_rate: 'Updates per second (e.g., "20hz")', interpolation: 'Smooth updates (default: true)' },
+    params: {
+      sync_rate: 'Updates per second (e.g., "20hz")',
+      interpolation: 'Smooth updates (default: true)',
+    },
     example: `orb player {\n  @networked(sync_rate: "30hz")\n  position: synced\n}`,
   },
   glowing: {
     description: 'Makes object emit light/glow effect.',
-    params: { intensity: 'Glow intensity 0-1 (default: 0.5)', color: 'Glow color hex', pulse: 'Pulsing (default: false)' },
+    params: {
+      intensity: 'Glow intensity 0-1 (default: 0.5)',
+      color: 'Glow color hex',
+      pulse: 'Pulsing (default: false)',
+    },
     example: `orb crystal {\n  @glowing(intensity: 0.8, color: "#00ffff", pulse: true)\n}`,
   },
   clickable: {
@@ -103,7 +117,11 @@ const traitDocs: Record<string, { description: string; params?: Record<string, s
   },
   hoverable: {
     description: 'Object responds to gaze/pointer hover.',
-    params: { on_enter: 'Hover start handler', on_exit: 'Hover end handler', delay: 'Trigger delay (default: 0)' },
+    params: {
+      on_enter: 'Hover start handler',
+      on_exit: 'Hover end handler',
+      delay: 'Trigger delay (default: 0)',
+    },
     example: `orb tooltip_trigger {\n  @hoverable(on_enter: showTooltip, on_exit: hideTooltip)\n}`,
   },
   billboard: {
@@ -113,37 +131,105 @@ const traitDocs: Record<string, { description: string; params?: Record<string, s
   },
   spatial_audio: {
     description: 'Audio emanates from object position with 3D spatialization.',
-    params: { src: 'Audio file', loop: 'Loop (default: false)', volume: 'Volume 0-1', distance: 'Max distance (default: 10)' },
+    params: {
+      src: 'Audio file',
+      loop: 'Loop (default: false)',
+      volume: 'Volume 0-1',
+      distance: 'Max distance (default: 10)',
+    },
     example: `orb radio {\n  @spatial_audio(src: "music.mp3", loop: true, distance: 5)\n}`,
   },
   equippable: {
     description: 'Object can be equipped to a slot.',
-    params: { slot: '"hand", "head", "body", "back"', on_equip: 'Equip handler', on_unequip: 'Remove handler' },
+    params: {
+      slot: '"hand", "head", "body", "back"',
+      on_equip: 'Equip handler',
+      on_unequip: 'Remove handler',
+    },
     example: `orb helmet {\n  @equippable(slot: "head")\n  @grabbable\n  model: "helmet.glb"\n}`,
   },
   destructible: {
     description: 'Object can be destroyed/broken.',
-    params: { health: 'HP before destroy (default: 100)', on_destroy: 'Destroy handler', fragments: 'Debris count (default: 0)' },
+    params: {
+      health: 'HP before destroy (default: 100)',
+      on_destroy: 'Destroy handler',
+      fragments: 'Debris count (default: 0)',
+    },
     example: `orb crate {\n  @destructible(health: 50, fragments: 5)\n  @collidable\n}`,
   },
   animated: {
     description: 'Plays embedded animations from model file.',
-    params: { clip: 'Animation clip name', loop: 'Loop (default: true)', speed: 'Speed multiplier (default: 1.0)' },
+    params: {
+      clip: 'Animation clip name',
+      loop: 'Loop (default: true)',
+      speed: 'Speed multiplier (default: 1.0)',
+    },
     example: `orb character {\n  @animated(clip: "idle", loop: true)\n  model: "character.glb"\n}`,
   },
 };
 
 // All traits organized by category
 const allTraits: Record<string, string[]> = {
-  interaction: ['grabbable', 'throwable', 'holdable', 'clickable', 'hoverable', 'draggable', 'selectable', 'focusable', 'pointable', 'scalable', 'rotatable'],
+  interaction: [
+    'grabbable',
+    'throwable',
+    'holdable',
+    'clickable',
+    'hoverable',
+    'draggable',
+    'selectable',
+    'focusable',
+    'pointable',
+    'scalable',
+    'rotatable',
+  ],
   physics: ['collidable', 'physics', 'rigid', 'kinematic', 'trigger', 'gravity', 'buoyant'],
-  visual: ['glowing', 'emissive', 'transparent', 'reflective', 'animated', 'billboard', 'sprite', 'instanced', 'pulse', 'outline'],
+  visual: [
+    'glowing',
+    'emissive',
+    'transparent',
+    'reflective',
+    'animated',
+    'billboard',
+    'sprite',
+    'instanced',
+    'pulse',
+    'outline',
+  ],
   networking: ['networked', 'synced', 'persistent', 'owned', 'host_only', 'local_only'],
-  behavior: ['stackable', 'attachable', 'equippable', 'consumable', 'destructible', 'respawnable', 'breakable', 'character', 'patrol'],
+  behavior: [
+    'stackable',
+    'attachable',
+    'equippable',
+    'consumable',
+    'destructible',
+    'respawnable',
+    'breakable',
+    'character',
+    'patrol',
+  ],
   spatial: ['anchor', 'tracked', 'world_locked', 'hand_tracked', 'eye_tracked', 'head_tracked'],
-  audio: ['spatial_audio', 'ambient', 'voice_activated', 'music_reactive', 'reverb_zone', 'voice_proximity'],
+  audio: [
+    'spatial_audio',
+    'ambient',
+    'voice_activated',
+    'music_reactive',
+    'reverb_zone',
+    'voice_proximity',
+  ],
   state: ['state', 'reactive', 'observable', 'computed', 'persistent_state'],
-  advanced: ['teleport', 'ui_panel', 'particle_system', 'weather', 'day_night', 'lod', 'hand_tracking', 'haptic', 'portal', 'mirror'],
+  advanced: [
+    'teleport',
+    'ui_panel',
+    'particle_system',
+    'weather',
+    'day_night',
+    'lod',
+    'hand_tracking',
+    'haptic',
+    'portal',
+    'mirror',
+  ],
 };
 
 // =============================================================================
@@ -182,7 +268,11 @@ Use this first when working on a HoloScript project to understand the codebase.`
       properties: {
         code: { type: 'string', description: 'HoloScript code to diagnose' },
         filePath: { type: 'string', description: 'File path for context' },
-        severity: { type: 'string', enum: ['error', 'warning', 'info', 'all'], description: 'Filter by severity (default: all)' },
+        severity: {
+          type: 'string',
+          enum: ['error', 'warning', 'info', 'all'],
+          description: 'Filter by severity (default: all)',
+        },
       },
       required: ['code'],
     },
@@ -219,7 +309,16 @@ Use this first when working on a HoloScript project to understand the codebase.`
       type: 'object',
       properties: {
         code: { type: 'string', description: 'HoloScript code to refactor' },
-        operation: { type: 'string', enum: ['rename', 'extract_template', 'inline_template', 'organize_imports', 'group_objects'] },
+        operation: {
+          type: 'string',
+          enum: [
+            'rename',
+            'extract_template',
+            'inline_template',
+            'organize_imports',
+            'group_objects',
+          ],
+        },
         target: { type: 'string', description: 'Target name (for rename: old name)' },
         newName: { type: 'string', description: 'New name (for rename/extract)' },
       },
@@ -302,7 +401,10 @@ Use this first when working on a HoloScript project to understand the codebase.`
       properties: {
         symbol: { type: 'string', description: 'Symbol name to find references for' },
         projectPath: { type: 'string', description: 'Project root for cross-file search' },
-        includeDeclaration: { type: 'boolean', description: 'Include the declaration (default: true)' },
+        includeDeclaration: {
+          type: 'boolean',
+          description: 'Include the declaration (default: true)',
+        },
       },
       required: ['symbol'],
     },
@@ -313,10 +415,7 @@ Use this first when working on a HoloScript project to understand the codebase.`
 // TOOL HANDLER
 // =============================================================================
 
-export async function handleIDETool(
-  name: string,
-  args: Record<string, unknown>
-): Promise<unknown> {
+export async function handleIDETool(name: string, args: Record<string, unknown>): Promise<unknown> {
   switch (name) {
     case 'hs_scan_project': {
       const rootPath = (args.path as string) || process.cwd();
@@ -358,7 +457,8 @@ export async function handleIDETool(
               if (type === 'holo' || type === 'hsplus' || type === 'hs') {
                 try {
                   const content = fs.readFileSync(fullPath, 'utf-8');
-                  const extract = (pattern: RegExp) => [...content.matchAll(pattern)].map((m) => m[1]);
+                  const extract = (pattern: RegExp) =>
+                    [...content.matchAll(pattern)].map((m) => m[1]);
                   file.objects = extract(/(?:orb|object)\s+["']?(\w+)/g);
                   file.templates = extract(/template\s+["'](\w+)/g);
                   file.traits = [...new Set(extract(/@(\w+)/g))];
@@ -373,7 +473,7 @@ export async function handleIDETool(
         } catch {
           // Skip inaccessible directories
         }
-      }
+      };
 
       scanDir(rootPath, 0);
 
@@ -439,7 +539,8 @@ export async function handleIDETool(
         }
       });
 
-      const filtered = severity === 'all' ? diagnostics : diagnostics.filter((d) => d.severity === severity);
+      const filtered =
+        severity === 'all' ? diagnostics : diagnostics.filter((d) => d.severity === severity);
 
       return { count: filtered.length, diagnostics: filtered };
     }
@@ -488,7 +589,17 @@ export async function handleIDETool(
           });
         }
       } else if (beforeCursor.match(/^\s*$/)) {
-        const keywords = ['orb', 'template', 'composition', 'environment', 'spatial_group', 'logic', 'function', 'connect', 'object'];
+        const keywords = [
+          'orb',
+          'template',
+          'composition',
+          'environment',
+          'spatial_group',
+          'logic',
+          'function',
+          'connect',
+          'object',
+        ];
         for (const kw of keywords) {
           completions.push({
             label: kw,
@@ -506,7 +617,8 @@ export async function handleIDETool(
       const type = (args.type as string) || 'trait';
 
       if (type === 'all_traits') {
-        const result: Record<string, { traits: string[]; descriptions: Record<string, string> }> = {};
+        const result: Record<string, { traits: string[]; descriptions: Record<string, string> }> =
+          {};
         for (const [category, traits] of Object.entries(allTraits)) {
           result[category] = {
             traits,
@@ -529,7 +641,10 @@ export async function handleIDETool(
               example: `orb obj {\n  @${query}\n  position: [0, 0, 0]\n}`,
             };
           }
-          return { error: `Unknown trait: @${query}`, hint: 'Use hs_docs with type "all_traits" to see available traits' };
+          return {
+            error: `Unknown trait: @${query}`,
+            hint: 'Use hs_docs with type "all_traits" to see available traits',
+          };
         }
         return { trait: `@${query}`, ...docs };
       }
@@ -559,7 +674,9 @@ export async function handleIDETool(
 
         case 'extract_template':
           if (!target || !newName) {
-            return { error: 'extract_template requires target (object name) and newName (template name)' };
+            return {
+              error: 'extract_template requires target (object name) and newName (template name)',
+            };
           }
           const objMatch = code.match(new RegExp(`orb\\s+${target}\\s*\\{([^}]+)\\}`, 's'));
           if (objMatch) {
@@ -574,8 +691,11 @@ export async function handleIDETool(
           const imports = [...code.matchAll(/import\s+.+/g)].map((m) => m[0]);
           const uniqueImports = [...new Set(imports)].sort();
           let cleanCode = code;
-          imports.forEach((imp) => { cleanCode = cleanCode.replace(imp + '\n', ''); });
-          result = uniqueImports.join('\n') + (uniqueImports.length ? '\n\n' : '') + cleanCode.trim();
+          imports.forEach((imp) => {
+            cleanCode = cleanCode.replace(imp + '\n', '');
+          });
+          result =
+            uniqueImports.join('\n') + (uniqueImports.length ? '\n\n' : '') + cleanCode.trim();
           changes.push(`Organized ${imports.length} imports`);
           break;
       }
@@ -592,7 +712,11 @@ export async function handleIDETool(
       const currentLine = lines[line - 1] || '';
 
       const traitMatch = currentLine.match(/@(\w+)/);
-      if (traitMatch && column >= currentLine.indexOf('@') && column <= currentLine.indexOf('@') + traitMatch[0].length) {
+      if (
+        traitMatch &&
+        column >= currentLine.indexOf('@') &&
+        column <= currentLine.indexOf('@') + traitMatch[0].length
+      ) {
         const trait = traitMatch[1];
         const docs = traitDocs[trait];
         return {

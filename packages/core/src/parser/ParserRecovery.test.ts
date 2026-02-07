@@ -22,7 +22,7 @@ describe('HoloScriptPlusParser - Error Recovery', () => {
     expect(result.success).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
 
-    const node = result.ast.children?.[0] || (result.ast.root);
+    const node = result.ast.children?.[0] || result.ast.root;
 
     expect(node.properties.size).toBe(10);
   });
@@ -98,7 +98,7 @@ describe('HoloScriptPlusParser - Error Recovery', () => {
     expect(result.success).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
 
-    const node = result.ast.children?.[0] || (result.ast.root);
+    const node = result.ast.children?.[0] || result.ast.root;
 
     // Should still parse the valid property despite preceding errors
     expect(node.properties.prop3).toBe(42);
@@ -118,7 +118,7 @@ describe('HoloScriptPlusParser - Error Recovery', () => {
 
     expect(result.success).toBe(false);
 
-    const outer = result.ast.children?.[0] || (result.ast.root);
+    const outer = result.ast.children?.[0] || result.ast.root;
     const middle = outer.children?.[0];
     const inner = middle?.children?.[0];
 
@@ -136,7 +136,7 @@ describe('HoloScriptPlusParser - Error Recovery', () => {
 
     expect(result.success).toBe(false);
 
-    const node = result.ast.children?.[0] || (result.ast.root);
+    const node = result.ast.children?.[0] || result.ast.root;
 
     // Should still parse the valid property even though array had an error
     expect(node.properties.color).toBe('blue');
@@ -151,7 +151,7 @@ describe('HoloScriptPlusParser - Error Recovery', () => {
     const result = parser.parse(source);
 
     // This may or may not process the first line, but valid prop should parse
-    const node = result.ast.children?.[0] || (result.ast.root);
+    const node = result.ast.children?.[0] || result.ast.root;
     expect(node.properties.validProp).toBe(20);
   });
 
@@ -163,7 +163,7 @@ describe('HoloScriptPlusParser - Error Recovery', () => {
     }`;
     const result = parser.parse(source);
 
-    const node = result.ast.children?.[0] || (result.ast.root);
+    const node = result.ast.children?.[0] || result.ast.root;
     expect(node.properties.size).toBe(5);
   });
 });

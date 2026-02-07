@@ -482,35 +482,35 @@ export class HoloScriptPlusParser {
     for (const trait of traits) {
       switch (trait.type) {
         case 'material':
-          config.material = (trait).config;
+          config.material = trait.config;
           break;
 
         case 'lighting':
-          config.lighting = (trait).config;
+          config.lighting = trait.config;
           break;
 
         case 'rendering':
-          config.rendering = (trait).config;
+          config.rendering = trait.config;
           break;
 
         case 'shader':
-          config.shader = (trait).config;
+          config.shader = trait.config;
           break;
 
         case 'networked':
-          config.networked = (trait).config;
+          config.networked = trait.config;
           break;
 
         case 'rpc':
-          config.rpc = (trait).config;
+          config.rpc = trait.config;
           break;
 
         case 'joint':
-          config.joint = (trait).config;
+          config.joint = trait.config;
           break;
 
         case 'ik':
-          config.ik = (trait).config;
+          config.ik = trait.config;
           break;
       }
     }

@@ -639,7 +639,7 @@ export const LookAtTrait: TraitHandler = {
     });
 
     if (targetObj) {
-      const targetPos = (targetObj).position.clone();
+      const targetPos = targetObj.position.clone();
       if (context.data.lockY) {
         targetPos.y = context.object.position.y;
       }

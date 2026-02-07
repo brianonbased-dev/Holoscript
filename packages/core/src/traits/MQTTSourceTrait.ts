@@ -226,14 +226,14 @@ export const mqttSourceHandler: TraitHandler<MQTTSourceConfig> = {
  * Check if a node has the @mqtt_source trait
  */
 export function hasMQTTSourceTrait(node: any): boolean {
-  return !!(node).__mqttSourceState;
+  return !!node.__mqttSourceState;
 }
 
 /**
  * Get the MQTT source state from a node
  */
 export function getMQTTSourceState(node: any): MQTTSourceState | null {
-  return (node).__mqttSourceState || null;
+  return node.__mqttSourceState || null;
 }
 
 /**

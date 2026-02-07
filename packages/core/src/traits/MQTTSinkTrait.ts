@@ -294,14 +294,14 @@ function hashState(payload: unknown): string {
  * Check if a node has the @mqtt_sink trait
  */
 export function hasMQTTSinkTrait(node: any): boolean {
-  return !!(node).__mqttSinkState;
+  return !!node.__mqttSinkState;
 }
 
 /**
  * Get the MQTT sink state from a node
  */
 export function getMQTTSinkState(node: any): MQTTSinkState | null {
-  return (node).__mqttSinkState || null;
+  return node.__mqttSinkState || null;
 }
 
 /**
@@ -329,7 +329,7 @@ export function publishToMQTTSink(node: any, payload?: unknown, topic?: string):
     return Promise.reject(new Error('MQTT sink not connected'));
   }
 
-  const nodeState = (node).__mqttSinkConfig as MQTTSinkConfig | undefined;
+  const nodeState = node.__mqttSinkConfig as MQTTSinkConfig | undefined;
   const finalTopic = topic || resolveTopic(nodeState?.topic || '', node);
   const finalPayload = payload !== undefined && payload !== null ? payload : {};
 

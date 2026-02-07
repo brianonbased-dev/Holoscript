@@ -118,7 +118,7 @@ export const emotionalVoiceHandler: TraitHandler<EmotionalVoiceConfig> = {
   // and the LipSyncTrait would receive the audio stream or pre-calculated phonemes.
 
   // Emit event for runtime to play audio
-  (node).emit?.('vocalize', {
+  node.emit?.('vocalize', {
     buffer: audioBuffer,
     text: request.text,
     request,

@@ -14,11 +14,7 @@
  * @version 1.0.0
  */
 
-import type {
-  HoloComposition,
-  HoloObjectDecl,
-  HoloValue,
-} from '../parser/HoloCompositionTypes';
+import type { HoloComposition, HoloObjectDecl, HoloValue } from '../parser/HoloCompositionTypes';
 
 export interface AndroidCompilerOptions {
   packageName?: string;

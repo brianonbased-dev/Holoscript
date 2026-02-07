@@ -3,9 +3,7 @@
  *
  * Union types, generics, type inference, exhaustiveness checking
  */
-import {
-  HSPlusNode,
-} from './HoloScriptPlus';
+import { HSPlusNode } from './HoloScriptPlus';
 import { VRTraitName } from '../types';
 export type { HSPlusNode, VRTraitName };
 
@@ -194,21 +192,21 @@ export class TypeInferenceEngine {
   }
 
   private substitute(type: HoloScriptType, subs: Map<string, HoloScriptType>): HoloScriptType {
-    if (type.kind === 'custom' && subs.has((type).name)) {
-      return subs.get((type).name)!;
+    if (type.kind === 'custom' && subs.has(type.name)) {
+      return subs.get(type.name)!;
     }
 
     if (type.kind === 'array') {
       return {
         kind: 'array',
-        elementType: this.substitute((type).elementType, subs),
+        elementType: this.substitute(type.elementType, subs),
       };
     }
 
     if (type.kind === 'union') {
       return {
         kind: 'union',
-        members: (type).members.map((m) => this.substitute(m, subs)),
+        members: type.members.map((m) => this.substitute(m, subs)),
       };
     }
 
@@ -248,10 +246,10 @@ export class ExhaustivenessChecker {
 
   private getCaseName(type: HoloScriptType): string {
     if (type.kind === 'literal') {
-      return String((type).value);
+      return String(type.value);
     }
     if (type.kind === 'custom') {
-      return (type).name;
+      return type.name;
     }
     return type.kind;
   }
@@ -355,17 +353,17 @@ export class AdvancedTypeChecker {
   public formatType(type: HoloScriptType): string {
     switch (type.kind) {
       case 'primitive':
-        return (type).name;
+        return type.name;
       case 'array':
-        return `${this.formatType((type).elementType)}[]`;
+        return `${this.formatType(type.elementType)}[]`;
       case 'union':
-        return (type).members.map((m) => this.formatType(m)).join(' | ');
+        return type.members.map((m) => this.formatType(m)).join(' | ');
       case 'intersection':
-        return (type).members.map((m) => this.formatType(m)).join(' & ');
+        return type.members.map((m) => this.formatType(m)).join(' & ');
       case 'custom':
-        return (type).name;
+        return type.name;
       case 'literal':
-        return JSON.stringify((type).value);
+        return JSON.stringify(type.value);
       default:
         return 'unknown';
     }

@@ -181,7 +181,7 @@ describe('HoloHubClient', () => {
 
       const results = await client.searchAssets('searchable');
       expect(results.length).toBeGreaterThan(0);
-      expect(results.some(r => r.metadata.name === 'Searchable Widget')).toBe(true);
+      expect(results.some((r) => r.metadata.name === 'Searchable Widget')).toBe(true);
     });
 
     it('should find assets by partial match', async () => {

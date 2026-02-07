@@ -546,9 +546,9 @@ function calculateCameraDistance(node: HSPlusNode, context: TraitContext): numbe
   const nodePos = (node as any).position || [0, 0, 0];
   const cameraPos = context.vr.headset.position;
 
-  const dx = (nodePos)[0] - (cameraPos as any)[0];
-  const dy = (nodePos)[1] - (cameraPos as any)[1];
-  const dz = (nodePos)[2] - (cameraPos as any)[2];
+  const dx = nodePos[0] - (cameraPos as any)[0];
+  const dy = nodePos[1] - (cameraPos as any)[1];
+  const dz = nodePos[2] - (cameraPos as any)[2];
 
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }

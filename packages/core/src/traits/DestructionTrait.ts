@@ -355,7 +355,7 @@ function triggerDestruction(
     setTimeout(() => {
       const nearbyDestructibles = context.getObjectsInRadius?.(position, config.chain_radius) || [];
       for (const other of nearbyDestructibles) {
-        if (other !== node && (other).__destructionState) {
+        if (other !== node && other.__destructionState) {
           context.dispatchEvent?.(other, { type: 'destroy', impactPoint: position });
         }
       }

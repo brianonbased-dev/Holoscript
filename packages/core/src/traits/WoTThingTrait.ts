@@ -155,14 +155,14 @@ export const wotThingHandler: TraitHandler<WoTThingConfig> = {
  * Check if a node has the @wot_thing trait
  */
 export function hasWoTThingTrait(node: any): boolean {
-  return !!(node).__wotThingState;
+  return !!node.__wotThingState;
 }
 
 /**
  * Get the WoT Thing state from a node
  */
 export function getWoTThingState(node: any): WoTThingState | null {
-  return (node).__wotThingState || null;
+  return node.__wotThingState || null;
 }
 
 /**

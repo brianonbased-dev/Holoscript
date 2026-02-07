@@ -8,11 +8,11 @@ export interface CaptureOptions {
 }
 
 export async function captureScreenshot(page: Page, options: CaptureOptions = {}): Promise<Buffer> {
-  return (await page.screenshot({
+  return await page.screenshot({
     type: options.type || 'png',
     quality: options.type === 'jpeg' ? options.quality || 80 : undefined,
     fullPage: options.fullPage,
     clip: options.clip,
     encoding: 'binary',
-  }));
+  });
 }

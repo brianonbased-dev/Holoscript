@@ -414,7 +414,8 @@ export const textTo3DTools: Tool[] = [
       properties: {
         description: {
           type: 'string',
-          description: 'Text description of the 3D object to generate (e.g. "a glowing sword", "wooden treasure chest")',
+          description:
+            'Text description of the 3D object to generate (e.g. "a glowing sword", "wooden treasure chest")',
         },
         provider: {
           type: 'string',

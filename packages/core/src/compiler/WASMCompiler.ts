@@ -13,11 +13,7 @@
  * @version 1.0.0
  */
 
-import type {
-  HoloComposition,
-  HoloObjectDecl,
-  HoloState,
-} from '../parser/HoloCompositionTypes';
+import type { HoloComposition, HoloObjectDecl, HoloState } from '../parser/HoloCompositionTypes';
 import type { HSPlusAST, HSPlusNode } from '../types/HoloScriptPlus';
 
 // =============================================================================

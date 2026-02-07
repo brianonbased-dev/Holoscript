@@ -243,11 +243,7 @@ const grabbableHandler: TraitHandler<GrabbableTrait> = {
     const offset = state.grabOffset;
     const newPosition: Vector3 = config.snap_to_hand
       ? hand.position
-      : [
-          handPos[0] + offset[0],
-          handPos[1] + offset[1],
-          handPos[2] + offset[2],
-        ];
+      : [handPos[0] + offset[0], handPos[1] + offset[1], handPos[2] + offset[2]];
 
     // Update position
     if (node.properties) {
@@ -385,14 +381,11 @@ const throwableHandler: TraitHandler<ThrowableTrait> = {
       // Reflect velocity
       const velocity = collision.relativeVelocity;
       const normal = collision.normal;
-      const dot =
-        (velocity)[0] * (normal)[0] +
-        (velocity)[1] * (normal)[1] +
-        (velocity)[2] * (normal)[2];
+      const dot = velocity[0] * normal[0] + velocity[1] * normal[1] + velocity[2] * normal[2];
       const reflected: Vector3 = [
-        ((velocity)[0] - 2 * dot * (normal)[0]) * bounceFactor,
-        ((velocity)[1] - 2 * dot * (normal)[1]) * bounceFactor,
-        ((velocity)[2] - 2 * dot * (normal)[2]) * bounceFactor,
+        (velocity[0] - 2 * dot * normal[0]) * bounceFactor,
+        (velocity[1] - 2 * dot * normal[1]) * bounceFactor,
+        (velocity[2] - 2 * dot * normal[2]) * bounceFactor,
       ];
 
       context.physics.applyVelocity(node, reflected);
@@ -634,9 +627,9 @@ const scalableHandler: TraitHandler<ScalableTrait> = {
       // Calculate initial distance between hands
       const { left, right } = event.hands;
       state.initialDistance = Math.sqrt(
-        Math.pow((right.position)[0] - (left.position)[0], 2) +
-          Math.pow((right.position)[1] - (left.position)[1], 2) +
-          Math.pow((right.position)[2] - (left.position)[2], 2)
+        Math.pow(right.position[0] - left.position[0], 2) +
+          Math.pow(right.position[1] - left.position[1], 2) +
+          Math.pow(right.position[2] - left.position[2], 2)
       );
 
       context.emit('scale_start', { node });
@@ -696,25 +689,13 @@ const rotatableHandler: TraitHandler<RotatableTrait> = {
     let newRotation: Vector3;
     switch (config.axis) {
       case 'x':
-        newRotation = [
-          initObjRot[0] + deltaRotation[0],
-          initObjRot[1],
-          initObjRot[2],
-        ];
+        newRotation = [initObjRot[0] + deltaRotation[0], initObjRot[1], initObjRot[2]];
         break;
       case 'y':
-        newRotation = [
-          initObjRot[0],
-          initObjRot[1] + deltaRotation[1],
-          initObjRot[2],
-        ];
+        newRotation = [initObjRot[0], initObjRot[1] + deltaRotation[1], initObjRot[2]];
         break;
       case 'z':
-        newRotation = [
-          initObjRot[0],
-          initObjRot[1],
-          initObjRot[2] + deltaRotation[2],
-        ];
+        newRotation = [initObjRot[0], initObjRot[1], initObjRot[2] + deltaRotation[2]];
         break;
       default:
         newRotation = [
@@ -753,7 +734,9 @@ const rotatableHandler: TraitHandler<RotatableTrait> = {
     if (event.type === 'rotate_start') {
       state.isRotating = true;
       state.initialHandRotation = vec3ToTuple(event.hand.rotation);
-      state.initialObjectRotation = vec3ToTuple((node.properties?.rotation as Vector3) || [0, 0, 0]);
+      state.initialObjectRotation = vec3ToTuple(
+        (node.properties?.rotation as Vector3) || [0, 0, 0]
+      );
 
       context.emit('rotate_start', { node });
     }
@@ -830,9 +813,7 @@ const stackableHandler: TraitHandler<StackableTrait> = {
       // Check alignment on other axes
       let aligned = true;
       for (const axis of otherAxes) {
-        if (
-          Math.abs(nodePosArr[axis] - otherPosArr[axis]) > (config.snap_distance || 0.5)
-        ) {
+        if (Math.abs(nodePosArr[axis] - otherPosArr[axis]) > (config.snap_distance || 0.5)) {
           aligned = false;
           break;
         }

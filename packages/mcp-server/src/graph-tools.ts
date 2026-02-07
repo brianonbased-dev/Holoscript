@@ -14,7 +14,15 @@ import { Tool } from '@modelcontextprotocol/sdk/types.js';
 export interface HoloNode {
   id: string;
   name: string;
-  type: 'template' | 'object' | 'orb' | 'building' | 'npc' | 'collectible' | 'group' | 'environment';
+  type:
+    | 'template'
+    | 'object'
+    | 'orb'
+    | 'building'
+    | 'npc'
+    | 'collectible'
+    | 'group'
+    | 'environment';
   position?: [number, number, number];
   properties: Record<string, unknown>;
   state?: Record<string, unknown>;
@@ -498,7 +506,11 @@ export function visualizeFlow(graph: HoloGraph, focus?: string): string {
 
   lines.push('\nFLOWS:');
   for (const flow of graph.flows) {
-    if (focus && !flow.trigger.includes(focus) && !flow.actions.some((a) => a.target.includes(focus))) {
+    if (
+      focus &&
+      !flow.trigger.includes(focus) &&
+      !flow.actions.some((a) => a.target.includes(focus))
+    ) {
       continue;
     }
 
@@ -511,7 +523,9 @@ export function visualizeFlow(graph: HoloGraph, focus?: string): string {
     lines.push('\nGROUPS:');
     for (const group of graph.groups) {
       lines.push(`  ${group.name}:`);
-      lines.push(`    +-- ${group.children.map((c) => c.replace(/^(object|orb)_/, '')).join(', ')}`);
+      lines.push(
+        `    +-- ${group.children.map((c) => c.replace(/^(object|orb)_/, '')).join(', ')}`
+      );
     }
   }
 
@@ -533,9 +547,7 @@ export function getNodeConnections(
   uses?: string;
 } {
   const nodeId =
-    graph.nodes.find((n) => n.name === nodeName)?.id ||
-    `object_${nodeName}` ||
-    `orb_${nodeName}`;
+    graph.nodes.find((n) => n.name === nodeName)?.id || `object_${nodeName}` || `orb_${nodeName}`;
 
   const result = {
     receives: [] as Array<{ from: string; event: string }>,
@@ -792,12 +804,16 @@ export async function handleGraphTool(
           (f) => f.event.includes('interact') || f.event.includes('collect')
         );
         if (!hasCollectFlow) {
-          suggestions.push('Collectibles exist but no collection logic - add on_interact handlers?');
+          suggestions.push(
+            'Collectibles exist but no collection logic - add on_interact handlers?'
+          );
         }
       }
 
       if (intent) {
-        suggestions.push(`Based on intent "${intent}": consider adding flows that connect existing nodes.`);
+        suggestions.push(
+          `Based on intent "${intent}": consider adding flows that connect existing nodes.`
+        );
       }
 
       return {

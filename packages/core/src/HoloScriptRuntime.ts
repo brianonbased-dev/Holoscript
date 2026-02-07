@@ -112,14 +112,16 @@ export class HoloScriptRuntime {
     this.builtinFunctions = this.initBuiltins(customFunctions);
 
     // Wire up state machine hook executor to this runtime's expression evaluator
-    stateMachineInterpreter.setHookExecutor((code: string, context: Record<string, HoloScriptValue>) => {
-      // Merge hook context into variables temporarily
-      for (const [key, value] of Object.entries(context)) {
-        this.context.variables.set(key, value);
+    stateMachineInterpreter.setHookExecutor(
+      (code: string, context: Record<string, HoloScriptValue>) => {
+        // Merge hook context into variables temporarily
+        for (const [key, value] of Object.entries(context)) {
+          this.context.variables.set(key, value);
+        }
+        // Evaluate the hook code
+        return this.evaluateExpression(code);
       }
-      // Evaluate the hook code
-      return this.evaluateExpression(code);
-    });
+    );
   }
 
   /**
@@ -232,8 +234,9 @@ export class HoloScriptRuntime {
     builtins.set('add', (args): HoloScriptValue => Number(args[0]) + Number(args[1]));
     builtins.set('subtract', (args): HoloScriptValue => Number(args[0]) - Number(args[1]));
     builtins.set('multiply', (args): HoloScriptValue => Number(args[0]) * Number(args[1]));
-    builtins.set('divide', (args): HoloScriptValue =>
-      Number(args[1]) !== 0 ? Number(args[0]) / Number(args[1]) : 0
+    builtins.set(
+      'divide',
+      (args): HoloScriptValue => (Number(args[1]) !== 0 ? Number(args[0]) / Number(args[1]) : 0)
     );
     builtins.set('mod', (args): HoloScriptValue => Number(args[0]) % Number(args[1]));
     builtins.set('abs', (args): HoloScriptValue => Math.abs(Number(args[0])));
@@ -252,8 +255,9 @@ export class HoloScriptRuntime {
       if (Array.isArray(val)) return val.length;
       return 0;
     });
-    builtins.set('substring', (args): HoloScriptValue =>
-      String(args[0]).substring(Number(args[1]), Number(args[2]))
+    builtins.set(
+      'substring',
+      (args): HoloScriptValue => String(args[0]).substring(Number(args[1]), Number(args[2]))
     );
     builtins.set('uppercase', (args): HoloScriptValue => String(args[0]).toUpperCase());
     builtins.set('lowercase', (args): HoloScriptValue => String(args[0]).toLowerCase());
@@ -304,7 +308,10 @@ export class HoloScriptRuntime {
     // Type checking
     builtins.set('typeof', (args): HoloScriptValue => typeof args[0]);
     builtins.set('isArray', (args): HoloScriptValue => Array.isArray(args[0]));
-    builtins.set('isNumber', (args): HoloScriptValue => typeof args[0] === 'number' && !isNaN(args[0]));
+    builtins.set(
+      'isNumber',
+      (args): HoloScriptValue => typeof args[0] === 'number' && !isNaN(args[0])
+    );
     builtins.set('isString', (args): HoloScriptValue => typeof args[0] === 'string');
 
     // New Primitives

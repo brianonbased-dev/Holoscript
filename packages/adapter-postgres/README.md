@@ -32,13 +32,13 @@ const results = await adapter.query('SELECT * FROM users WHERE active = $1', [tr
 
 // Log script execution
 await adapter.saveExecution(
-  'script-123',           // scriptId
-  'object Cube { ... }',  // code
-  'success',              // status
-  42,                     // execution time (ms)
-  '{"rendered": true}',   // output (optional)
-  undefined,              // error (optional)
-  'rendering-agent'       // agentId (optional)
+  'script-123', // scriptId
+  'object Cube { ... }', // code
+  'success', // status
+  42, // execution time (ms)
+  '{"rendered": true}', // output (optional)
+  undefined, // error (optional)
+  'rendering-agent' // agentId (optional)
 );
 ```
 
@@ -61,7 +61,7 @@ const config: PoolConfig = {
   database: 'holoscript',
   user: 'postgres',
   password: 'secret',
-  max: 20,                  // max pool size
+  max: 20, // max pool size
   idleTimeoutMillis: 30000, // close idle connections after 30s
   connectionTimeoutMillis: 2000, // connection timeout
 };
@@ -99,10 +99,7 @@ Execute a raw SQL query with optional parameterized values.
 const users = await adapter.query('SELECT * FROM users');
 
 // Parameterized query (prevents SQL injection)
-const user = await adapter.query(
-  'SELECT * FROM users WHERE id = $1',
-  ['user-123']
-);
+const user = await adapter.query('SELECT * FROM users WHERE id = $1', ['user-123']);
 ```
 
 #### `saveExecution(...): Promise<void>`
@@ -129,9 +126,9 @@ The adapter implements `IDatabaseProvider` for compatibility with HoloScript Run
 interface IDatabaseProvider {
   query(sql: string, params?: any[]): Promise<any>;
   saveExecution(
-    scriptId: string, 
-    code: string, 
-    status: string, 
+    scriptId: string,
+    code: string,
+    status: string,
     executionTimeMs: number,
     output?: string,
     error?: string,

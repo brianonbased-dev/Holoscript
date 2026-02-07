@@ -278,12 +278,12 @@ describe('HoloSmartAsset Schema', () => {
   describe('Type inference', () => {
     it('should infer correct types from schema', () => {
       type InferredAsset = z.infer<typeof HoloSmartAssetSchema>;
-      
+
       const asset: InferredAsset = {
         metadata: { name: 'Typed', version: '1.0.0' },
         script: 'class Typed {}',
       };
-      
+
       expect(asset.metadata.name).toBe('Typed');
       expect(asset.script).toBe('class Typed {}');
     });

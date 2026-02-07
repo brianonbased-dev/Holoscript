@@ -70,6 +70,8 @@ type TokenType =
   | 'QUESTION'
   | 'MATCH'
   | 'UNDERSCORE'
+  | 'ON_ERROR'
+  | 'ASSERT'
   | 'EOF';
 
 interface Token {
@@ -592,6 +594,12 @@ class Lexer {
       case 'match':
         token.type = 'MATCH';
         break;
+      case 'on_error':
+        token.type = 'ON_ERROR';
+        break;
+      case 'assert':
+        token.type = 'ASSERT';
+        break;
       case '_':
         token.type = 'UNDERSCORE';
         break;
@@ -1035,6 +1043,20 @@ export class HoloScriptPlusParser {
     }
 
     // =========================================================================
+    // Special handling for on_error blocks (Epoch 11 Self-Healing)
+    // =========================================================================
+    if (type === 'on_error' || startToken.type === 'ON_ERROR') {
+      return this.parseOnErrorNode();
+    }
+
+    // =========================================================================
+    // Special handling for assert statements (Epoch 11 Self-Healing)
+    // =========================================================================
+    if (type === 'assert' || startToken.type === 'ASSERT') {
+      return this.parseAssertNode();
+    }
+
+    // =========================================================================
     // Special handling for environment blocks
     // =========================================================================
     if (type === 'environment') {
@@ -1294,6 +1316,8 @@ export class HoloScriptPlusParser {
                 'module',
                 'struct',
                 'orb',
+                'on_error',
+                'assert',
               ];
 
               if (this.check('COLON') || this.check('EQUALS')) {
@@ -2434,6 +2458,39 @@ export class HoloScriptPlusParser {
 
     this.expect('RBRACE', 'Expected }');
     return { name, onEntry, onExit };
+  }
+
+  private parseOnErrorNode(): HSPlusNode {
+    const startToken = this.previous();
+    const body = this.parseCodeBlock();
+    return {
+      type: 'on_error' as any,
+      body,
+      loc: {
+        start: { line: startToken.line, column: startToken.column },
+        end: { line: this.current().line, column: this.current().column },
+      },
+    } as any;
+  }
+
+  private parseAssertNode(): HSPlusNode {
+    const startToken = this.previous();
+    this.expect('LPAREN', 'Expected (');
+    const condition = this.parseExpression();
+    let message = '';
+    if (this.match('COMMA')) {
+      message = String(this.parseValue());
+    }
+    this.expect('RPAREN', 'Expected )');
+    return {
+      type: 'assert' as any,
+      condition,
+      message,
+      loc: {
+        start: { line: startToken.line, column: startToken.column },
+        end: { line: this.current().line, column: this.current().column },
+      },
+    } as any;
   }
 
   private parseTransitionsBlock(): any[] {

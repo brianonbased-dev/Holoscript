@@ -79,9 +79,9 @@ describe('MemoryStorageAdapter', () => {
       const nested = {
         level1: {
           level2: {
-            value: 'deep'
-          }
-        }
+            value: 'deep',
+          },
+        },
       };
       await storage.set('nested', nested);
       expect(await storage.get('nested')).toEqual(nested);
@@ -271,7 +271,7 @@ describe('Typed Storage Patterns', () => {
   it('should preserve type information with generics', async () => {
     const user: UserData = { id: 1, name: 'Test', email: 'test@example.com' };
     await storage.set('user', user);
-    
+
     const retrieved = await storage.get<UserData>('user');
     expect(retrieved?.id).toBe(1);
     expect(retrieved?.name).toBe('Test');
@@ -286,7 +286,10 @@ describe('Typed Storage Patterns', () => {
   });
 
   it('should work with Map-like patterns', async () => {
-    const map = new Map([['a', 1], ['b', 2]]);
+    const map = new Map([
+      ['a', 1],
+      ['b', 2],
+    ]);
     // Store as array of entries since Map doesn't serialize
     await storage.set('map', Array.from(map.entries()));
     const entries = await storage.get<[string, number][]>('map');

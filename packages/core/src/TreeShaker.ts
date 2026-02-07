@@ -307,21 +307,21 @@ export class TreeShaker {
 
     if (typeof n.expression === 'string') {
       // Extract identifiers from expression string
-      const matches = (n.expression).match(/[a-zA-Z_][a-zA-Z0-9_]*/g);
+      const matches = n.expression.match(/[a-zA-Z_][a-zA-Z0-9_]*/g);
       if (matches) {
         identifiers.push(...matches);
       }
     }
 
     if (typeof n.condition === 'string') {
-      const matches = (n.condition).match(/[a-zA-Z_][a-zA-Z0-9_]*/g);
+      const matches = n.condition.match(/[a-zA-Z_][a-zA-Z0-9_]*/g);
       if (matches) {
         identifiers.push(...matches);
       }
     }
 
     if (typeof n.value === 'string') {
-      const matches = (n.value).match(/[a-zA-Z_][a-zA-Z0-9_]*/g);
+      const matches = n.value.match(/[a-zA-Z_][a-zA-Z0-9_]*/g);
       if (matches) {
         identifiers.push(...matches);
       }

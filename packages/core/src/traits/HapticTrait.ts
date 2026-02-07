@@ -154,9 +154,9 @@ export const hapticHandler: TraitHandler<HapticTrait> = {
       if (dominantHand) {
         const handPos = dominantHand.position;
         const distance = Math.sqrt(
-          Math.pow((handPos as any)[0] - (pos)[0], 2) +
-            Math.pow((handPos as any)[1] - (pos)[1], 2) +
-            Math.pow((handPos as any)[2] - (pos)[2], 2)
+          Math.pow((handPos as any)[0] - pos[0], 2) +
+            Math.pow((handPos as any)[1] - pos[1], 2) +
+            Math.pow((handPos as any)[2] - pos[2], 2)
         );
 
         const maxDist = config.proximity_distance * context.getScaleMultiplier();

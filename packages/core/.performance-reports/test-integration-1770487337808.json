@@ -23,7 +23,5 @@
       }
     }
   },
-  "recommendations": [
-    "✅ All metrics are within target ranges!"
-  ]
+  "recommendations": ["✅ All metrics are within target ranges!"]
 }

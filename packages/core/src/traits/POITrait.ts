@@ -181,7 +181,7 @@ export const poiHandler: TraitHandler<POIConfig> = {
     } else if (event.type === 'poi_set_metadata') {
       const key = event.key as string;
       const value = event.value;
-      (config.metadata)[key] = value;
+      config.metadata[key] = value;
     } else if (event.type === 'poi_highlight') {
       context.emit?.('poi_show_highlight', {
         node,
