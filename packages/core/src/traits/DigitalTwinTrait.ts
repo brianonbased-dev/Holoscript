@@ -166,7 +166,7 @@ export const digitalTwinHandler: TraitHandler<DigitalTwinConfig> = {
         if (prop.direction !== 'out') {
           const value = physicalData[prop.physical_key];
           if (value !== undefined) {
-            (node as Record<string, unknown>)[prop.virtual_property] = value;
+            (node as unknown as Record<string, unknown>)[prop.virtual_property] = value;
           }
         }
       }
@@ -222,7 +222,7 @@ export const digitalTwinHandler: TraitHandler<DigitalTwinConfig> = {
       
       for (const prop of config.sync_properties) {
         if (prop.direction !== 'out' && changes[prop.physical_key] !== undefined) {
-          (node as Record<string, unknown>)[prop.virtual_property] = changes[prop.physical_key];
+          (node as unknown as Record<string, unknown>)[prop.virtual_property] = changes[prop.physical_key];
         }
       }
     } else if (event.type === 'twin_query') {
@@ -266,7 +266,7 @@ function calculateDivergence(
   
   for (const prop of syncProperties) {
     const physicalValue = physicalState[prop.physical_key];
-    const virtualValue = (node as Record<string, unknown>)[prop.virtual_property];
+    const virtualValue = (node as unknown as Record<string, unknown>)[prop.virtual_property];
     
     if (typeof physicalValue === 'number' && typeof virtualValue === 'number') {
       totalDiff += Math.abs(physicalValue - virtualValue) / Math.max(Math.abs(physicalValue), 1);

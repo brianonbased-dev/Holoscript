@@ -26,6 +26,15 @@ export interface TraitContext {
   audio: AudioContext;
   haptics: HapticsContext;
   accessibility?: AccessibilityContext;
+  camera?: {
+    position: { x: number; y: number; z: number };
+    rotation?: { x: number; y: number; z: number };
+    fov?: number;
+  };
+  player?: {
+    position: { x: number; y: number; z: number };
+    rotation?: { x: number; y: number; z: number };
+  };
   emit: (event: string, payload?: unknown) => void;
   getState: () => Record<string, unknown>;
   setState: (updates: Record<string, unknown>) => void;

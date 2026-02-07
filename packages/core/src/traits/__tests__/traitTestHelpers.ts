@@ -5,6 +5,7 @@
  */
 
 import type { TraitHandler } from '../TraitTypes';
+import type { HSPlusNode } from '../../types/HoloScriptPlus';
 
 export interface MockContext {
   emit: (event: string, data: unknown) => void;
@@ -49,7 +50,7 @@ export function attachTrait<T>(
   ctx: MockContext
 ): void {
   const fullConfig = { ...handler.defaultConfig, ...config };
-  handler.onAttach(node, fullConfig, ctx);
+  handler.onAttach?.(node as unknown as HSPlusNode, fullConfig, ctx as any);
 }
 
 export function sendEvent<T>(
@@ -60,7 +61,7 @@ export function sendEvent<T>(
   event: { type: string; [key: string]: unknown }
 ): void {
   const fullConfig = { ...handler.defaultConfig, ...config };
-  handler.onEvent?.(node, fullConfig, ctx, event);
+  handler.onEvent?.(node as unknown as HSPlusNode, fullConfig, ctx as any, event);
 }
 
 export function updateTrait<T>(
@@ -71,5 +72,5 @@ export function updateTrait<T>(
   delta: number
 ): void {
   const fullConfig = { ...handler.defaultConfig, ...config };
-  handler.onUpdate?.(node, fullConfig, ctx, delta);
+  handler.onUpdate?.(node as unknown as HSPlusNode, fullConfig, ctx as any, delta);
 }

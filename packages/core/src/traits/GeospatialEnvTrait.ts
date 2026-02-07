@@ -106,13 +106,12 @@ export const geospatialEnvHandler: TraitHandler<GeospatialEnvConfig> = {
     // Check for state transitions based on accuracy
     if (state.state === 'localizing' || state.state === 'localized') {
       if (state.accuracy <= config.accuracy_threshold) {
-        if (state.state !== 'tracking') {
-          state.state = 'tracking';
-          context.emit?.('on_geospatial_tracking', {
-            node,
-            accuracy: state.accuracy,
-          });
-        }
+        // Transition to tracking state when accuracy is good
+        state.state = 'tracking';
+        context.emit?.('on_geospatial_tracking', {
+          node,
+          accuracy: state.accuracy,
+        });
       } else if (state.accuracy > config.accuracy_threshold * 3) {
         state.state = 'limited';
       }
