@@ -2039,24 +2039,6 @@ export class HoloCompositionParser {
     return { type: 'EmitStatement', event, data };
   }
 
-  private parseOnErrorStatement(): HoloStatement {
-    this.expect('ON_ERROR');
-    this.expect('LBRACE');
-    this.skipNewlines();
-
-    const body: HoloStatement[] = [];
-    while (!this.check('RBRACE') && !this.isAtEnd()) {
-      this.skipNewlines();
-      if (this.check('RBRACE')) break;
-      const stmt = this.parseStatement();
-      if (stmt) body.push(stmt);
-      this.skipNewlines();
-    }
-
-    this.expect('RBRACE');
-    return { type: 'OnErrorStatement', body };
-  }
-
   private parseAnimateStatement(): HoloStatement {
     this.expect('ANIMATE');
     const target = this.expectString();
@@ -2076,6 +2058,15 @@ export class HoloCompositionParser {
 
     this.expect('RBRACE');
     return { type: 'AnimateStatement', target, properties };
+  }
+
+  private parseOnErrorStatement(): HoloOnErrorStatement {
+    this.expect('ON_ERROR');
+    this.expect('LBRACE');
+    this.skipNewlines();
+    const body = this.parseStatementBlock();
+    this.expect('RBRACE');
+    return { type: 'OnErrorStatement', body };
   }
 
   private parseAssignmentOrExpression(): HoloStatement | null {
@@ -2289,6 +2280,7 @@ export class HoloCompositionParser {
       'UI',
       'TRANSITION',
       'ELEMENT',
+      'ON_ERROR'
     ];
     if (keywordsAsIdentifiers.includes(this.current().type)) {
       this.advance();
@@ -2468,7 +2460,8 @@ export class HoloCompositionParser {
       type === 'AWAIT' ||
       type === 'RETURN' ||
       type === 'EMIT' ||
-      type === 'ANIMATE'
+      type === 'ANIMATE' ||
+      type === 'ON_ERROR'
     );
   }
 
