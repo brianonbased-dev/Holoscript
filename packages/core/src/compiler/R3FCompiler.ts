@@ -69,6 +69,10 @@ export const MATERIAL_PRESETS: Record<string, Record<string, any>> = {
   },
   toon: { roughness: 1.0, metalness: 0.0 },
   wireframe: { roughness: 0.5, metalness: 0.5, wireframe: true },
+  velvet: { roughness: 1.0, metalness: 0.0, clearcoat: 0.3, clearcoatRoughness: 0.8 },
+  xray: { roughness: 0.0, metalness: 0.0, transparent: true, opacity: 0.3, emissiveIntensity: 0.5 },
+  gradient: { roughness: 0.5, metalness: 0.0 },
+  matte: { roughness: 1.0, metalness: 0.0 },
 };
 
 export const ENVIRONMENT_PRESETS: Record<string, any> = {

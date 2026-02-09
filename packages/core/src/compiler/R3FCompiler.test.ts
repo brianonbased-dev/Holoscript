@@ -1370,6 +1370,29 @@ describe('MATERIAL_PRESETS', () => {
     expect(MATERIAL_PRESETS.wireframe.wireframe).toBe(true);
     expect(MATERIAL_PRESETS.wireframe.metalness).toBe(0.5);
   });
+
+  it('should have velvet preset with clearcoat', () => {
+    expect(MATERIAL_PRESETS.velvet).toBeDefined();
+    expect(MATERIAL_PRESETS.velvet.roughness).toBe(1.0);
+    expect(MATERIAL_PRESETS.velvet.clearcoat).toBe(0.3);
+  });
+
+  it('should have xray preset with transparency', () => {
+    expect(MATERIAL_PRESETS.xray).toBeDefined();
+    expect(MATERIAL_PRESETS.xray.transparent).toBe(true);
+    expect(MATERIAL_PRESETS.xray.opacity).toBe(0.3);
+  });
+
+  it('should have gradient preset', () => {
+    expect(MATERIAL_PRESETS.gradient).toBeDefined();
+    expect(MATERIAL_PRESETS.gradient.roughness).toBe(0.5);
+  });
+
+  it('should have matte preset', () => {
+    expect(MATERIAL_PRESETS.matte).toBeDefined();
+    expect(MATERIAL_PRESETS.matte.roughness).toBe(1.0);
+    expect(MATERIAL_PRESETS.matte.metalness).toBe(0.0);
+  });
 });
 
 describe('ENVIRONMENT_PRESETS', () => {
