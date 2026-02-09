@@ -57,29 +57,42 @@ See [V3_EXIT_GATE_CHECKLIST.md](./docs/V3_EXIT_GATE_CHECKLIST.md) for exit crite
 
 ---
 
-## 🚀 v3.1 Agentic Choreography - In Progress
+## 🚀 v3.1 Agentic Choreography - Implementation Complete
 
 **Target Version:** 3.1.0
 **Timeline:** 12 weeks (Target: March 2026)
+**Status:** ✅ All 8 priorities implemented with tests
 **Full Plan:** [SPRINT_4_PLAN.md](./docs/SPRINT_4_PLAN.md)
 
 ### Priority Stack
 
-| #   | Priority                    | Focus                          | Status         |
-| --- | --------------------------- | ------------------------------ | -------------- |
-| 1   | AgentRegistry & Discovery   | Core agent infrastructure      | ✅ Complete    |
-| 2   | ChoreographyEngine          | Task → Agent matching          | ✅ Complete    |
-| 3   | Multi-Agent Negotiation     | Conflict resolution            | ✅ Complete    |
-| 4   | Spatial Context Awareness   | Location-aware choreography    | ⬜ Not Started |
-| 5   | Consensus Mechanisms        | Distributed agreement          | ⬜ Not Started |
-| 6   | Agent Communication         | Secure messaging channels      | ✅ Complete    |
-| 7   | Hierarchy & Delegation      | Command structure              | ⬜ Not Started |
-| 8   | Debugging & Observability   | Trace viewer, replay debugging | ⬜ Not Started |
+| #   | Priority                    | Focus                          | Coverage | Status      |
+| --- | --------------------------- | ------------------------------ | -------- | ----------- |
+| 1   | AgentRegistry & Discovery   | Core agent infrastructure      | 61.87%   | ✅ Complete |
+| 2   | ChoreographyEngine          | Task → Agent matching          | 76.26%   | ✅ Complete |
+| 3   | Multi-Agent Negotiation     | Conflict resolution            | 71.53%   | ✅ Complete |
+| 4   | Spatial Context Awareness   | Location-aware choreography    | 56.71%   | ✅ Complete |
+| 5   | Consensus Mechanisms        | Distributed agreement          | 85.08%   | ✅ Complete |
+| 6   | Agent Communication         | Secure messaging channels      | 78.35%   | ✅ Complete |
+| 7   | Hierarchy & Delegation      | Command structure              | 88.50%   | ✅ Complete |
+| 8   | Debugging & Observability   | Trace viewer, replay debugging | 70.97%   | ✅ Complete |
 
 **Success Metrics:**
-- AgentRegistry managing 100+ agents
-- Choreography latency < 50ms
-- Test coverage ≥60% overall, ≥80% new code
+- AgentRegistry managing 100+ agents ✅
+- Choreography latency < 50ms ✅
+- Test coverage ≥60% overall (current: 41.37%), ≥80% new code (avg: ~73%)
+
+### Remaining for v3.1.0 Release
+
+| Task | Priority | Status |
+| ---- | -------- | ------ |
+| Improve Spatial module coverage (56.71% → 80%) | High | ⬜ Not Started |
+| Add tests for 0% coverage traits | Medium | ⬜ Not Started |
+| Create v3.1 tutorials | Medium | ⬜ Not Started |
+| Add v3.1 feature examples | Medium | ⬜ Not Started |
+| Final integration testing | High | ⬜ Not Started |
+
+See [IMPLEMENTATION_AUDIT_2025.md](./IMPLEMENTATION_AUDIT_2025.md) for detailed gap analysis.
 
 ---
 
@@ -3896,12 +3909,120 @@ Major version with visual scripting and WASM.
 
 ---
 
+## Trait Rendering Expansion (2026-2027)
+
+**Goal:** Close the gap between the 1,525+ parser-accepted traits and actual rendered behavior. Currently ~55 traits have runtime handlers and ~56 have R3F compiler mappings. This initiative expands visual coverage across three phases.
+
+### Phase 1: Trait-to-PBR Visual Registry (Q2 2026)
+
+**Target:** ~250 traits with material/visual mappings | **Agent:** Architect
+**Location:** `packages/core/src/traits/visual-registry.ts` (new)
+
+Map every material, surface, lighting, and visual-effect trait to PBR parameters. Extends the existing `MATERIAL_PRESETS` pattern in R3FCompiler.
+
+| Category | Traits | Example Mappings |
+| --- | --- | --- |
+| Material Properties | wooden, marble, granite, bamboo, carbon_fiber, ... (33) | PBR roughness/metalness/color |
+| Surface Textures | polished, rough, cracked, mossy, rusty, ... (30) | Normal maps, roughness modifiers |
+| Gems & Minerals | ruby, emerald, diamond, obsidian, quartz, ... (30) | IOR, transmission, dispersion |
+| Fabric & Cloth | silk, leather, denim, velvet, lace, ... (30) | Sheen, roughness, subsurface |
+| Lighting | spotlight, candlelight, neon_light, moonlight, ... (28) | Light type, color temp, intensity |
+| Visual Effects | holographic, iridescent, cel_shaded, x_ray, ... (30) | Custom shaders, post-processing |
+| Age & Condition | pristine, weathered, ancient, corroded, ... (30) | Wear overlays, color shifts |
+| Size & Scale | tiny, colossal, microscopic, towering, ... (18) | Scale multipliers |
+
+**Deliverables:**
+
+- [ ] `TraitVisualRegistry` class with PBR config lookup
+- [ ] R3FCompiler integration (auto-apply material from trait)
+- [ ] 250+ trait → visual mappings
+- [ ] Fallback: unknown visual traits get neutral default
+- [ ] Unit tests for all preset mappings
+
+### Phase 2: Compositional Trait Effects (Q3 2026)
+
+**Target:** Trait combination rules | **Agent:** Architect + QA
+**Location:** `packages/core/src/traits/trait-compositor.ts` (new)
+
+Define how traits **compose** to modify rendering. Traits act as stackable modifiers rather than 1:1 mappings.
+
+```
+@wooden @ancient_era @cursed →
+  Base: wood PBR (roughness: 0.8, metalness: 0.0)
+  + ancient_era modifier: weathering overlay, moss patches, cracks
+  + cursed modifier: dark color shift, faint purple particle aura
+```
+
+| Modifier Type | Traits | Effect |
+| --- | --- | --- |
+| Era/Period | prehistoric, medieval, victorian, art_deco, cyberpunk, ... (23) | Color palette, wear level, style hints |
+| Condition | pristine, damaged, ruined, enchanted, corrupted, ... (30) | Overlay effects, emission changes |
+| Emotion/Mood | eerie, serene, chaotic, triumphant, cozy, ... (20) | Lighting tint, particle aura, ambient sound |
+| Environment | foggy, underwater, zero_gravity, volcanic, ... (33) | Scene-level post-processing, physics mods |
+| Magic/Fantasy | enchantable, cursed, blessed, elemental_fire, ... (37) | Particle systems, glow auras, shader effects |
+
+**Deliverables:**
+
+- [ ] `TraitCompositor` class: applies modifiers in priority order
+- [ ] Modifier categories: material, overlay, particle, lighting, post-process
+- [ ] Conflict resolution rules (e.g., `@icy` + `@volcanic` = steam effect)
+- [ ] R3FCompiler + BabylonCompiler integration
+- [ ] Visual test suite: golden-image snapshots for key combinations
+
+### Phase 3: AI-Assisted Asset Generation (Q4 2026 - Q1 2027)
+
+**Target:** Semantic traits → generated 3D content | **Agent:** Architect + IDE
+**Location:** `packages/runtime/src/generators/` (new)
+
+Use AI/procedural generation to create geometry and textures from semantic trait descriptions. Traits like `@dragon`, `@chair`, `@lighthouse` become actual rendered objects.
+
+| Strategy | Traits Covered | Technology |
+| --- | --- | --- |
+| Text-to-3D API | Animals, creatures, furniture, vehicles (~200) | Meshy, Tripo, Rodin, or self-hosted |
+| Text-to-Texture | Material/surface traits for custom UV maps (~100) | Stable Diffusion, SDXL |
+| Procedural Geometry | Shape traits, construction, nature (~80) | SDF functions, L-systems, Wave Function Collapse |
+| Asset Library Fallback | Common objects with pre-made models (~50) | GLB/GLTF asset bundles |
+
+**Pipeline:**
+
+```text
+@dragon @ancient_era @fire_breathing
+  1. TraitCompositor resolves visual config
+  2. AssetResolver checks local cache → CDN → generation API
+  3. Text-to-3D: "ancient dragon" → GLB mesh
+  4. TraitCompositor applies @ancient_era weathering shader
+  5. Runtime attaches @fire_breathing particle system
+  6. Scene renders composed result
+```
+
+**Deliverables:**
+
+- [ ] `AssetResolver` with cache-first strategy (local → CDN → generate)
+- [ ] Text-to-3D adapter interface (pluggable providers)
+- [ ] Procedural geometry generators (trees, rocks, terrain, buildings)
+- [ ] Asset manifest format for pre-bundled trait→model mappings
+- [ ] Offline mode: graceful degradation to primitive geometry + material
+- [ ] Rate limiting and cost controls for API-based generation
+
+### Trait Rendering Coverage Targets
+
+| Milestone | Traits with Visual Behavior | Coverage |
+| --- | --- | --- |
+| Current (Feb 2026) | ~60 | 3.9% |
+| Phase 1 complete | ~310 | 20% |
+| Phase 2 complete | ~600 | 39% |
+| Phase 3 complete | ~1,000+ | 65%+ |
+| Long-term (2027+) | 1,525+ | 100% |
+
+---
+
 ## 2028 Roadmap (Maintenance & Growth)
 
 - Community-driven feature requests
 - Stability and performance improvements
 - Ecosystem expansion
 - 10,000+ monthly active developers target
+- Trait rendering coverage push to 100%
 
 ---
 
