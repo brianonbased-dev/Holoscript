@@ -4,6 +4,8 @@
  * Handles incoming webhooks from the HoloScript registry.
  */
 
+import { hmacSha256, timingSafeEqual } from '../utils/crypto.js';
+
 /**
  * Webhook event types
  */
@@ -210,9 +212,9 @@ export class WebhookHandler {
       const parsedPayload: WebhookPayload =
         typeof payload === 'string' ? JSON.parse(payload) : payload;
 
-      // Verify signature if provided
+      // Verify signature if provided (HMAC-SHA256)
       if (signature && timestamp) {
-        this.verifySignature(
+        await this.verifySignature(
           typeof payload === 'string' ? payload : JSON.stringify(payload),
           signature,
           timestamp
@@ -251,53 +253,23 @@ export class WebhookHandler {
   }
 
   /**
-   * Verify webhook signature
+   * Verify webhook signature using HMAC-SHA256
    */
-  private verifySignature(payload: string, signature: string, timestamp: string): void {
-    const expectedSignature = this.computeSignature(payload, timestamp);
+  private async verifySignature(payload: string, signature: string, timestamp: string): Promise<void> {
+    const expectedSignature = await this.computeSignature(payload, timestamp);
 
-    // Timing-safe comparison
-    if (!this.timingSafeEqual(signature, expectedSignature)) {
+    // Timing-safe comparison to prevent timing attacks
+    if (!timingSafeEqual(signature, expectedSignature)) {
       throw new WebhookVerificationError('Invalid webhook signature');
     }
   }
 
   /**
-   * Compute expected signature
+   * Compute expected signature using HMAC-SHA256
    */
-  private computeSignature(payload: string, timestamp: string): string {
-    // In production, use HMAC-SHA256
+  private async computeSignature(payload: string, timestamp: string): Promise<string> {
     const data = `${timestamp}.${payload}`;
-    return this.simpleHash(data + this.config.signingSecret);
-  }
-
-  /**
-   * Simple hash function (placeholder - use crypto in production)
-   */
-  private simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(16).padStart(16, '0');
-  }
-
-  /**
-   * Timing-safe string comparison
-   */
-  private timingSafeEqual(a: string, b: string): boolean {
-    if (a.length !== b.length) {
-      return false;
-    }
-
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    }
-
-    return result === 0;
+    return hmacSha256(data, this.config.signingSecret);
   }
 
   /**

@@ -5,6 +5,7 @@ let mockQuery: Mock;
 let mockConnect: Mock;
 let mockEnd: Mock;
 let mockOn: Mock;
+let poolConstructorSpy: Mock;
 
 // Mock pg module
 vi.mock('pg', () => {
@@ -12,10 +13,22 @@ vi.mock('pg', () => {
   const connect = vi.fn();
   const end = vi.fn();
   const on = vi.fn();
+  const constructorSpy = vi.fn();
+
+  // Use a proper class for the Pool mock
+  class MockPool {
+    query = query;
+    connect = connect;
+    end = end;
+    on = on;
+    constructor(config?: any) {
+      constructorSpy(config);
+    }
+  }
 
   return {
-    Pool: vi.fn(() => ({ query, connect, end, on })),
-    __getMocks: () => ({ query, connect, end, on }),
+    Pool: MockPool,
+    __getMocks: () => ({ query, connect, end, on, constructorSpy }),
   };
 });
 
@@ -43,6 +56,7 @@ describe('PostgresHoloAdapter', () => {
     mockConnect = mocks.connect;
     mockEnd = mocks.end;
     mockOn = mocks.on;
+    poolConstructorSpy = mocks.constructorSpy;
 
     // Create a fresh adapter for each test
     adapter = new PostgresHoloAdapter({ connectionString: 'postgres://test' });
@@ -56,12 +70,14 @@ describe('PostgresHoloAdapter', () => {
     it('should create adapter with connection string', () => {
       // Reset singleton again for this test
       (PostgresPool as any).instance = undefined;
+      poolConstructorSpy.mockClear();
       const testAdapter = new PostgresHoloAdapter('postgres://localhost:5432/test');
-      expect(pg.Pool).toHaveBeenCalled();
+      expect(poolConstructorSpy).toHaveBeenCalled();
     });
 
     it('should create adapter with config object', () => {
       (PostgresPool as any).instance = undefined;
+      poolConstructorSpy.mockClear();
       const config = {
         host: 'localhost',
         port: 5432,
@@ -70,7 +86,7 @@ describe('PostgresHoloAdapter', () => {
         password: 'pass',
       };
       const testAdapter = new PostgresHoloAdapter(config);
-      expect(pg.Pool).toHaveBeenCalled();
+      expect(poolConstructorSpy).toHaveBeenCalled();
     });
   });
 
@@ -193,14 +209,16 @@ describe('PostgresPool', () => {
     mockConnect = mocks.connect;
     mockEnd = mocks.end;
     mockOn = mocks.on;
+    poolConstructorSpy = mocks.constructorSpy;
   });
 
   it('should be a singleton', () => {
+    poolConstructorSpy.mockClear();
     const pool1 = PostgresPool.getInstance({ connectionString: 'postgres://test1' });
     const pool2 = PostgresPool.getInstance({ connectionString: 'postgres://test2' });
 
     // Pool constructor should only be called once (singleton pattern)
-    expect(pg.Pool).toHaveBeenCalledTimes(1);
+    expect(poolConstructorSpy).toHaveBeenCalledTimes(1);
     expect(pool1).toBe(pool2);
   });
 

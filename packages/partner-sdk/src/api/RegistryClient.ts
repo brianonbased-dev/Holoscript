@@ -4,6 +4,8 @@
  * Provides programmatic access to the HoloScript package registry.
  */
 
+import { hmacSha256 } from '../utils/crypto.js';
+
 /**
  * Partner authentication credentials
  */
@@ -302,9 +304,9 @@ export class RegistryClient {
     };
 
     if (this.config.credentials.secretKey) {
-      // Generate request signature for enhanced security
+      // Generate request signature for enhanced security (HMAC-SHA256)
       const timestamp = Date.now().toString();
-      const signature = this.generateSignature(method, endpoint, timestamp, body);
+      const signature = await this.generateSignature(method, endpoint, timestamp, body);
       headers['X-Timestamp'] = timestamp;
       headers['X-Signature'] = signature;
     }
@@ -349,28 +351,15 @@ export class RegistryClient {
   /**
    * Generate request signature for secure endpoints
    */
-  private generateSignature(
+  private async generateSignature(
     method: string,
     endpoint: string,
     timestamp: string,
     body?: unknown
-  ): string {
+  ): Promise<string> {
     const payload = `${method}:${endpoint}:${timestamp}:${body ? JSON.stringify(body) : ''}`;
-    // In production, use HMAC-SHA256 with secretKey
-    return this.simpleHash(payload + (this.config.credentials.secretKey || ''));
-  }
-
-  /**
-   * Simple hash function (placeholder - use crypto in production)
-   */
-  private simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(16);
+    const secret = this.config.credentials.secretKey || this.config.credentials.apiKey;
+    return hmacSha256(payload, secret);
   }
 
   /**

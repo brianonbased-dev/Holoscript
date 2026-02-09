@@ -28,12 +28,87 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 app.use(express.text({ type: 'text/plain', limit: '1mb' }));
 
-// In-memory store for scenes
+// =============================================================================
+// SCENE CACHE WITH TTL AND MAX ENTRIES (OOM Prevention)
+// =============================================================================
+const MAX_SCENES = 1000;
+const SCENE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CLEANUP_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+
+// In-memory store for scenes with TTL tracking
 const scenes = new Map();
+const sceneTimestamps = new Map(); // Track creation time for TTL
+
+/**
+ * Evict expired scenes and enforce max capacity
+ */
+function cleanupScenes() {
+  const now = Date.now();
+  let evictedExpired = 0;
+  let evictedOverflow = 0;
+
+  // 1. Remove expired scenes
+  for (const [id, timestamp] of sceneTimestamps.entries()) {
+    if (now - timestamp > SCENE_TTL_MS) {
+      scenes.delete(id);
+      sceneTimestamps.delete(id);
+      evictedExpired++;
+    }
+  }
+
+  // 2. If still over capacity, remove oldest scenes (LRU)
+  if (scenes.size > MAX_SCENES) {
+    const sortedByTime = [...sceneTimestamps.entries()].sort((a, b) => a[1] - b[1]);
+    const toRemove = sortedByTime.slice(0, scenes.size - MAX_SCENES);
+    for (const [id] of toRemove) {
+      scenes.delete(id);
+      sceneTimestamps.delete(id);
+      evictedOverflow++;
+    }
+  }
+
+  if (evictedExpired > 0 || evictedOverflow > 0) {
+    console.log(`[Cleanup] Evicted ${evictedExpired} expired, ${evictedOverflow} overflow. Remaining: ${scenes.size}`);
+  }
+}
+
+// Run cleanup periodically
+setInterval(cleanupScenes, CLEANUP_INTERVAL_MS);
+
+/**
+ * Add scene with TTL tracking and capacity enforcement
+ */
+function addScene(id, scene) {
+  // Cleanup before adding to prevent OOM
+  if (scenes.size >= MAX_SCENES) {
+    cleanupScenes();
+  }
+  
+  // If still at capacity after cleanup, evict oldest
+  if (scenes.size >= MAX_SCENES) {
+    const oldest = [...sceneTimestamps.entries()].sort((a, b) => a[1] - b[1])[0];
+    if (oldest) {
+      scenes.delete(oldest[0]);
+      sceneTimestamps.delete(oldest[0]);
+    }
+  }
+  
+  scenes.set(id, scene);
+  sceneTimestamps.set(id, Date.now());
+}
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'holoscript-render', version: '1.0.0' });
+  res.json({ 
+    status: 'ok', 
+    service: 'holoscript-render', 
+    version: '1.0.0',
+    cache: {
+      scenes: scenes.size,
+      maxScenes: MAX_SCENES,
+      ttlHours: SCENE_TTL_MS / (60 * 60 * 1000)
+    }
+  });
 });
 
 // Create a shareable scene
@@ -47,7 +122,7 @@ app.post('/share', async (req, res) => {
 
     const id = generateId();
 
-    scenes.set(id, {
+    addScene(id, {
       code,
       title: title || 'HoloScript Scene',
       description: description || 'Interactive 3D scene built with HoloScript',
