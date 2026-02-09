@@ -49,7 +49,7 @@ holoscript-lint --config .holoscriptlintrc src/
 ## Programmatic Usage
 
 ```typescript
-import { HoloScriptLinter, lint, createLinter } from '@hololand/holoscript-linter';
+import { HoloScriptLinter, lint, createLinter } from '@holoscript/linter';
 
 // Create linter with custom config
 const linter = new HoloScriptLinter({

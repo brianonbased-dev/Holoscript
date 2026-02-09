@@ -11,7 +11,7 @@ pip install holoscript
 ## Quick Start
 
 ```python
-from holoscript import HoloScript, parse, validate, generate
+from holoscript import HoloScript
 
 # Initialize
 hs = HoloScript()

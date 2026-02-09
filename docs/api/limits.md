@@ -35,7 +35,7 @@ The **1,000 node limit** is the primary constraint. Design around lazy loading a
 
 | Limit           | Value         |
 | --------------- | ------------- |
-| VR Traits       | 55 available  |
+| VR Traits       | 57 implemented (119+ defined) |
 | Lifecycle Hooks | 80+ available |
 | Scale Range     | 0.1x - 10x    |
 | Inventory Stack | 10 items      |

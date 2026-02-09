@@ -164,6 +164,18 @@ holoscript repl
 AST: { type: "orb", name: "Test", ... }
 ```
 
+### Additional Commands
+
+The CLI includes 32+ commands for package management, registry, deployment, and code tools. For the full command reference, see [`packages/cli/README.md`](../../packages/cli/README.md).
+
+Key commands not covered above:
+
+- **Package Management:** `add`, `remove`, `list`, `pack`, `unpack`
+- **Registry:** `publish`, `login`, `logout`, `whoami`, `access`, `org`, `token`
+- **Code Tools:** `traits`, `suggest`, `generate`, `templates`, `inspect`, `diff`
+- **Deployment:** `deploy`, `monitor`, `wot-export`
+- **Runtime:** `run`, `headless`
+
 ---
 
 ## Configuration

@@ -1,6 +1,8 @@
 ## Quick Reference
 
-### By Domain (165+ Traits)
+### By Domain
+
+> **Note:** This reference documents the full trait design space. Not all traits listed below have runtime implementations yet. For currently implemented traits (~57), see `packages/runtime/src/traits/`. For parser-validated traits (~37), see `packages/core/src/parser/ErrorRecovery.ts`.
 
 | Domain                 | Traits                                                                                                                                                                                                                     |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

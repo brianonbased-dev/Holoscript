@@ -148,29 +148,6 @@ The formatter integrates with the HoloScript VSCode extension:
 2. Format selection: Select code and press `Shift+Alt+F`
 3. Format document: Press `Shift+Alt+F` with no selection
 
-## Prettier Plugin
-
-For projects using Prettier, use the Prettier plugin:
-
-```bash
-pnpm add prettier-plugin-holoscript
-```
-
-```json
-// .prettierrc
-{
-  "plugins": ["prettier-plugin-holoscript"],
-  "overrides": [
-    {
-      "files": ["*.holo", "*.hsplus"],
-      "options": {
-        "parser": "holoscript"
-      }
-    }
-  ]
-}
-```
-
 ## License
 
 Elastic License 2.0 - See [LICENSE](../../LICENSE) for details.

@@ -120,7 +120,7 @@ Default keymaps (customizable via config):
 | Extension | Filetype     | Description                              |
 | --------- | ------------ | ---------------------------------------- |
 | `.holo`   | `holo`       | Declarative compositions                 |
-| `.hsplus` | `holo`       | HoloScript Plus with VR traits           |
+| `.hsplus` | `hsplus`     | HoloScript Plus with VR traits           |
 | `.hs`     | `holoscript` | Classic HoloScript (disabled by default) |
 
 > **Note:** `.hs` registration is disabled by default to avoid conflicts with Haskell. Enable with `register_hs_extension = true`.

@@ -42,7 +42,7 @@ All three phases successfully implemented in parallel with 100% test passing rat
 **Enables declarative graphics configuration in HoloScript+ code:**
 
 ```holoscript
-orb goldMetal {
+orb "goldMetal" {
   position: [0, 2, 0]
   @material {
     type: pbr,

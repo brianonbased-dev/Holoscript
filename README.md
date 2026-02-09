@@ -297,7 +297,7 @@ const result = parser.parse(`
 
 ## Features
 
-### 🕹️ Trait System (157 traits across 18 domains)
+### 🕹️ Trait System (119+ traits across 18 domains)
 
 | Domain                  | Example Traits                                                                   |
 | ----------------------- | -------------------------------------------------------------------------------- |
@@ -337,16 +337,25 @@ const result = parser.parse(`
 
 ### Core Language (This Repo)
 
-| Package                 | Version | What it does                              | Status |
-| ----------------------- | ------- | ----------------------------------------- | ------ |
-| `@holoscript/core`      | 2.1.0   | Parser, runtime, types, trait definitions | ✅     |
-| `@holoscript/runtime`   | 2.1.0   | Execution engine                          | ✅     |
-| `@holoscript/cli`       | 2.1.0   | Command line tools                        | ✅     |
-| `@holoscript/formatter` | 2.0.0   | Code formatting                           | ✅     |
-| `@holoscript/linter`    | 2.0.0   | Static analysis                           | ✅     |
-| `@holoscript/lsp`       | 1.0.0   | Language Server Protocol                  | ✅     |
-| `@holoscript/std`       | 1.0.0   | Standard library                          | ✅     |
-| `@holoscript/fs`        | 1.0.0   | File system utilities                     | ✅     |
+| Package                      | Version | What it does                              | Status |
+| ---------------------------- | ------- | ----------------------------------------- | ------ |
+| `@holoscript/core`           | 3.0.0   | Parser, runtime, types, trait definitions | ✅     |
+| `@holoscript/runtime`        | 3.0.0   | Execution engine                          | ✅     |
+| `@holoscript/cli`            | 3.0.0   | Command line tools                        | ✅     |
+| `@holoscript/formatter`      | 3.0.0   | Code formatting                           | ✅     |
+| `@holoscript/linter`         | 3.0.0   | Static analysis                           | ✅     |
+| `@holoscript/lsp`            | 3.0.0   | Language Server Protocol                  | ✅     |
+| `@holoscript/std`            | 3.0.0   | Standard library                          | ✅     |
+| `@holoscript/fs`             | 3.0.0   | File system utilities                     | ✅     |
+| `@holoscript/mcp-server`     | 3.0.0   | MCP tools for AI agents (35 tools)        | ✅     |
+| `@holoscript/sdk`            | 3.0.0   | Smart Asset SDK & HoloHub client          | ✅     |
+| `@holoscript/visual`         | 3.0.0   | Visual node-based editor (26 nodes)       | ✅     |
+| `@holoscript/registry`       | 3.0.0   | Package registry & team workspaces        | ✅     |
+| `@holoscript/partner-sdk`    | 3.0.0   | Partner integration SDK                   | ✅     |
+| `@holoscript/adapter-postgres` | 0.1.0  | PostgreSQL execution logging              | ✅     |
+| `@holoscript/neovim`         | 1.0.0   | Neovim editor plugin                      | ✅     |
+| `@holoscript/intellij`       | 1.0.0   | IntelliJ/JetBrains plugin                 | ✅     |
+| `@holoscript/compiler-wasm`  | 3.0.0   | Rust/WASM compiler (10x faster parsing)   | 🚧     |
 
 ### Migrated to Hololand (Jan 2026)
 

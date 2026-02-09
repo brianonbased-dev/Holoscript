@@ -10,59 +10,72 @@ npm install -g @holoscript/cli
 
 ## Commands
 
-### Build
+### Build / Compile
 
-Compile HoloScript files:
+Compile HoloScript files to target platforms:
 
 ```bash
 holoscript build src/
 holoscript build --target web --output dist/
+holoscript compile scene.holo --target unity
 ```
 
-### Lint
-
-Check for issues:
+### Parse & Validate
 
 ```bash
-holoscript lint src/
-holoscript lint --fix src/
+holoscript parse scene.holo
+holoscript validate src/
+holoscript ast scene.holo          # Show AST output
 ```
 
-### Format
-
-Format code:
+### Run & Dev
 
 ```bash
-holoscript fmt src/
+holoscript run scene.holo          # Execute headless
+holoscript repl                    # Interactive shell
+holoscript watch src/              # Watch for changes
+holoscript headless scene.holo     # Headless runtime
 ```
 
-### Workspace
-
-Manage team workspaces:
+### Package Management
 
 ```bash
-holoscript workspace create my-team
-holoscript workspace list
-holoscript workspace invite user@example.com
+holoscript add @holoscript/std
+holoscript remove @holoscript/std
+holoscript list                    # List installed packages
+holoscript pack                    # Package assets
+holoscript unpack bundle.hsa       # Unpack assets
 ```
 
-### Registry
-
-Manage packages:
+### Registry & Publishing
 
 ```bash
-holoscript publish
-holoscript login
-holoscript search "vr physics"
+holoscript publish                 # Publish package
+holoscript login                   # Authenticate
+holoscript logout                  # Sign out
+holoscript whoami                  # Show identity
+holoscript access grant user pkg   # Manage access
+holoscript org create my-team      # Organization management
+holoscript token create            # Token management
 ```
 
-### Dev
-
-Start development server:
+### Code Tools
 
 ```bash
-holoscript dev
-holoscript dev --port 3000
+holoscript traits                  # List available traits
+holoscript suggest scene.holo      # Get code suggestions
+holoscript generate "a VR lobby"   # AI code generation
+holoscript templates               # Show available templates
+holoscript inspect output.js       # Inspect compiled output
+holoscript diff a.holo b.holo      # Show differences
+```
+
+### Deployment
+
+```bash
+holoscript deploy scene.holo       # Deploy to remote
+holoscript monitor                 # Monitor runtime
+holoscript wot-export scene.holo   # W3C Web of Things export
 ```
 
 ## Configuration

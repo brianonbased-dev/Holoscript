@@ -9,17 +9,26 @@ HoloScript is a **full programming language** for spatial computing, not just a 
 ```
 HoloScript/                     # This repo - complete language system
 ├── packages/
-│   ├── core/                   # Parser, AST, validator, compiler
-│   ├── runtime/                # Native HoloScript runtime
-│   ├── cli/                    # Command-line tools
+│   ├── core/                   # Parser, AST, validator, 16 compilers
+│   ├── runtime/                # Browser runtime, traits, physics, events
+│   ├── cli/                    # Command-line tools (32+ commands)
 │   ├── lsp/                    # Language Server Protocol
 │   ├── mcp-server/             # MCP for AI agent integration
 │   ├── vscode-extension/       # VS Code language support
 │   ├── formatter/              # Code formatting
 │   ├── linter/                 # Static analysis
-│   ├── std/                    # Standard library
-│   ├── fs/                     # Filesystem utilities
+│   ├── std/                    # Standard library (types, math, collections)
+│   ├── fs/                     # Filesystem utilities & file watching
 │   ├── benchmark/              # Performance benchmarks
+│   ├── test/                   # Testing framework & visual regression
+│   ├── holoscript/             # SDK: Smart Assets & HoloHub client
+│   ├── compiler-wasm/          # WebAssembly parser for browsers
+│   ├── visual/                 # Node-based visual programming editor
+│   ├── registry/               # Package registry & team workspace API
+│   ├── partner-sdk/            # Partner integration SDK
+│   ├── adapter-postgres/       # PostgreSQL database adapter
+│   ├── neovim/                 # Neovim plugin
+│   ├── intellij/               # IntelliJ / JetBrains plugin
 │   └── python-bindings/        # Python API
 ├── services/
 │   └── render-service/         # Preview rendering (Render.com)
@@ -68,14 +77,46 @@ But HoloScript works without Hololand.
 
 ## Package Relationships
 
-| Package                  | Purpose                          | npm         |
-| ------------------------ | -------------------------------- | ----------- |
-| `@holoscript/core`       | Parser, AST, validator, compiler | ✅ v2.1.0   |
-| `@holoscript/runtime`    | Native execution engine          | ✅          |
-| `@holoscript/cli`        | Command-line tools               | ✅          |
-| `@holoscript/lsp`        | Language Server Protocol         | ✅          |
-| `@holoscript/mcp-server` | AI agent integration             | ✅ v1.0.2   |
-| `@holoscript/vscode`     | VS Code extension                | Marketplace |
+### Core Language
+
+| Package                  | Purpose                                    | Version |
+| ------------------------ | ------------------------------------------ | ------- |
+| `@holoscript/core`       | Parser, AST, validator, 16 compilers       | v3.0.0  |
+| `@holoscript/runtime`    | Browser runtime, 50+ traits, physics       | v3.0.0  |
+| `@holoscript/std`        | Standard library (types, math, collections)| v3.0.0  |
+| `@holoscript/fs`         | Filesystem utilities & file watching       | v3.0.0  |
+| `@holoscript/cli`        | Command-line tools (32+ commands)          | v3.0.0  |
+
+### Developer Tools
+
+| Package                    | Purpose                                  | Version |
+| -------------------------- | ---------------------------------------- | ------- |
+| `@holoscript/lsp`          | Language Server Protocol                 | v3.0.0  |
+| `@holoscript/formatter`    | Code formatting                          | v3.0.0  |
+| `@holoscript/linter`       | Static analysis                          | v3.0.0  |
+| `@holoscript/test`         | Testing framework & visual regression    | v3.0.0  |
+| `@holoscript/benchmark`    | Performance benchmarks                   | v3.0.0  |
+
+### Editor Extensions
+
+| Package                    | Purpose                                  | Version |
+| -------------------------- | ---------------------------------------- | ------- |
+| `holoscript-vscode`        | VS Code extension                        | v3.0.0  |
+| `@holoscript/neovim`       | Neovim plugin                            | v3.0.0  |
+| `@holoscript/intellij`     | IntelliJ / JetBrains plugin              | v3.0.0  |
+| `@holoscript/visual`       | Node-based visual programming editor     | v3.0.0  |
+
+### Integration & Platform
+
+| Package                          | Purpose                                  | Version |
+| -------------------------------- | ---------------------------------------- | ------- |
+| `@holoscript/mcp-server`         | MCP for AI agent integration (35 tools)  | v3.0.0  |
+| `@holoscript/sdk`                | Smart Asset SDK & HoloHub client         | v3.0.0  |
+| `@holoscript/wasm`               | WebAssembly parser for browsers          | v3.0.0  |
+| `@holoscript/registry`           | Package registry & team workspace API    | v3.0.0  |
+| `@holoscript/partner-sdk`        | Partner integration SDK                  | v3.0.0  |
+| `@holoscript/adapter-postgres`   | PostgreSQL database adapter              | v3.0.0  |
+| `holoscript` (Python)            | Python bindings                          | v3.0.0  |
 
 ## Data Flow
 
@@ -109,7 +150,7 @@ AI Agent (Grok/Claude/Copilot)
          │
          ▼
 ┌─────────────────────┐
-│ @holoscript/mcp-server │  ← 15 MCP tools
+│ @holoscript/mcp-server │  ← 35 MCP tools
 └────────┬────────────┘
          │ parse, validate, generate
          ▼
@@ -134,7 +175,7 @@ AI Agent (Grok/Claude/Copilot)
 | ------------------------- | -------------------------- |
 | Full programming language | One deployment platform    |
 | Native runtime            | Extended platform adapters |
-| Compiler (9 targets)      | Brittney AI assistant      |
+| Compiler (16 targets)     | Brittney AI assistant      |
 | Developer tools           | Hosting services           |
 | AI integration (MCP)      | Sample applications        |
 

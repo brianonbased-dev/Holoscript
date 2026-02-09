@@ -21,39 +21,13 @@ Learn the basics of HoloScript and create your first VR scenes.
 | 1.9  | [Project Structure](./level-1-fundamentals/09-project-structure.md)    | Organizing larger HoloScript projects             | 20 min   |
 | 1.10 | [Building & Deploying](./level-1-fundamentals/10-building.md)          | Compiling and deploying your VR experience        | 25 min   |
 
-### Level 2: Intermediate (10 lessons)
+### Level 2: Intermediate (Coming Soon)
 
-Master advanced features for professional VR development.
+Master advanced features for professional VR development. Topics will include advanced traits, physics, audio, animation, VR UI, state management, networking, performance, debugging, and testing.
 
-| #    | Lesson                                                               | Description                                    | Duration |
-| ---- | -------------------------------------------------------------------- | ---------------------------------------------- | -------- |
-| 2.1  | [Advanced Traits](./level-2-intermediate/01-advanced-traits.md)      | Creating and combining complex trait behaviors | 40 min   |
-| 2.2  | [Physics Simulation](./level-2-intermediate/02-physics.md)           | Realistic physics with @physics trait          | 45 min   |
-| 2.3  | [Audio & Sound](./level-2-intermediate/03-audio.md)                  | Spatial audio and sound effects                | 35 min   |
-| 2.4  | [Animation System](./level-2-intermediate/04-animation.md)           | Animating objects with @animated trait         | 40 min   |
-| 2.5  | [User Interface in VR](./level-2-intermediate/05-vr-ui.md)           | Building VR-friendly user interfaces           | 45 min   |
-| 2.6  | [State Management](./level-2-intermediate/06-state-management.md)    | Managing complex application state             | 50 min   |
-| 2.7  | [Networking Basics](./level-2-intermediate/07-networking.md)         | Introduction to multiplayer with @networked    | 45 min   |
-| 2.8  | [Performance Optimization](./level-2-intermediate/08-performance.md) | Profiling and optimizing VR experiences        | 40 min   |
-| 2.9  | [Debugging Techniques](./level-2-intermediate/09-debugging.md)       | Tools and techniques for debugging             | 35 min   |
-| 2.10 | [Testing Your Scenes](./level-2-intermediate/10-testing.md)          | Unit and integration testing in HoloScript     | 40 min   |
+### Level 3: Advanced (Coming Soon)
 
-### Level 3: Advanced (10 lessons)
-
-Become an expert with custom development and advanced patterns.
-
-| #    | Lesson                                                              | Description                                     | Duration |
-| ---- | ------------------------------------------------------------------- | ----------------------------------------------- | -------- |
-| 3.1  | [Custom Trait Development](./level-3-advanced/01-custom-traits.md)  | Building your own traits from scratch           | 60 min   |
-| 3.2  | [Plugin Architecture](./level-3-advanced/02-plugins.md)             | Creating and publishing HoloScript plugins      | 55 min   |
-| 3.3  | [Advanced Networking](./level-3-advanced/03-advanced-networking.md) | CRDTs, state sync, and distributed systems      | 60 min   |
-| 3.4  | [Procedural Generation](./level-3-advanced/04-procedural.md)        | Generating worlds and content procedurally      | 50 min   |
-| 3.5  | [AI & NPC Behavior](./level-3-advanced/05-ai-npcs.md)               | Building intelligent characters with @ai_driver | 55 min   |
-| 3.6  | [Cross-Platform](./level-3-advanced/06-cross-platform.md)           | Targeting multiple VR platforms                 | 45 min   |
-| 3.7  | [Accessibility](./level-3-advanced/07-accessibility.md)             | Making VR experiences accessible to all         | 40 min   |
-| 3.8  | [Security Best Practices](./level-3-advanced/08-security.md)        | Securing multiplayer experiences                | 45 min   |
-| 3.9  | [Enterprise Patterns](./level-3-advanced/09-enterprise.md)          | Scaling HoloScript for large teams              | 50 min   |
-| 3.10 | [Future of HoloScript](./level-3-advanced/10-future.md)             | Roadmap and contributing to the ecosystem       | 30 min   |
+Become an expert with custom development and advanced patterns. Topics will include custom traits, plugins, advanced networking, procedural generation, AI/NPC behavior, cross-platform targeting, accessibility, security, enterprise patterns, and more.
 
 ## Prerequisites
 

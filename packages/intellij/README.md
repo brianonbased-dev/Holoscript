@@ -105,12 +105,16 @@ Colors can be customized in **Settings** → **Editor** → **Color Scheme** →
 
 The plugin includes live templates for common patterns:
 
-| Abbreviation | Expansion        |
-| ------------ | ---------------- |
-| `orb`        | New orb object   |
-| `grab`       | Grabbable object |
-| `anim`       | Animation block  |
-| `on`         | Event handler    |
+| Abbreviation | Expansion             |
+| ------------ | --------------------- |
+| `orb`        | New orb object        |
+| `grab`       | Grabbable object      |
+| `anim`       | Animation block       |
+| `on`         | Event handler         |
+| `comp`       | Composition block     |
+| `template`   | Template definition   |
+| `state`      | State block           |
+| `physics`    | Physics configuration |
 
 ## Keyboard Shortcuts
 

@@ -7,7 +7,7 @@ Please read our [Code of Conduct](./CODE_OF_CONDUCT.md) before participating.
 ## Getting Started
 
 ```bash
-git clone https://github.com/brianonbased-dev/holoscript.git
+git clone https://github.com/brianonbased-dev/Holoscript.git
 cd HoloScript
 pnpm install
 pnpm build
@@ -58,7 +58,7 @@ Every trait follows the same pattern across these files:
 
 | Step | File                                 | Action                                   |
 | ---- | ------------------------------------ | ---------------------------------------- |
-| 1    | `core/src/types/HoloScriptPlus.d.ts` | Add trait interface                      |
+| 1    | `core/src/types/HoloScriptPlus.ts`   | Add trait interface                      |
 | 2    | `core/src/constants.ts`              | Add to `VR_TRAITS` and `LIFECYCLE_HOOKS` |
 | 3    | `core/src/types.ts`                  | Add lifecycle hook type unions           |
 | 4    | `core/src/traits/YourTrait.ts`       | Create handler with `TraitHandler<T>`    |
@@ -71,7 +71,7 @@ See any existing trait file in `core/src/traits/` for the template pattern.
 
 ## Code Style
 
-- TypeScript strict mode (`noUnusedLocals: true`)
+- TypeScript strict mode
 - Prefer `import type` for type-only imports
 - Use `as const` for literal union types
 - No default exports except in trait files (convention)

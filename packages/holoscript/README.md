@@ -1,56 +1,54 @@
-# holoscript
+# @holoscript/sdk
 
-Combined HoloScript package for easy installation.
+HoloScript Smart Asset SDK and HoloHub client integration.
 
 ## Installation
 
 ```bash
-npm install holoscript
+npm install @holoscript/sdk
 ```
 
-This installs all HoloScript packages:
+## Overview
 
-- `@holoscript/core` - Parser and compiler
-- `@holoscript/cli` - Command-line tools
-- `@holoscript/linter` - Code linting
-- `@holoscript/formatter` - Code formatting
-
-## Quick Start
-
-```bash
-# Create a new project
-npx holoscript init my-project
-cd my-project
-
-# Start development
-npx holoscript dev
-
-# Build for production
-npx holoscript build
-```
+This package provides the SDK for creating and managing HoloScript Smart Assets and interacting with the HoloHub platform. It is **not** a CLI toolkit — for CLI tools, see [`@holoscript/cli`](../cli/README.md).
 
 ## Usage
 
 ```typescript
-import { Parser, compile } from 'holoscript';
-
-const parser = new Parser();
-const ast = parser.parse(`
-  orb player {
-    position: [0, 1.6, 0]
-    @grabbable
-    @physics
-  }
-`);
-
-const output = compile(ast, { target: 'web' });
+import { HoloSmartAsset, HoloHubClient } from '@holoscript/sdk';
 ```
 
-## Documentation
+### Smart Assets
 
-- [Getting Started](https://holoscript.dev/docs/getting-started)
-- [Language Reference](https://holoscript.dev/docs/reference)
-- [API Docs](https://holoscript.dev/api)
+Create and manage smart assets with schema validation powered by Zod:
+
+```typescript
+import { HoloSmartAsset } from '@holoscript/sdk';
+
+const asset = new HoloSmartAsset({
+  name: 'Interactive Cube',
+  traits: ['@grabbable', '@physics'],
+  geometry: 'cube',
+});
+```
+
+### HoloHub Client
+
+Connect to the HoloHub platform for asset publishing and discovery:
+
+```typescript
+import { HoloHubClient } from '@holoscript/sdk';
+
+const client = new HoloHubClient({
+  apiKey: process.env.HOLOHUB_API_KEY,
+});
+```
+
+## Related Packages
+
+- [`@holoscript/core`](../core/README.md) - Parser, compiler, and runtime
+- [`@holoscript/cli`](../cli/README.md) - Command-line tools (`holoscript build`, `holoscript run`, etc.)
+- [`@holoscript/mcp-server`](../mcp-server/README.md) - MCP tools for AI agents
 
 ## License
 

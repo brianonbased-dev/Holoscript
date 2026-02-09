@@ -107,23 +107,20 @@ This is a major release bringing WASM compilation, certified packages, partner S
 
 #### HoloScript Academy (Sprint 8)
 
-- 30 lessons across 3 levels
-- Level 1: Fundamentals (10 lessons)
-- Level 2: Intermediate (10 lessons)
-- Level 3: Advanced (10 lessons)
+- 10 lessons (Level 1: Fundamentals)
+- Levels 2-3 planned
 - Hands-on exercises and projects
 
 #### Visual Scripting (Sprint 7)
 
 - Node-based visual programming
-- 95+ node types
+- 26 node types (event, action, logic, data)
 - Real-time preview
 - Export to HoloScript code
 
-#### AI-Powered Autocomplete (Sprint 7)
+#### Enhanced LSP Autocomplete (Sprint 7)
 
-- Context-aware code completion
-- Multi-line suggestions
+- Context-aware code completion via LSP
 - Trait and property inference
 
 #### IntelliJ Plugin (Sprint 7)
@@ -470,34 +467,9 @@ Three major new packages for building production VR experiences:
 
 ### Added
 
-- **@holoscript/spatial-audio** - 3D positional audio for VR/AR
-  - HRTF binaural processing with multiple datasets (CIPIC, KEMAR)
-  - Room acoustics simulation (reflections, reverb, occlusion)
-  - Spatial audio emitters with distance attenuation
-  - Audio zone management for different acoustic regions
-  - Full Web Audio API integration
-
-- **@holoscript/state-sync** - Distributed state with CRDTs
-  - Conflict-free replicated data types (GCounter, PNCounter, ORSet, etc.)
-  - Delta synchronization for bandwidth efficiency
-  - Merkle tree sync for state verification
-  - Undo/redo with state history
-  - Snapshot capture and restore
-  - Perfect for multiplayer VR state management
-
-- **@holoscript/streaming** - Asset and world streaming
-  - Progressive loading with priority queues
-  - LOD (Level of Detail) streaming
-  - Memory + IndexedDB caching with smart eviction
-  - Memory budget monitoring
-  - Bundle loading for related assets
-
+- **Spatial audio traits** - `@spatial_audio`, `@reverb_zone`, `@voice_proximity` in `@holoscript/runtime`
 - **Debug Scripts** - Parser debugging utilities in `/scripts/`
 - **AI Assistant Configuration** - Claude Desktop and Copilot integration
-
-### Removed
-
-- **@holoscript/llm** - Migrated to `@hololand/ai` (LLM inference is a platform service, not language tooling). AI trait definitions (`@llm_agent`, `@dialogue`, etc.) remain in `@holoscript/core`.
 
 ---
 
