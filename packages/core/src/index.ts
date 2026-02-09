@@ -1744,3 +1744,25 @@ export * from './audio';
 // =============================================================================
 
 export * from './network';
+
+// =============================================================================
+// LOD Module (v3.3 Level of Detail System)
+// =============================================================================
+
+export * from './lod';
+
+// =============================================================================
+// Trait Visual System (Trait-to-PBR Mapping)
+// =============================================================================
+
+export {
+  TraitVisualRegistry,
+  registerAllPresets,
+  type TraitVisualConfig,
+  type R3FMaterialProps,
+  type VisualLayer,
+  VISUAL_LAYER_PRIORITY,
+} from './traits/visual/index';
+
+export { TraitCompositor } from './traits/visual/TraitCompositor';
+export { COMPOSITION_RULES } from './traits/visual/composition-rules';

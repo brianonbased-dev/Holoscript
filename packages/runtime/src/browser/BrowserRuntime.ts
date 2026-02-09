@@ -8,7 +8,14 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { parseHolo, parseHoloScriptPlus, type HoloComposition } from '@holoscript/core';
+import {
+  parseHolo,
+  parseHoloScriptPlus,
+  type HoloComposition,
+  TraitCompositor,
+  MATERIAL_PRESETS,
+  type R3FMaterialProps,
+} from '@holoscript/core';
 import { emit, on } from '../events.js';
 import { isVRCapable } from '../device.js';
 import { PhysicsWorld } from '../physics/PhysicsWorld';
@@ -847,6 +854,7 @@ class BrowserRuntime implements HoloScriptRuntime {
   private actionContext: ActionContext;
   private physicsWorld: PhysicsWorld;
   private traitSystem: TraitSystem;
+  private traitCompositor: TraitCompositor;
   private inputManager: InputManager;
 
   // FPS tracking
@@ -921,6 +929,7 @@ class BrowserRuntime implements HoloScriptRuntime {
 
     // Traits - register all interaction traits
     this.traitSystem = new TraitSystem(this.physicsWorld);
+    this.traitCompositor = new TraitCompositor();
     // Interaction traits
     this.traitSystem.register(GrabbableTrait);
     this.traitSystem.register(ThrowableTrait);
@@ -1348,23 +1357,86 @@ class BrowserRuntime implements HoloScriptRuntime {
     const getTraitConfig = (name: string) =>
       obj.traits?.find((t: ParsedTrait) => t.name === name)?.config || {};
 
-    const material = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(color),
-      metalness: 0.3,
-      roughness: 0.7,
-    });
+    // --- Trait Visual System: compose PBR material from traits ---
+    const traitNames = (obj.traits || []).map((t: ParsedTrait) => t.name);
+    const composedProps: R3FMaterialProps = traitNames.length > 0
+      ? this.traitCompositor.compose(traitNames)
+      : {};
 
-    // Apply visual traits to material
-    if (hasTrait('glowing') || hasTrait('emissive')) {
-      const glowConfig = getTraitConfig('glowing') || getTraitConfig('emissive');
-      material.emissive = new THREE.Color(color);
-      material.emissiveIntensity = (glowConfig.intensity as number) ?? 0.5;
+    // Apply named material preset (e.g., material: "glass")
+    const namedMaterial = obj.properties?.material as string | undefined;
+    const presetProps = namedMaterial && MATERIAL_PRESETS[namedMaterial]
+      ? MATERIAL_PRESETS[namedMaterial]
+      : {};
+
+    // Merge: defaults → preset → compositor (traits override preset)
+    const materialProps: Record<string, unknown> = {
+      color: new THREE.Color(composedProps.color || color),
+      metalness: composedProps.metalness ?? presetProps.metalness ?? 0.3,
+      roughness: composedProps.roughness ?? presetProps.roughness ?? 0.7,
+    };
+
+    // Emissive
+    if (composedProps.emissive || presetProps.emissiveIntensity) {
+      materialProps.emissive = new THREE.Color(composedProps.emissive || color);
+      materialProps.emissiveIntensity = composedProps.emissiveIntensity ?? presetProps.emissiveIntensity ?? 0.5;
     }
 
-    if (hasTrait('transparent')) {
-      const transparentConfig = getTraitConfig('transparent');
-      material.transparent = true;
-      material.opacity = (transparentConfig.opacity as number) ?? obj.properties?.opacity ?? 0.7;
+    // Transparency
+    if (composedProps.opacity !== undefined || composedProps.transparent || presetProps.transparent) {
+      materialProps.transparent = true;
+      materialProps.opacity = composedProps.opacity ?? presetProps.opacity ?? 0.7;
+    }
+
+    // Advanced PBR properties from compositor or preset
+    if (composedProps.envMapIntensity ?? presetProps.envMapIntensity) {
+      materialProps.envMapIntensity = composedProps.envMapIntensity ?? presetProps.envMapIntensity;
+    }
+    if (composedProps.clearcoat ?? presetProps.clearcoat) {
+      materialProps.clearcoat = composedProps.clearcoat ?? presetProps.clearcoat;
+    }
+    if (composedProps.clearcoatRoughness ?? presetProps.clearcoatRoughness) {
+      materialProps.clearcoatRoughness = composedProps.clearcoatRoughness ?? presetProps.clearcoatRoughness;
+    }
+    if (composedProps.transmission ?? presetProps.transmission) {
+      materialProps.transmission = composedProps.transmission ?? presetProps.transmission;
+    }
+    if (composedProps.ior ?? presetProps.ior) {
+      materialProps.ior = composedProps.ior ?? presetProps.ior;
+    }
+    if (composedProps.thickness ?? presetProps.thickness) {
+      materialProps.thickness = composedProps.thickness ?? presetProps.thickness;
+    }
+    if (composedProps.iridescence ?? presetProps.iridescence) {
+      materialProps.iridescence = composedProps.iridescence ?? presetProps.iridescence;
+    }
+    if (composedProps.iridescenceIOR ?? presetProps.iridescenceIOR) {
+      materialProps.iridescenceIOR = composedProps.iridescenceIOR ?? presetProps.iridescenceIOR;
+    }
+    if (presetProps.wireframe) {
+      materialProps.wireframe = true;
+    }
+
+    // Use MeshPhysicalMaterial for advanced PBR, MeshStandardMaterial for basic
+    const needsPhysical = materialProps.clearcoat || materialProps.transmission ||
+      materialProps.iridescence || materialProps.ior;
+    const material = needsPhysical
+      ? new THREE.MeshPhysicalMaterial(materialProps as any)
+      : new THREE.MeshStandardMaterial(materialProps as any);
+
+    // Legacy fallback: apply visual traits directly if compositor returned empty
+    // (preserves backward compatibility when visual registry has no presets loaded)
+    if (Object.keys(composedProps).length === 0) {
+      if (hasTrait('glowing') || hasTrait('emissive')) {
+        const glowConfig = getTraitConfig('glowing') || getTraitConfig('emissive');
+        material.emissive = new THREE.Color(color);
+        material.emissiveIntensity = (glowConfig.intensity as number) ?? 0.5;
+      }
+      if (hasTrait('transparent')) {
+        const transparentConfig = getTraitConfig('transparent');
+        material.transparent = true;
+        material.opacity = (transparentConfig.opacity as number) ?? obj.properties?.opacity ?? 0.7;
+      }
     }
 
     const mesh = new THREE.Mesh(geometry, material);
