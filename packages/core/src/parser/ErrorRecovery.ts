@@ -4,8 +4,10 @@
  * Provides enhanced error messages with suggestions for common mistakes.
  * Helps users fix errors quickly by offering context-aware fixes.
  *
- * @version 1.0.0
+ * @version 2.0.0 - Expanded VALID_TRAITS via VR_TRAITS import for maximum agent creativity
  */
+
+import { VR_TRAITS } from '../constants';
 
 // =============================================================================
 // TYPES
@@ -105,46 +107,10 @@ const VALID_GEOMETRIES = [
   'particles',
 ];
 
-const VALID_TRAITS = [
-  'physics',
-  'collidable',
-  'grabbable',
-  'hoverable',
-  'clickable',
-  'draggable',
-  'throwable',
-  'stackable',
-  'breakable',
-  'snappable',
-  'scalable',
-  'rotatable',
-  'pointable',
-  'static',
-  'kinematic',
-  'animated',
-  'networked',
-  'local_only',
-  'visible',
-  'invisible',
-  'spatial_audio',
-  'audio',
-  'accessible',
-  'alt_text',
-  'anchor',
-  'plane_detection',
-  'hand_tracking',
-  'eye_tracking',
-  'ui_floating',
-  'ui_anchored',
-  'ui_hand_menu',
-  'ui_billboard',
-  'ui_curved',
-  'ui_docked',
-  'portal',
-  'vr_only',
-  'ar_only',
-  'desktop_only',
-];
+// VALID_TRAITS is derived from VR_TRAITS (constants.ts) - the single source of truth.
+// All traits in VR_TRAITS are accepted by the parser without UNKNOWN_TRAIT errors.
+// This maximizes agent creativity by providing a comprehensive vocabulary.
+const VALID_TRAITS: string[] = [...VR_TRAITS];
 
 const COMMON_PROPERTIES = [
   'position',
