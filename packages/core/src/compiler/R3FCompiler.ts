@@ -1,4 +1,7 @@
 import { HSPlusAST, ASTNode, HSPlusDirective, VRTraitName } from '../types';
+import { TraitVisualRegistry } from '../traits/visual/TraitVisualRegistry';
+// Side-effect import: registers all preset visuals into the registry
+import '../traits/visual';
 
 export interface R3FNode {
   type: string;
@@ -1084,8 +1087,31 @@ export class R3FCompiler {
           props.voiceProximity = trait.config || { max_distance: 20 };
           props.spatial = true;
         }
-        // ── Catch-all for remaining traits ────────────────────────
+        // ── Visual registry lookup for remaining traits ────────────
         else {
+          const visual = TraitVisualRegistry.getInstance().get(name);
+          if (visual) {
+            if (visual.material) {
+              props.materialProps = { ...props.materialProps, ...visual.material };
+            }
+            if (visual.emissive) {
+              props.materialProps = {
+                ...props.materialProps,
+                emissive: visual.emissive.color,
+                emissiveIntensity: visual.emissive.intensity,
+              };
+            }
+            if (visual.opacity !== undefined) {
+              props.materialProps = {
+                ...props.materialProps,
+                opacity: visual.opacity,
+                transparent: visual.opacity < 1,
+              };
+            }
+            if (visual.scale) {
+              props.scale = visual.scale;
+            }
+          }
           props[name] = trait.config || true;
         }
       }
