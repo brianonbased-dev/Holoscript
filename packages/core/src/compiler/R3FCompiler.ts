@@ -57,6 +57,18 @@ export const MATERIAL_PRESETS: Record<string, Record<string, any>> = {
     opacity: 0.6,
     emissiveIntensity: 1.0,
   },
+  stone: { roughness: 0.85, metalness: 0.0, color: '#808080' },
+  marble: { roughness: 0.15, metalness: 0.0, color: '#F0EDE6', envMapIntensity: 0.8 },
+  shiny: { roughness: 0.05, metalness: 0.3, envMapIntensity: 1.5, clearcoat: 0.8 },
+  neon: {
+    roughness: 0.0,
+    metalness: 0.0,
+    emissiveIntensity: 3.0,
+    transparent: true,
+    opacity: 0.9,
+  },
+  toon: { roughness: 1.0, metalness: 0.0 },
+  wireframe: { roughness: 0.5, metalness: 0.5, wireframe: true },
 };
 
 export const ENVIRONMENT_PRESETS: Record<string, any> = {
