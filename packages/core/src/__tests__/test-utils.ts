@@ -239,7 +239,7 @@ export function generateScene(
 // ============================================================================
 
 /**
- * All VR traits for exhaustive testing (imported from constants.ts)
+ * All VR traits for exhaustive testing (1,525+ traits from 61 category modules)
  */
 export const ALL_VR_TRAITS: VRTraitName[] = [...VR_TRAITS] as VRTraitName[];
 

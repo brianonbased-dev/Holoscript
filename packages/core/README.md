@@ -36,7 +36,7 @@ const output = compiler.compile(ast);
 - **Complete AST** - Full abstract syntax tree representation
 - **Validation** - Comprehensive error checking with recovery
 - **15+ Compile Targets** - Web (R3F, Babylon), Unity, Unreal, Godot, iOS, Android, Vision Pro, WebGPU, WASM, VRChat, OpenXR, URDF, DTDL, SDF
-- **119+ Traits** - VR interactions, physics, networking, AI, animation, and more
+- **1,525+ Traits** - Modularized across 61 category files covering VR interactions, physics, networking, AI, animation, nature, magic, sci-fi, emotions, and more
 - **AI Integration** - Adapters for OpenAI, Anthropic, Gemini, Ollama, and more
 - **Reactive State** - `reactive()`, `computed()`, `effect()`, `bind()`
 
@@ -69,6 +69,27 @@ const output = compiler.compile(ast);
 | `URDFCompiler` | Robotics (URDF) | Production |
 | `DTDLCompiler` | Digital Twins (DTDL) | Production |
 | `SDFCompiler` | SDF Robotics | Production |
+
+## Trait System
+
+VR traits are modularized into 61 category files under `src/traits/constants/`:
+
+| Category        | File                     | Traits                                  |
+| --------------- | ------------------------ | --------------------------------------- |
+| Core VR         | `core-vr-interaction.ts` | grabbable, throwable, pointable, ...    |
+| Humanoid        | `humanoid-avatar.ts`     | skeleton, body, face, ...               |
+| Game Mechanics  | `game-mechanics.ts`      | collectible, destructible, healable, .. |
+| Magic & Fantasy | `magic-fantasy.ts`       | enchantable, cursed, blessed, ...       |
+| Animals         | `animals.ts`             | cat, dog, horse, dragon, ...            |
+| ...             | _58 more categories_     | See `src/traits/constants/index.ts`     |
+
+Import individual categories or the combined set:
+
+```typescript
+import { VR_TRAITS } from '@holoscript/core';           // All 1,525+ traits
+import { AUDIO_TRAITS } from '@holoscript/core';         // Just audio traits
+import { MAGIC_FANTASY_TRAITS } from '@holoscript/core'; // Just magic/fantasy
+```
 
 ## License
 

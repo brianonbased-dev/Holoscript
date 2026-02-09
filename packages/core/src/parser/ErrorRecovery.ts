@@ -4,7 +4,7 @@
  * Provides enhanced error messages with suggestions for common mistakes.
  * Helps users fix errors quickly by offering context-aware fixes.
  *
- * @version 2.0.0 - Expanded VALID_TRAITS via VR_TRAITS import for maximum agent creativity
+ * @version 3.0.0 - VR_TRAITS modularized into 61 category files under traits/constants/
  */
 
 import { VR_TRAITS } from '../constants';
@@ -107,9 +107,9 @@ const VALID_GEOMETRIES = [
   'particles',
 ];
 
-// VALID_TRAITS is derived from VR_TRAITS (constants.ts) - the single source of truth.
-// All traits in VR_TRAITS are accepted by the parser without UNKNOWN_TRAIT errors.
-// This maximizes agent creativity by providing a comprehensive vocabulary.
+// VALID_TRAITS is derived from VR_TRAITS (1,525+ traits across 61 category modules).
+// Source: traits/constants/index.ts barrel → re-exported via constants.ts.
+// All traits are parser-accepted; no UNKNOWN_TRAIT errors for any VR_TRAITS entry.
 const VALID_TRAITS: string[] = [...VR_TRAITS];
 
 const COMMON_PROPERTIES = [

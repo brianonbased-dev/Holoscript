@@ -43,8 +43,21 @@ const result = compiler.compile(ast, compileFunc, { preserveState: true });
 
 ## Traits
 
-Built-in: `@physics`, `@grabbable`, `@hoverable`, `@clickable`, `@spatial_audio`
-UI: `@ui_floating`, `@ui_anchored`, `@ui_hand_menu`, `@ui_billboard`
+1,525+ traits organized across 61 category files in `src/traits/constants/`.
+
+**Core:** `@physics`, `@grabbable`, `@hoverable`, `@clickable`, `@spatial_audio`
+**UI:** `@ui_floating`, `@ui_anchored`, `@ui_hand_menu`, `@ui_billboard`
+**Game:** `@collectible`, `@destructible`, `@lootable`, `@quest_item`
+**Magic:** `@enchantable`, `@cursed`, `@elemental_fire`, `@telekinetic`
+**Nature:** `@growable`, `@bioluminescent`, `@aquatic`, `@metamorphic`
+
+```typescript
+// Import all traits
+import { VR_TRAITS } from '@holoscript/core';
+
+// Import specific categories
+import { GAME_MECHANICS_TRAITS, MAGIC_FANTASY_TRAITS } from '@holoscript/core';
+```
 
 ## Error Recovery
 
