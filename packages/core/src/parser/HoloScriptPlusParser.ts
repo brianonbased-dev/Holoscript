@@ -2462,7 +2462,7 @@ export class HoloScriptPlusParser {
 
   private parseOnErrorNode(): HSPlusNode {
     const startToken = this.previous();
-    const body = this.parseCodeBlock();
+    const body = this.parseControlFlowBody();
     return {
       type: 'on_error' as any,
       body,
@@ -2478,7 +2478,7 @@ export class HoloScriptPlusParser {
     this.expect('LPAREN', 'Expected (');
     const condition = this.parseExpression();
     let message = '';
-    if (this.match('COMMA')) {
+    if (this.match(['COMMA'])) {
       message = String(this.parseValue());
     }
     this.expect('RPAREN', 'Expected )');
@@ -3257,6 +3257,10 @@ export class HoloScriptPlusParser {
       this.pos++;
     }
     return token;
+  }
+
+  private previous(): Token {
+    return this.tokens[this.pos - 1] || this.current();
   }
 
   private match(types: TokenType[]): Token | null {

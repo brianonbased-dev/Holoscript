@@ -78,6 +78,10 @@ const linter = new HoloScriptLinter();
 // Semantic intelligence
 let semanticCompletion: SemanticCompletionProvider | null = null;
 
+// LRU Cache configuration
+const MAX_CACHED_DOCUMENTS = 50;
+const documentAccessOrder: string[] = []; // Track access order for LRU eviction
+
 // Cache for parsed documents
 const documentCache = new Map<
   string,
@@ -88,6 +92,30 @@ const documentCache = new Map<
     typeChecker: HoloScriptTypeChecker;
   }
 >();
+
+/**
+ * LRU cache eviction - removes least recently used documents when cache is full
+ */
+function evictLRUDocuments(): void {
+  while (documentCache.size >= MAX_CACHED_DOCUMENTS && documentAccessOrder.length > 0) {
+    const lruUri = documentAccessOrder.shift();
+    if (lruUri) {
+      documentCache.delete(lruUri);
+      console.error(`[LSP] Evicted LRU document from cache: ${lruUri}`);
+    }
+  }
+}
+
+/**
+ * Update access order for LRU tracking
+ */
+function touchDocument(uri: string): void {
+  const index = documentAccessOrder.indexOf(uri);
+  if (index > -1) {
+    documentAccessOrder.splice(index, 1);
+  }
+  documentAccessOrder.push(uri);
+}
 
 // Semantic token types and modifiers - Enhanced for HoloScript
 const tokenTypes = [
@@ -373,6 +401,10 @@ async function validateDocument(document: TextDocument): Promise<void> {
       };
 
       findSymbols(ast.children || []);
+
+      // LRU eviction before adding new entry
+      evictLRUDocuments();
+      touchDocument(document.uri);
 
       // Cache the parsed result including the type checker
       documentCache.set(document.uri, {
@@ -1137,6 +1169,17 @@ function mapLintSeverity(severity: LintSeverity): DiagnosticSeverity {
       return DiagnosticSeverity.Warning;
   }
 }
+
+// Clean up cache when documents are closed
+documents.onDidClose((event) => {
+  const uri = event.document.uri;
+  documentCache.delete(uri);
+  const index = documentAccessOrder.indexOf(uri);
+  if (index > -1) {
+    documentAccessOrder.splice(index, 1);
+  }
+  console.error(`[LSP] Removed closed document from cache: ${uri}`);
+});
 
 // Start listening
 documents.listen(connection);

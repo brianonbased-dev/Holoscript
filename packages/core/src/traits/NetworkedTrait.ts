@@ -3,6 +3,10 @@
  *
  * Enables real-time state synchronization for multiplayer VR/AR experiences.
  * Supports owner-authoritative, shared, and server-authoritative sync modes.
+ * Integrates with SyncProtocol for WebSocket/WebRTC/Local transport.
+ *
+ * @version 3.0.1
+ * @milestone v3.0.x Stabilization Sprint
  *
  * @example
  * ```hsplus
@@ -16,6 +20,9 @@
  * }
  * ```
  */
+
+import { SyncProtocol, type TransportType, type SyncState } from '../network/SyncProtocol';
+import { logger } from '../logger';
 
 export type NetworkSyncMode = 'owner' | 'shared' | 'server';
 export type NetworkChannel = 'reliable' | 'unreliable' | 'ordered';
@@ -140,6 +147,17 @@ export interface NetworkEvent {
 }
 
 /**
+ * Interpolation sample for network smoothing
+ */
+interface InterpolationSample {
+  timestamp: number;
+  position: [number, number, number];
+  rotation: [number, number, number, number];
+  scale: [number, number, number];
+  properties: Record<string, unknown>;
+}
+
+/**
  * Network statistics
  */
 export interface NetworkStats {
@@ -166,6 +184,34 @@ export interface NetworkStats {
 }
 
 // ============================================================================
+// Shared SyncProtocol Pool
+// ============================================================================
+
+const syncProtocolPool: Map<string, SyncProtocol> = new Map();
+
+function getOrCreateSyncProtocol(
+  roomId: string,
+  transport: TransportType = 'local',
+  serverUrl?: string
+): SyncProtocol {
+  const key = `${transport}:${roomId}`;
+
+  if (!syncProtocolPool.has(key)) {
+    const protocol = new SyncProtocol({
+      roomId,
+      transport,
+      serverUrl,
+      deltaEncoding: true,
+      conflictStrategy: 'last-write-wins',
+    });
+    syncProtocolPool.set(key, protocol);
+    logger.info(`[NetworkedTrait] Created sync protocol pool for room: ${roomId}`);
+  }
+
+  return syncProtocolPool.get(key)!;
+}
+
+// ============================================================================
 // NetworkedTrait Class
 // ============================================================================
 
@@ -181,6 +227,9 @@ export class NetworkedTrait {
   private isOwner: boolean = false;
   private peerId: string = '';
   private connected: boolean = false;
+  private syncProtocol: SyncProtocol | null = null;
+  private entityId: string = '';
+  private interpolationBuffer: InterpolationSample[] = [];
 
   constructor(config: NetworkedConfig) {
     this.config = {
@@ -203,6 +252,199 @@ export class NetworkedTrait {
         return prop;
       });
     }
+
+    // Generate unique entity ID
+    this.entityId = `entity_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    this.isOwner = config.mode === 'owner';
+  }
+
+  /**
+   * Connect to the network (using SyncProtocol)
+   */
+  public async connect(
+    transport: TransportType = 'local',
+    serverUrl?: string
+  ): Promise<void> {
+    const roomId = this.config.room || 'default-room';
+
+    this.syncProtocol = getOrCreateSyncProtocol(roomId, transport, serverUrl);
+
+    // Subscribe to state updates
+    this.syncProtocol.on('state-updated', (event) => {
+      const data = event.data as { entityId: string; state: SyncState };
+      if (data.entityId === this.entityId && !this.isOwner) {
+        this.handleRemoteUpdate(data.state);
+      }
+    });
+
+    this.syncProtocol.on('connected', () => {
+      this.setConnected(true, this.entityId);
+    });
+
+    this.syncProtocol.on('disconnected', (event) => {
+      const data = event.data as { reason: string } | undefined;
+      logger.info(`[NetworkedTrait] Disconnected: ${data?.reason || 'unknown'}`);
+      this.setConnected(false);
+    });
+
+    // Connect if not already connected
+    if (!this.syncProtocol.isConnected()) {
+      await this.syncProtocol.connect();
+    }
+
+    this.connected = true;
+    this.peerId = this.entityId;
+    logger.info(`[NetworkedTrait] Connected to room: ${roomId}`);
+  }
+
+  /**
+   * Handle remote state update
+   */
+  private handleRemoteUpdate(syncState: SyncState): void {
+    const props = syncState.properties;
+    const interpConfig = this.getInterpolationConfig();
+
+    if (interpConfig.enabled) {
+      // Add to interpolation buffer
+      const sample: InterpolationSample = {
+        timestamp: syncState.timestamp,
+        position: (props.position as [number, number, number]) || [0, 0, 0],
+        rotation: (props.rotation as [number, number, number, number]) || [0, 0, 0, 1],
+        scale: (props.scale as [number, number, number]) || [1, 1, 1],
+        properties: props,
+      };
+
+      this.interpolationBuffer.push(sample);
+
+      // Keep buffer limited
+      const maxBufferSize = 10;
+      while (this.interpolationBuffer.length > maxBufferSize) {
+        this.interpolationBuffer.shift();
+      }
+    } else {
+      // Direct application
+      this.applyState(props);
+    }
+  }
+
+  /**
+   * Sync state to network
+   */
+  public syncToNetwork(): void {
+    if (!this.syncProtocol || !this.connected || !this.isOwner) return;
+
+    if (this.shouldSync()) {
+      const updates = this.flushUpdates();
+      if (Object.keys(updates).length > 0) {
+        this.syncProtocol.syncState(this.entityId, updates);
+      }
+    }
+  }
+
+  /**
+   * Get interpolated state for rendering
+   */
+  public getInterpolatedState(bufferTimeMs: number = 100): InterpolationSample | null {
+    const buffer = this.interpolationBuffer;
+    if (buffer.length < 2) return buffer[0] || null;
+
+    const renderTime = Date.now() - bufferTimeMs;
+
+    // Find surrounding samples
+    for (let i = 0; i < buffer.length - 1; i++) {
+      if (buffer[i].timestamp <= renderTime && buffer[i + 1].timestamp >= renderTime) {
+        const older = buffer[i];
+        const newer = buffer[i + 1];
+        const t = (renderTime - older.timestamp) / (newer.timestamp - older.timestamp);
+        const clampedT = Math.max(0, Math.min(1, t));
+
+        return {
+          timestamp: renderTime,
+          position: this.lerpVector3(older.position, newer.position, clampedT),
+          rotation: this.slerpQuat(older.rotation, newer.rotation, clampedT),
+          scale: this.lerpVector3(older.scale, newer.scale, clampedT),
+          properties: newer.properties,
+        };
+      }
+    }
+
+    return buffer[buffer.length - 1];
+  }
+
+  private lerpVector3(
+    a: [number, number, number],
+    b: [number, number, number],
+    t: number
+  ): [number, number, number] {
+    return [
+      a[0] + (b[0] - a[0]) * t,
+      a[1] + (b[1] - a[1]) * t,
+      a[2] + (b[2] - a[2]) * t,
+    ];
+  }
+
+  private slerpQuat(
+    a: [number, number, number, number],
+    b: [number, number, number, number],
+    t: number
+  ): [number, number, number, number] {
+    let dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+    const bNorm: [number, number, number, number] =
+      dot < 0 ? [-b[0], -b[1], -b[2], -b[3]] : [...b];
+    dot = Math.abs(dot);
+
+    if (dot > 0.9995) {
+      const result: [number, number, number, number] = [
+        a[0] + (bNorm[0] - a[0]) * t,
+        a[1] + (bNorm[1] - a[1]) * t,
+        a[2] + (bNorm[2] - a[2]) * t,
+        a[3] + (bNorm[3] - a[3]) * t,
+      ];
+      const len = Math.sqrt(
+        result[0] ** 2 + result[1] ** 2 + result[2] ** 2 + result[3] ** 2
+      );
+      return [result[0] / len, result[1] / len, result[2] / len, result[3] / len];
+    }
+
+    const theta0 = Math.acos(dot);
+    const theta = theta0 * t;
+    const sinTheta = Math.sin(theta);
+    const sinTheta0 = Math.sin(theta0);
+    const s0 = Math.cos(theta) - (dot * sinTheta) / sinTheta0;
+    const s1 = sinTheta / sinTheta0;
+
+    return [
+      a[0] * s0 + bNorm[0] * s1,
+      a[1] * s0 + bNorm[1] * s1,
+      a[2] * s0 + bNorm[2] * s1,
+      a[3] * s0 + bNorm[3] * s1,
+    ];
+  }
+
+  /**
+   * Disconnect from network
+   */
+  public disconnect(): void {
+    if (this.syncProtocol && this.connected) {
+      // We don't disconnect the shared pool, just mark ourselves disconnected
+      this.connected = false;
+      this.setConnected(false);
+      logger.info(`[NetworkedTrait] Disconnected entity: ${this.entityId}`);
+    }
+  }
+
+  /**
+   * Get entity ID
+   */
+  public getEntityId(): string {
+    return this.entityId;
+  }
+
+  /**
+   * Get current latency
+   */
+  public getLatency(): number {
+    return this.syncProtocol?.getLatency() || 0;
   }
 
   /**
@@ -441,5 +683,16 @@ export type SyncMode = NetworkSyncMode;
 export type InterpolationType = InterpolationConfig;
 export type SyncedProperty = SyncProperty;
 export type NetworkAuthority = AuthorityConfig;
+
+/**
+ * Cleanup all shared sync protocols (call on app shutdown)
+ */
+export function cleanupNetworkPool(): void {
+  for (const [key, protocol] of syncProtocolPool) {
+    protocol.disconnect();
+    syncProtocolPool.delete(key);
+  }
+  logger.info('[NetworkedTrait] Cleaned up sync protocol pool');
+}
 
 export default NetworkedTrait;

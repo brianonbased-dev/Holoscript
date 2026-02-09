@@ -28,7 +28,7 @@ export class HoloScriptValidator {
     'lifecycle',
   ];
 
-  private static VALID_KEYWORDS = ['world', 'scene', 'prefab', 'object', 'import', 'export'];
+  private static VALID_KEYWORDS = ['world', 'scene', 'prefab', 'object', 'import', 'export', 'on_error', 'assert'];
 
   constructor() {
     this.parser = new HoloScriptCodeParser();

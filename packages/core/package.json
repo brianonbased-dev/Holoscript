@@ -45,7 +45,8 @@
   "scripts": {
     "build": "tsup && tsc --emitDeclarationOnly",
     "dev": "tsup --watch",
-    "test": "vitest run --pool=forks --poolOptions.forks.singleFork",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "keywords": [
@@ -73,9 +74,10 @@
   "devDependencies": {
     "@types/pixelmatch": "^5.2.6",
     "@types/pngjs": "^6.0.4",
+    "@vitest/coverage-v8": "^4.0.18",
     "tsup": "^8.0.1",
     "typedoc": "^0.28.16",
     "typescript": "^5.3.3",
-    "vitest": "^1.0.0"
+    "vitest": "^4.0.18"
   }
 }

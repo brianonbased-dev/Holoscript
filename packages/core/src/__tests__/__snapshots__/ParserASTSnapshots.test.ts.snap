@@ -5836,23 +5836,7 @@ exports[`Parser AST Visual Regression > Directive AST Nodes > trait with configu
   },
   "requiredCompanions": [],
   "success": false,
-  "warnings": [
-    {
-      "code": "HSP001",
-      "column": 11,
-      "context": "  1 | composition ConfiguredOrb {
-  2 |   geometry: "sphere"
-> 3 |   @physics(mass: 1.5, friction: 0.8)
-               ^
-  4 | }",
-      "endColumn": undefined,
-      "endLine": undefined,
-      "line": 3,
-      "message": "HSP001: Unknown directive @physics",
-      "severity": "warning",
-      "suggestion": undefined,
-    },
-  ],
+  "warnings": [],
 }
 `;
 
@@ -10973,23 +10957,7 @@ exports[`Parser AST Visual Regression > UI Components AST > ui_panel AST 1`] = `
   },
   "requiredCompanions": [],
   "success": true,
-  "warnings": [
-    {
-      "code": "HSP001",
-      "column": 15,
-      "context": "  2 |   width: 400
-  3 |   height: 300
-> 4 |   @ui_floating
-                   ^
-  5 | }",
-      "endColumn": undefined,
-      "endLine": undefined,
-      "line": 4,
-      "message": "HSP001: Unknown directive @ui_floating",
-      "severity": "warning",
-      "suggestion": undefined,
-    },
-  ],
+  "warnings": [],
 }
 `;
 

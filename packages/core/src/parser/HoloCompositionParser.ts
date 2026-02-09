@@ -79,6 +79,7 @@ import type {
   HoloTalentNode,
   HoloShape,
   HoloShapeProperty,
+  HoloOnErrorStatement,
 } from './HoloCompositionTypes';
 import { TypoDetector } from './TypoDetector';
 
@@ -729,10 +730,10 @@ export class HoloCompositionParser {
         } else if (this.check('IMPORT')) {
           composition.imports.push(this.parseImport());
         } else if (this.check('USING')) {
-          const u = this.parseUsing();
+          const u = this.parseUsingStatement();
           if (u) composition.imports.push(u);
         } else if (this.check('SHAPE')) {
-          composition.shapes.push(this.parseShape());
+          composition.shapes.push(this.parseShapeDeclaration());
         } else if (this.check('NPC')) {
           composition.npcs.push(this.parseNPC());
         } else if (this.check('QUEST')) {
@@ -1036,6 +1037,48 @@ export class HoloCompositionParser {
     const source = this.expectString();
 
     return { type: 'Import', specifiers, source };
+  }
+
+  // ===========================================================================
+  // USING (alias for import)
+  // ===========================================================================
+
+  private parseUsingStatement(): HoloImport | null {
+    this.expect('USING');
+    
+    // using "path/to/module" syntax
+    if (this.check('STRING')) {
+      const source = this.expectString();
+      return { type: 'Import', specifiers: [], source };
+    }
+    
+    // using { Name } from "path" syntax (similar to import)
+    if (this.check('LBRACE')) {
+      this.expect('LBRACE');
+      this.skipNewlines();
+      
+      const specifiers: HoloImportSpecifier[] = [];
+      while (!this.check('RBRACE') && !this.isAtEnd()) {
+        const imported = this.expectIdentifier();
+        let local: string | undefined;
+        if (this.match('IDENTIFIER') && this.previous().value === 'as') {
+          local = this.expectIdentifier();
+        }
+        specifiers.push({ type: 'ImportSpecifier', imported, local });
+        if (!this.match('COMMA')) break;
+        this.skipNewlines();
+      }
+      this.skipNewlines();
+      this.expect('RBRACE');
+      this.expect('FROM');
+      const source = this.expectString();
+      
+      return { type: 'Import', specifiers, source };
+    }
+    
+    // Fallback: just skip unknown using syntax
+    this.skipBlock();
+    return null;
   }
 
   // ===========================================================================
@@ -1852,11 +1895,18 @@ export class HoloCompositionParser {
       } else if (this.isStatementKeyword()) {
         const stmt = this.parseStatement();
         if (stmt) body.push(stmt);
-      } else if (this.check('IDENTIFIER')) {
+      } else if (this.check('IDENTIFIER') || this.isKeywordAsIdentifierType(this.current().type)) {
         // Peek ahead to see if it's a property assignment or a statement
         const next = this.tokens[this.pos + 1];
         if (next && next.type === 'COLON') {
-          const key = this.expectIdentifier();
+          // It's a property
+          let key: string;
+          if (this.check('IDENTIFIER')) {
+            key = this.expectIdentifier();
+          } else {
+            this.isKeywordAsIdentifier(); // Consume the keyword
+            key = this.previous().value;
+          }
           this.expect('COLON');
           const value = this.parseValue();
           properties.push({ type: 'GroupProperty', key, value });
@@ -2269,12 +2319,7 @@ export class HoloCompositionParser {
     return { type: 'Literal', value: null };
   }
 
-  /**
-   * Check if current token is a keyword that can be used as identifier in expressions.
-   * Keywords like 'state', 'object', 'template' can appear as identifiers in contexts
-   * like 'state.visitors' or 'object.position'.
-   */
-  private isKeywordAsIdentifier(): boolean {
+  private isKeywordAsIdentifierType(type: TokenType): boolean {
     const keywordsAsIdentifiers: TokenType[] = [
       'STATE',
       'OBJECT',
@@ -2297,7 +2342,11 @@ export class HoloCompositionParser {
       'ELEMENT',
       'ON_ERROR',
     ];
-    if (keywordsAsIdentifiers.includes(this.current().type)) {
+    return keywordsAsIdentifiers.includes(type);
+  }
+
+  private isKeywordAsIdentifier(): boolean {
+    if (this.isKeywordAsIdentifierType(this.current().type)) {
       this.advance();
       return true;
     }
@@ -2455,11 +2504,14 @@ export class HoloCompositionParser {
     return this.current().type === 'EOF';
   }
 
-  private check(type: TokenType): boolean {
+  private check(type: TokenType | TokenType[]): boolean {
+    if (Array.isArray(type)) {
+      return type.includes(this.current().type);
+    }
     return this.current().type === type;
   }
 
-  private match(type: TokenType): boolean {
+  private match(type: TokenType | TokenType[]): boolean {
     if (this.check(type)) {
       this.advance();
       return true;
@@ -2493,7 +2545,7 @@ export class HoloCompositionParser {
     if (type === 'IDENTIFIER') return true;
 
     // Keywords that can also be property names in object bodies
-    const validPropertyKeywords = [
+    const validPropertyKeywords: TokenType[] = [
       'ANIMATE',
       'AUDIO',
       'CAMERA',
@@ -2501,11 +2553,6 @@ export class HoloCompositionParser {
       'ENVIRONMENT',
       'LIGHT',
       'LOGIC',
-      'MATERIAL',
-      'POSITION',
-      'ROTATION',
-      'SCALE',
-      'COLOR',
       'TIMELINE',
       'ZONE',
       'UI',
@@ -2518,9 +2565,9 @@ export class HoloCompositionParser {
       'IMPORT',
       'USING',
       'TEMPLATE',
-      'GEOMETRY',
-      'PHYSICS',
-      'TEXTURE',
+      'STATE',
+      'OBJECT',
+      'ON_ERROR'
     ];
     return validPropertyKeywords.includes(type);
   }

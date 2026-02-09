@@ -157,6 +157,10 @@ import { userMonitorHandler } from './UserMonitorTrait';
 import { emotionalVoiceHandler } from './EmotionalVoiceTrait';
 import { flowFieldHandler } from './FlowFieldTrait';
 
+// v3.1 Agentic Choreography traits
+import { choreographyHandler } from './ChoreographyTrait';
+import { negotiationHandler } from './NegotiationTrait';
+
 // =============================================================================
 // TRAIT STATE
 // =============================================================================
@@ -1236,6 +1240,10 @@ export class VRTraitRegistry {
     this.register(userMonitorHandler as TraitHandler);
     this.register(emotionalVoiceHandler as TraitHandler);
     this.register(flowFieldHandler as TraitHandler);
+
+    // v3.1 Agentic Choreography
+    this.register(choreographyHandler as TraitHandler);
+    this.register(negotiationHandler as TraitHandler);
   }
 
   register<T>(handler: TraitHandler<T>): void {

@@ -170,4 +170,99 @@ describe('NetworkedTrait', () => {
       expect(count).toBe(1);
     });
   });
+
+  describe('serialization', () => {
+    it('should serialize state to ArrayBuffer', () => {
+      trait.setProperty('x', 10);
+      trait.setProperty('y', 20);
+
+      const buffer = trait.serialize();
+      expect(buffer).toBeInstanceOf(ArrayBuffer);
+      expect(buffer.byteLength).toBeGreaterThan(0);
+    });
+
+    it('should deserialize state from ArrayBuffer', () => {
+      const testState = { score: 999, level: 5 };
+      const json = JSON.stringify(testState);
+      const encoder = new TextEncoder();
+      const buffer = encoder.encode(json).buffer;
+
+      trait.deserialize(buffer);
+      expect(trait.getProperty('score')).toBe(999);
+      expect(trait.getProperty('level')).toBe(5);
+    });
+
+    it('should round-trip serialize/deserialize', () => {
+      trait.setProperty('pos', [1, 2, 3]);
+      trait.setProperty('name', 'player');
+
+      const buffer = trait.serialize();
+      const newTrait = createNetworkedTrait();
+      newTrait.deserialize(buffer);
+
+      expect(newTrait.getProperty('pos')).toEqual([1, 2, 3]);
+      expect(newTrait.getProperty('name')).toBe('player');
+    });
+  });
+
+  describe('SyncProtocol integration', () => {
+    it('should have getEntityId method', () => {
+      const id = trait.getEntityId();
+      expect(typeof id).toBe('string');
+      expect(id).toContain('entity_');
+    });
+
+    it('should generate unique entity IDs', () => {
+      const trait2 = createNetworkedTrait();
+      expect(trait.getEntityId()).not.toBe(trait2.getEntityId());
+    });
+
+    it('should have getLatency method', () => {
+      const latency = trait.getLatency();
+      expect(typeof latency).toBe('number');
+      expect(latency).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should have disconnect method', () => {
+      expect(() => trait.disconnect()).not.toThrow();
+    });
+  });
+
+  describe('sync rate limiting', () => {
+    it('should track pending updates', () => {
+      trait.setProperty('test', 1);
+      const updates = trait.flushUpdates();
+      expect(updates).toHaveProperty('test', 1);
+    });
+
+    it('should clear updates on flush', () => {
+      trait.setProperty('a', 1);
+      trait.flushUpdates();
+
+      const secondFlush = trait.flushUpdates();
+      expect(Object.keys(secondFlush)).toHaveLength(0);
+    });
+  });
+
+  describe('ownership transfer', () => {
+    it('should request ownership for transferable config', async () => {
+      const transferable = createNetworkedTrait({
+        mode: 'shared',
+        authority: {
+          transferable: true,
+        },
+      });
+
+      const result = await transferable.requestOwnership();
+      expect(result).toBe(true);
+    });
+
+    it('should release ownership', () => {
+      trait.setOwner(true);
+      expect(trait.isLocalOwner()).toBe(true);
+
+      trait.releaseOwnership();
+      expect(trait.isLocalOwner()).toBe(false);
+    });
+  });
 });
