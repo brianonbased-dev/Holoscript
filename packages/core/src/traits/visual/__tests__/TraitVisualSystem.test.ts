@@ -400,6 +400,126 @@ describe('TraitCompositor', () => {
     expect(result.roughness).toBe(0.1); // brand_new
     expect(result.envMapIntensity).toBe(1.3); // brand_new
   });
+
+  // ── New composition rule tests ────────────────────────────────
+
+  it('temperature conflict: frozen_liquid suppresses fiery', () => {
+    const result = compositor.compose(['frozen_liquid', 'fiery']);
+
+    // frozen_liquid suppresses fiery; only frozen_liquid material applies
+    expect(result.color).toBe('#D6EAF8'); // frozen_liquid additive tint
+    // fiery's emissive should NOT be present
+    expect(result.emissiveIntensity).toBeUndefined();
+  });
+
+  it('organic requirement: moss_covered on wooden passes', () => {
+    // wooden has tags: ['organic', 'opaque']
+    const result = compositor.compose(['wooden', 'moss_covered']);
+
+    // Both should apply — moss_covered overrides wooden (condition > base_material)
+    expect(result.color).toBe('#4A7C3F'); // moss_covered color
+    expect(result.roughness).toBe(0.9); // moss_covered roughness
+  });
+
+  it('organic requirement: moss_covered on iron_material fails', () => {
+    // iron_material has tags: ['metallic'] — no organic/mineral/stone
+    const result = compositor.compose(['iron_material', 'moss_covered']);
+
+    // moss_covered filtered out, only iron_material applies
+    expect(result.color).toBe('#434343'); // iron_material color
+    expect(result.metalness).toBe(0.9); // iron_material metalness
+  });
+
+  it('visibility suppression: invisible suppresses glowing', () => {
+    const result = compositor.compose(['invisible', 'glowing']);
+
+    // invisible suppresses glowing; glowing's emissive should not appear
+    expect(result.emissive).toBeUndefined();
+    expect(result.emissiveIntensity).toBeUndefined();
+  });
+
+  it('magic synergy: enchanted + ancient = magical artifact', () => {
+    const result = compositor.compose(['enchanted', 'ancient']);
+
+    // Multi-trait merge: enchanted + ancient → purple magical artifact
+    expect(result.emissive).toBe('#9966FF');
+    expect(result.emissiveIntensity).toBe(0.5);
+    expect(result.color).toBe('#8B6914');
+  });
+
+  it('nature synergy: wildfire + wooden = burning wood', () => {
+    const result = compositor.compose(['wildfire', 'wooden']);
+
+    // Multi-trait merge: wildfire + wooden → burning wood
+    expect(result.emissive).toBe('#FF4500');
+    expect(result.emissiveIntensity).toBe(2.5);
+    expect(result.roughness).toBe(0.9);
+  });
+
+  it('metal finishing: brushed requires metallic tag from other trait', () => {
+    // brushed itself has metallic tag but can't self-satisfy
+    const resultAlone = compositor.compose(['brushed']);
+    expect(resultAlone.roughness).toBeUndefined();
+
+    // With iron_material (provides metallic tag) → brushed applies
+    const resultWithMetal = compositor.compose(['iron_material', 'brushed']);
+    expect(resultWithMetal.roughness).toBeDefined();
+  });
+
+  it('copper + rusted = verdigris patina', () => {
+    const result = compositor.compose(['copper_material', 'rusted']);
+
+    // Multi-trait merge: rusted + copper → verdigris
+    expect(result.color).toBe('#5C8A7A');
+    expect(result.metalness).toBe(0.6);
+  });
+
+  it('cursed suppresses blessed (and vice versa)', () => {
+    // cursed suppresses blessed
+    const r1 = compositor.compose(['cursed', 'blessed']);
+    // blessed is suppressed, only cursed material applies
+    expect(r1).toBeDefined();
+
+    // blessed suppresses cursed
+    const r2 = compositor.compose(['blessed', 'cursed']);
+    // cursed is suppressed, only blessed material applies
+    expect(r2).toBeDefined();
+  });
+
+  it('petrified suppresses living traits', () => {
+    const result = compositor.compose(['petrified', 'growable', 'bloomable']);
+
+    // petrified suppresses growable and bloomable
+    // Only petrified material should apply
+    expect(result.roughness).toBe(0.6); // petrified roughness
+  });
+
+  it('additive: ghostly adds transparency', () => {
+    const result = compositor.compose(['wooden', 'ghostly']);
+
+    // ghostly additive: opacity 0.3, transparent true
+    expect(result.opacity).toBe(0.3);
+    expect(result.transparent).toBe(true);
+    // wooden's base material should still be present
+    expect(result.color).toBeDefined();
+  });
+
+  it('additive: bioluminescent adds green glow', () => {
+    const result = compositor.compose(['aquatic', 'bioluminescent']);
+
+    // Multi-trait merge: bioluminescent + aquatic → glowing sea creature
+    expect(result.emissive).toBe('#00CCAA');
+    expect(result.emissiveIntensity).toBe(1.2);
+  });
+
+  it('frozen + crystalline = ice crystal', () => {
+    const result = compositor.compose(['frozen_liquid', 'crystalline']);
+
+    // Multi-trait merge: frozen_liquid + crystalline → ice crystal
+    expect(result.transmission).toBe(0.9);
+    expect(result.ior).toBe(1.31);
+    expect(result.iridescence).toBe(0.7);
+  });
 });
 
 // ---------------------------------------------------------------------------
