@@ -640,24 +640,26 @@ export default {
   line-height: 1.6;
 }
 
-/* Reset VitePress default heading styles inside landing page */
+/* Reset VitePress default heading styles inside landing page.
+   margin/padding use normal priority so individual class selectors
+   with !important can override them. */
 .landing-page h1,
 .landing-page h2,
 .landing-page h3,
 .landing-page h4,
 .landing-page p {
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0;
+  padding: 0;
   border: none !important;
   letter-spacing: normal !important;
 }
 .landing-page h1,
 .landing-page h2,
 .landing-page h3 {
-  line-height: 1.3 !important;
+  line-height: 1.3;
 }
 .landing-page p {
-  line-height: 1.6 !important;
+  line-height: 1.6;
 }
 
 /* ========= NAV ========= */
@@ -1337,6 +1339,7 @@ export default {
   color: var(--text2);
   margin-bottom: 1rem !important;
   font-size: 0.95rem;
+  text-align: center !important;
 }
 .footer-author-link {
   color: var(--cyan);
