@@ -461,7 +461,7 @@ animate();</code></pre>
           <a href="/examples/">Examples</a>
           <a href="https://x.com/holoscript">X / Twitter</a>
         </div>
-        <p class="footer-tagline">Made with love for the spatial computing community</p>
+        <p class="footer-tagline">Made with &#x1F49A; for the spatial computing community by Brian X Base LLC / <a href="https://x.com/OnBaseBrian" target="_blank" rel="noopener" class="footer-author-link">@onbasebrian</a></p>
         <span class="license-badge">MIT License</span>
       </div>
     </footer>
@@ -1331,6 +1331,13 @@ export default {
   color: var(--text2);
   margin-bottom: 1rem;
   font-size: 0.95rem;
+}
+.footer-author-link {
+  color: var(--cyan);
+  text-decoration: none;
+}
+.footer-author-link:hover {
+  text-decoration: underline;
 }
 .license-badge {
   display: inline-block;
