@@ -473,8 +473,44 @@ export class OpenXRCompiler {
 
     if (this.options.renderBackend === 'vulkan') {
       this.emit(`// Create Vulkan vertex buffer for ${obj.name}`);
-      this.emit(`VkBuffer ${varName}_vbo; // TODO: vkCreateBuffer + vkAllocateMemory`);
-      this.emit(`VkDescriptorSet ${varName}_desc; // TODO: allocate descriptor set`);
+      this.emit(`VkBuffer ${varName}_vbo = VK_NULL_HANDLE;`);
+      this.emit(`VkDeviceMemory ${varName}_vboMemory = VK_NULL_HANDLE;`);
+      this.emit('{');
+      this.indent();
+      this.emit('VkBufferCreateInfo bufferInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};');
+      this.emit(`bufferInfo.size = ${varName}_vertices.size() * sizeof(float);`);
+      this.emit('bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;');
+      this.emit('bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;');
+      this.emit(`vkCreateBuffer(vkDevice, &bufferInfo, nullptr, &${varName}_vbo);`);
+      this.emit('');
+      this.emit('VkMemoryRequirements memReqs;');
+      this.emit(`vkGetBufferMemoryRequirements(vkDevice, ${varName}_vbo, &memReqs);`);
+      this.emit('');
+      this.emit('VkMemoryAllocateInfo allocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};');
+      this.emit('allocInfo.allocationSize = memReqs.size;');
+      this.emit('allocInfo.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);');
+      this.emit(`vkAllocateMemory(vkDevice, &allocInfo, nullptr, &${varName}_vboMemory);`);
+      this.emit(`vkBindBufferMemory(vkDevice, ${varName}_vbo, ${varName}_vboMemory, 0);`);
+      this.emit('');
+      this.emit('// Upload vertex data');
+      this.emit('void* mapped = nullptr;');
+      this.emit(`vkMapMemory(vkDevice, ${varName}_vboMemory, 0, bufferInfo.size, 0, &mapped);`);
+      this.emit(`std::memcpy(mapped, ${varName}_vertices.data(), bufferInfo.size);`);
+      this.emit(`vkUnmapMemory(vkDevice, ${varName}_vboMemory);`);
+      this.dedent();
+      this.emit('}');
+      this.emit('');
+      this.emit(`// Allocate descriptor set for ${obj.name}`);
+      this.emit(`VkDescriptorSet ${varName}_desc = VK_NULL_HANDLE;`);
+      this.emit('{');
+      this.indent();
+      this.emit('VkDescriptorSetAllocateInfo descAllocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};');
+      this.emit('descAllocInfo.descriptorPool = descriptorPool;');
+      this.emit('descAllocInfo.descriptorSetCount = 1;');
+      this.emit('descAllocInfo.pSetLayouts = &descriptorSetLayout;');
+      this.emit(`vkAllocateDescriptorSets(vkDevice, &descAllocInfo, &${varName}_desc);`);
+      this.dedent();
+      this.emit('}');
     } else {
       this.emit(`GLuint ${varName}_vao, ${varName}_vbo;`);
       this.emit(`glGenVertexArrays(1, &${varName}_vao);`);
@@ -732,7 +768,7 @@ export class OpenXRCompiler {
   // Render loop
   // ---------------------------------------------------------------------------
 
-  private emitRenderLoop(_composition: HoloComposition): void {
+  private emitRenderLoop(composition: HoloComposition): void {
     this.emit('void renderLoop() {');
     this.indent();
 
@@ -813,7 +849,46 @@ export class OpenXRCompiler {
     this.emit('xrWaitSwapchainImage(swapchain, &swapWaitInfo);');
     this.emit('');
     this.emit('// === Render scene objects ===');
-    this.emit('// TODO: iterate scene objects, bind pipelines, issue draw calls');
+    if (this.options.renderBackend === 'vulkan') {
+      this.emit('VkCommandBufferBeginInfo cmdBeginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};');
+      this.emit('cmdBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;');
+      this.emit('vkBeginCommandBuffer(commandBuffer, &cmdBeginInfo);');
+      this.emit('');
+      this.emit('beginRenderPass(commandBuffer, renderPass, framebuffers[imageIndex], 1920, 1920);');
+      this.emit('');
+
+      // Collect all objects (top-level + from spatial groups)
+      const allObjects = this.collectAllObjects(composition);
+      for (const obj of allObjects) {
+        const varName = this.sanitizeName(obj.name);
+        this.emit(`// Draw: ${obj.name}`);
+        this.emit(`vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);`);
+        this.emit(`VkDeviceSize ${varName}_offset = 0;`);
+        this.emit(`vkCmdBindVertexBuffers(commandBuffer, 0, 1, &${varName}_vbo, &${varName}_offset);`);
+        this.emit(`vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &${varName}_desc, 0, nullptr);`);
+        this.emit(`vkCmdDraw(commandBuffer, static_cast<uint32_t>(${varName}_vertices.size() / 6), 1, 0, 0);`);
+        this.emit('');
+      }
+
+      this.emit('vkCmdEndRenderPass(commandBuffer);');
+      this.emit('vkEndCommandBuffer(commandBuffer);');
+      this.emit('');
+      this.emit('// Submit command buffer');
+      this.emit('VkSubmitInfo submitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};');
+      this.emit('submitInfo.commandBufferCount = 1;');
+      this.emit('submitInfo.pCommandBuffers = &commandBuffer;');
+      this.emit('vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);');
+      this.emit('vkQueueWaitIdle(graphicsQueue);');
+    } else {
+      const allObjects = this.collectAllObjects(composition);
+      for (const obj of allObjects) {
+        const varName = this.sanitizeName(obj.name);
+        this.emit(`// Draw: ${obj.name}`);
+        this.emit(`glBindVertexArray(${varName}_vao);`);
+        this.emit(`glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(${varName}_vertices.size() / 6));`);
+        this.emit('');
+      }
+    }
     this.emit('');
 
     this.emit('XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};');
@@ -1013,5 +1088,31 @@ export class OpenXRCompiler {
       );
     };
     return check(composition.objects);
+  }
+
+  private collectAllObjects(composition: HoloComposition): HoloObjectDecl[] {
+    const result: HoloObjectDecl[] = [];
+    const collect = (objs: HoloObjectDecl[] | undefined): void => {
+      if (!objs) return;
+      for (const obj of objs) {
+        result.push(obj);
+        if (obj.children) {
+          collect(obj.children);
+        }
+      }
+    };
+    collect(composition.objects);
+    // Also collect objects from spatial groups
+    const collectFromGroups = (groups: HoloSpatialGroup[] | undefined): void => {
+      if (!groups) return;
+      for (const group of groups) {
+        collect(group.objects);
+        if (group.groups) {
+          collectFromGroups(group.groups);
+        }
+      }
+    };
+    collectFromGroups(composition.spatialGroups);
+    return result;
   }
 }

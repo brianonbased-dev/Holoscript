@@ -131,7 +131,8 @@ export type NetworkEventType =
   | 'ownershipChanged'
   | 'propertyChanged'
   | 'stateReceived'
-  | 'latencyUpdate';
+  | 'latencyUpdate'
+  | 'rpcReceived';
 
 /**
  * Network event payload
@@ -230,6 +231,8 @@ export class NetworkedTrait {
   private syncProtocol: SyncProtocol | null = null;
   private entityId: string = '';
   private interpolationBuffer: InterpolationSample[] = [];
+  private ownershipRequestResolve: ((approved: boolean) => void) | null = null;
+  private clientId: string = '';
 
   constructor(config: NetworkedConfig) {
     this.config = {
@@ -287,12 +290,51 @@ export class NetworkedTrait {
       this.setConnected(false);
     });
 
+    this.syncProtocol.on('ownership-request', (event) => {
+      const { entityId, requesterId } = event.data as { entityId: string; requesterId: string };
+      if (entityId === this.entityId && this.isOwner) {
+        // If we are the owner, decide whether to transfer
+        const approved = this.config.authority?.transferable ?? true;
+        if (approved) {
+          this.setOwner(false);
+        }
+        this.syncProtocol?.respondToOwnership(entityId, requesterId, approved);
+      }
+    });
+
+    this.syncProtocol.on('ownership-response', (event) => {
+      const { entityId, approved, ownerId } = event.data as {
+        entityId: string;
+        approved: boolean;
+        ownerId: string;
+      };
+      if (entityId === this.entityId) {
+        this.setOwner(approved && ownerId === this.clientId, ownerId);
+        if (this.ownershipRequestResolve) {
+          this.ownershipRequestResolve(approved);
+          this.ownershipRequestResolve = null;
+        }
+      }
+    });
+
+    this.syncProtocol.on('rpc', (event) => {
+      const { method, args, from } = event.data as { method: string; args: unknown[]; from: string };
+      this.emit('rpcReceived', {
+        type: 'rpcReceived' as any,
+        property: method,
+        value: args,
+        peerId: from,
+        timestamp: Date.now(),
+      });
+    });
+
     // Connect if not already connected
     if (!this.syncProtocol.isConnected()) {
       await this.syncProtocol.connect();
     }
 
     this.connected = true;
+    this.clientId = this.syncProtocol.getClientId();
     this.peerId = this.entityId;
     logger.info(`[NetworkedTrait] Connected to room: ${roomId}`);
   }
@@ -529,13 +571,30 @@ export class NetworkedTrait {
   /**
    * Request ownership of this entity
    */
-  public requestOwnership(): Promise<boolean> {
+  public async requestOwnership(): Promise<boolean> {
+    if (this.isOwner) return true;
     if (!this.config.authority?.transferable) {
-      return Promise.resolve(false);
+      return false;
     }
 
-    // In real implementation, this would send a network request
-    return Promise.resolve(true);
+    // If not connected to a network, grant ownership locally
+    if (!this.syncProtocol) {
+      this.setOwner(true);
+      return true;
+    }
+
+    return new Promise((resolve) => {
+      this.ownershipRequestResolve = resolve;
+      this.syncProtocol?.requestOwnership(this.entityId);
+
+      // Timeout request after configured time
+      setTimeout(() => {
+        if (this.ownershipRequestResolve === resolve) {
+          this.ownershipRequestResolve(false);
+          this.ownershipRequestResolve = null;
+        }
+      }, this.config.authority?.requestTimeout || 5000);
+    });
   }
 
   /**

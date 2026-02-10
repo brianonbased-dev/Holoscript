@@ -25,6 +25,7 @@ import {
   statSync,
 } from 'fs';
 import { join } from 'path';
+import { deflateSync, inflateSync } from 'node:zlib';
 
 /**
  * Cache entry types
@@ -129,22 +130,17 @@ function getModTime(filePath: string): number {
 }
 
 /**
- * Simple compression using base64 encoding of deflated data
- * In a real implementation, use zlib
+ * Compress data using zlib deflate, encoded as base64 for storage
  */
 function compress(data: string): string {
-  // Simple base64 encoding as placeholder
-  // Real implementation would use zlib.deflateSync
-  return Buffer.from(data).toString('base64');
+  return deflateSync(Buffer.from(data)).toString('base64');
 }
 
 /**
- * Decompress data
+ * Decompress base64-encoded zlib data
  */
 function decompress(data: string): string {
-  // Simple base64 decoding as placeholder
-  // Real implementation would use zlib.inflateSync
-  return Buffer.from(data, 'base64').toString('utf-8');
+  return inflateSync(Buffer.from(data, 'base64')).toString('utf-8');
 }
 
 /**

@@ -114,10 +114,60 @@ export class BundleSplitter {
   }
 
   private extractImportPath(node: HSPlusNode): string | null {
-    // placeholder extraction
-    if ((node as any).arguments?.[0]) {
-      return (node as any).arguments[0];
+    const args = (node as any).arguments;
+    const source = (node as any).source;
+
+    // 1. Property access pattern: node.source?.value (e.g. ESTree-style ImportExpression)
+    if (source != null) {
+      if (typeof source === 'string') return source;
+      if (typeof source.value === 'string') return source.value;
     }
+
+    // No arguments array to inspect
+    if (!Array.isArray(args) || args.length === 0) return null;
+
+    const firstArg = args[0];
+
+    // 2. The argument is already a plain string (raw path)
+    if (typeof firstArg === 'string') return firstArg;
+
+    // 3. String literal AST node: { type: 'string_literal' | 'StringLiteral' | 'Literal', value: "..." }
+    if (firstArg != null && typeof firstArg === 'object') {
+      // Direct value property (most common)
+      if (typeof firstArg.value === 'string') return firstArg.value;
+
+      // Template literal with no expressions (static template): `./path`
+      if (
+        (firstArg.type === 'template_literal' || firstArg.type === 'TemplateLiteral') &&
+        Array.isArray(firstArg.quasis) &&
+        firstArg.quasis.length === 1 &&
+        (!Array.isArray(firstArg.expressions) || firstArg.expressions.length === 0)
+      ) {
+        const quasi = firstArg.quasis[0];
+        // Template element value can be stored in .value.cooked, .value.raw, or .cooked/.raw
+        if (typeof quasi === 'string') return quasi;
+        if (quasi != null && typeof quasi === 'object') {
+          if (typeof quasi.value === 'string') return quasi.value;
+          if (quasi.value != null && typeof quasi.value === 'object') {
+            if (typeof quasi.value.cooked === 'string') return quasi.value.cooked;
+            if (typeof quasi.value.raw === 'string') return quasi.value.raw;
+          }
+          if (typeof quasi.cooked === 'string') return quasi.cooked;
+          if (typeof quasi.raw === 'string') return quasi.raw;
+        }
+      }
+
+      // Fallback: raw property (some AST formats)
+      if (typeof firstArg.raw === 'string') {
+        // Strip surrounding quotes if present
+        const raw = firstArg.raw;
+        if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
+          return raw.slice(1, -1);
+        }
+        return raw;
+      }
+    }
+
     return null;
   }
 

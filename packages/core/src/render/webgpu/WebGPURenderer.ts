@@ -533,16 +533,147 @@ export class WebGPURenderer {
     };
   }
 
+  // Cached mipmap pipeline and sampler (lazily created)
+  private mipmapPipeline: GPURenderPipeline | null = null;
+  private mipmapSampler: GPUSampler | null = null;
+
   /**
-   * Generate mipmaps for a texture
+   * Get or create the mipmap blit pipeline.
+   * Uses a fullscreen-quad vertex shader (no vertex buffers) and a
+   * bilinear-sampling fragment shader to downsample each mip level.
+   */
+  private getOrCreateMipmapPipeline(format: GPUTextureFormat): GPURenderPipeline {
+    if (this.mipmapPipeline) return this.mipmapPipeline;
+    if (!this.context) throw new Error('Renderer not initialized');
+
+    const { device } = this.context;
+
+    const mipmapShaderCode = /* wgsl */ `
+      // Fullscreen triangle (no vertex buffer needed)
+      var<private> pos: array<vec2<f32>, 3> = array<vec2<f32>, 3>(
+        vec2<f32>(-1.0, -1.0),
+        vec2<f32>( 3.0, -1.0),
+        vec2<f32>(-1.0,  3.0),
+      );
+
+      struct VertexOutput {
+        @builtin(position) position: vec4<f32>,
+        @location(0) uv: vec2<f32>,
+      };
+
+      @vertex
+      fn vs_main(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
+        var output: VertexOutput;
+        let p = pos[vertexIndex];
+        output.position = vec4<f32>(p, 0.0, 1.0);
+        // Map clip-space to UV: [-1,1] -> [0,1], flip Y for texture coords
+        output.uv = vec2<f32>(p.x * 0.5 + 0.5, 1.0 - (p.y * 0.5 + 0.5));
+        return output;
+      }
+
+      @group(0) @binding(0) var srcTexture: texture_2d<f32>;
+      @group(0) @binding(1) var srcSampler: sampler;
+
+      @fragment
+      fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
+        return textureSample(srcTexture, srcSampler, uv);
+      }
+    `;
+
+    const shaderModule = device.createShaderModule({
+      label: 'mipmap-blit-shader',
+      code: mipmapShaderCode,
+    });
+
+    this.mipmapSampler = device.createSampler({
+      minFilter: 'linear',
+      magFilter: 'linear',
+    });
+
+    this.mipmapPipeline = device.createRenderPipeline({
+      label: 'mipmap-blit-pipeline',
+      layout: 'auto',
+      vertex: {
+        module: shaderModule,
+        entryPoint: 'vs_main',
+      },
+      fragment: {
+        module: shaderModule,
+        entryPoint: 'fs_main',
+        targets: [{ format }],
+      },
+      primitive: {
+        topology: 'triangle-list',
+      },
+    });
+
+    return this.mipmapPipeline;
+  }
+
+  /**
+   * Generate mipmaps for a texture using a blit-style render pass.
+   *
+   * For each mip level (1..mipLevelCount-1) we render a fullscreen triangle
+   * that samples the previous level with bilinear filtering, writing the
+   * downsampled result into the current level.
+   *
+   * Requires the texture to have been created with RENDER_ATTACHMENT usage.
    */
   private async generateMipmaps(texture: GPUTexture, width: number, height: number): Promise<void> {
-    // Mipmap generation would require a compute or render pass
-    // For now, this is a placeholder - implement with blit pipeline
     if (!this.context) return;
 
-    // TODO: Implement mipmap generation with blit pipeline
-    console.warn('Mipmap generation not yet implemented');
+    const { device } = this.context;
+    const format = texture.format;
+    const mipLevelCount = texture.mipLevelCount;
+
+    if (mipLevelCount <= 1) return;
+
+    const pipeline = this.getOrCreateMipmapPipeline(format);
+    const sampler = this.mipmapSampler!;
+
+    const encoder = device.createCommandEncoder({ label: 'mipmap-generation' });
+
+    for (let level = 1; level < mipLevelCount; level++) {
+      // Create a view of the previous mip level (source)
+      const srcView = texture.createView({
+        baseMipLevel: level - 1,
+        mipLevelCount: 1,
+      });
+
+      // Create a view of the current mip level (destination)
+      const dstView = texture.createView({
+        baseMipLevel: level,
+        mipLevelCount: 1,
+      });
+
+      // Build a bind group that points the shader at the source level
+      const bindGroup = device.createBindGroup({
+        layout: (pipeline as GPURenderPipeline).getBindGroupLayout(0),
+        entries: [
+          { binding: 0, resource: srcView },
+          { binding: 1, resource: sampler },
+        ],
+      });
+
+      // Render pass that writes into the destination mip level
+      const pass = encoder.beginRenderPass({
+        colorAttachments: [
+          {
+            view: dstView,
+            loadOp: 'clear',
+            storeOp: 'store',
+            clearValue: { r: 0, g: 0, b: 0, a: 0 },
+          },
+        ],
+      });
+
+      pass.setPipeline(pipeline);
+      pass.setBindGroup(0, bindGroup);
+      pass.draw(3); // fullscreen triangle
+      pass.end();
+    }
+
+    device.queue.submit([encoder.finish()]);
   }
 
   /**
@@ -855,6 +986,10 @@ export class WebGPURenderer {
     });
     this.pipelines.clear();
     this.shaderModules.clear();
+
+    // Clear cached mipmap pipeline resources
+    this.mipmapPipeline = null;
+    this.mipmapSampler = null;
 
     this.depthTexture?.destroy();
     this.msaaTexture?.destroy();

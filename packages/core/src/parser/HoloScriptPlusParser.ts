@@ -1092,7 +1092,7 @@ export class HoloScriptPlusParser {
         type: 'composition' as any,
         name: id,
         id,
-        properties: {},
+        properties: compBody.properties || {},
         directives: [],
         children: compBody.children,
         traits: new Map(),
@@ -1969,11 +1969,13 @@ export class HoloScriptPlusParser {
     systems: HSPlusNode[];
     configs: HSPlusNode[];
     children: HSPlusNode[];
+    properties: Record<string, unknown>;
   } {
     const result = {
       systems: [] as HSPlusNode[],
       configs: [] as HSPlusNode[],
       children: [] as HSPlusNode[],
+      properties: {} as Record<string, unknown>,
     };
 
     if (!this.check('LBRACE')) {
@@ -1982,6 +1984,32 @@ export class HoloScriptPlusParser {
 
     this.advance(); // {
     this.skipNewlines();
+
+    // List of keywords that start child node definitions
+    const childNodeKeywords = [
+      'logic',
+      'template',
+      'environment',
+      'state',
+      'object',
+      'composition',
+      'system',
+      'core_config',
+      'narrative',
+      'quest',
+      'objective',
+      'dialogue',
+      'choice',
+      'visual_metadata',
+      'spatial_group',
+      'scene',
+      'group',
+      'module',
+      'struct',
+      'orb',
+      'on_error',
+      'assert',
+    ];
 
     while (!this.check('RBRACE') && !this.check('EOF')) {
       const currentDirectives: HSPlusDirective[] = [];
@@ -1997,7 +2025,7 @@ export class HoloScriptPlusParser {
         this.skipNewlines();
       }
 
-      // 2. Parse node or standalone directives
+      // 2. Check if this is a property assignment (key: value or key = value)
       const isNodeStart =
         this.check('IDENTIFIER') ||
         this.check('STATE_MACHINE') ||
@@ -2006,19 +2034,59 @@ export class HoloScriptPlusParser {
         this.check('INITIAL');
 
       if (isNodeStart) {
-        const keyword = this.current().value;
-        const node = this.parseNode();
+        const token = this.current();
+        const next = this.peek(1);
 
-        // Attach preceding directives
-        node.directives = [...currentDirectives, ...(node.directives || [])] as any;
+        // Property assignment: key: value or key = value
+        if (next.type === 'COLON' || next.type === 'EQUALS') {
+          const key = this.advance().value;
+          this.advance(); // consume : or =
+          result.properties[key] = this.parseValue();
+        }
+        // Child node keyword followed by { or "name"
+        else if (
+          childNodeKeywords.includes(token.value) &&
+          (next.type === 'LBRACE' || next.type === 'STRING' || next.type === 'IDENTIFIER')
+        ) {
+          const keyword = this.current().value;
+          const node = this.parseNode();
+          node.directives = [...currentDirectives, ...(node.directives || [])] as any;
 
-        // Specialized categorization
-        if (keyword === 'system' || node.type === 'system') {
-          result.systems.push(node);
-        } else if (keyword === 'core_config' || node.type === 'core_config') {
-          result.configs.push(node);
-        } else {
-          result.children.push(node);
+          if (keyword === 'system' || node.type === 'system') {
+            result.systems.push(node);
+          } else if (keyword === 'core_config' || node.type === 'core_config') {
+            result.configs.push(node);
+          } else {
+            result.children.push(node);
+          }
+        }
+        // Property with value but no colon (e.g. prop1 "value1")
+        // Only for non-child-node identifiers followed by a value token
+        else if (
+          !childNodeKeywords.includes(token.value) &&
+          (next.type === 'STRING' || next.type === 'NUMBER' || next.type === 'BOOLEAN' || next.type === 'NULL')
+        ) {
+          const key = this.advance().value;
+          result.properties[key] = this.parseValue();
+        }
+        // Custom node type followed by name or body
+        else if (next.type === 'LBRACE' || next.type === 'IDENTIFIER') {
+          const keyword = this.current().value;
+          const node = this.parseNode();
+          node.directives = [...currentDirectives, ...(node.directives || [])] as any;
+
+          if (keyword === 'system' || node.type === 'system') {
+            result.systems.push(node);
+          } else if (keyword === 'core_config' || node.type === 'core_config') {
+            result.configs.push(node);
+          } else {
+            result.children.push(node);
+          }
+        }
+        // Bare identifier (no value)
+        else {
+          const key = this.advance().value;
+          result.properties[key] = true;
         }
       } else if (currentDirectives.length > 0) {
         // Standalone directives in composition body (like @manifest)
@@ -2030,9 +2098,15 @@ export class HoloScriptPlusParser {
           properties: {},
         } as any;
         result.children.push(fragment);
+      } else if (this.check('COMMA')) {
+        this.advance();
       } else {
-        // Skip unexpected token
+        // Unexpected token in composition block - report error and skip
         if (!this.check('RBRACE') && !this.check('EOF')) {
+          this.error(
+            `Unexpected token ${this.current().type} "${this.current().value}" in composition body. Expected property name, @directive, or child node`,
+            'HSP101'
+          );
           this.advance();
         }
       }
