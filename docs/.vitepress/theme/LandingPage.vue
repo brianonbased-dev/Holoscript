@@ -51,6 +51,15 @@ onMounted(() => {
     <section id="hero">
       <div class="hero-grid-bg"></div>
       <div class="container hero-content">
+        <div class="hero-logos">
+          <a href="/" class="hero-logo-link" aria-label="HoloScript">
+            <img src="/logo.svg" alt="HoloScript" class="hero-logo" />
+          </a>
+          <span class="hero-logo-x">&times;</span>
+          <a href="https://base.org" target="_blank" rel="noopener" class="hero-logo-link" aria-label="Base">
+            <img src="/base-logo.svg" alt="Base" class="hero-logo hero-logo--base" />
+          </a>
+        </div>
         <h1>One Language, Every Platform</h1>
         <p class="hero-sub">
           HoloScript is an open-source programming language that compiles to 18+ targets including
@@ -834,6 +843,33 @@ export default {
 .hero-content {
   position: relative;
   z-index: 1;
+}
+.hero-logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.hero-logo-link {
+  display: block;
+  transition: transform 0.3s;
+}
+.hero-logo-link:hover {
+  transform: scale(1.08);
+}
+.hero-logo {
+  height: 80px;
+  width: 80px;
+}
+.hero-logo--base {
+  border-radius: 14px;
+}
+.hero-logo-x {
+  font-size: 1.5rem;
+  color: var(--text2);
+  font-weight: 300;
+  user-select: none;
 }
 #hero h1 {
   font-size: clamp(2.5rem, 6vw, 4.5rem);
