@@ -273,7 +273,7 @@ animate();</code></pre>
             </p>
           </div>
           <div class="use-card">
-            <div class="use-icon">&#x1FA69;</div>
+            <div class="use-icon">&#x1F3AD;</div>
             <h3>AI Choreography</h3>
             <p>
               Multi-agent orchestration with 34 MCP tools, a choreography engine for multi-step
@@ -314,7 +314,7 @@ animate();</code></pre>
             </p>
           </div>
           <div class="use-card">
-            <div class="use-icon">&#x1FA7A;</div>
+            <div class="use-icon">&#x2695;&#xFE0F;</div>
             <h3>Healthcare</h3>
             <p>
               Medical training simulations, surgical rehearsal, and therapeutic VR environments.
