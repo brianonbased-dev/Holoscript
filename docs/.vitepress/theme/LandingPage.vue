@@ -738,14 +738,17 @@ export default {
   line-height: 1.3 !important;
   padding-bottom: 0.05em !important;
 }
-/* When section-title has no .section-sub sibling, add more bottom margin */
-.section-title:last-child,
+/* Spacing between section title and content grids */
 .section-title + .grid-3,
 .section-title + .grid-4 {
-  margin-top: 0;
+  margin-top: 2.5rem;
 }
-.section-title + .grid-3 {
-  margin-top: 2rem;
+.section-sub + .grid-3,
+.section-sub + .grid-4,
+.section-sub + .traits-grid,
+.section-sub + .tabs,
+.section-sub + .comparison {
+  margin-top: 0;
 }
 .section-sub {
   text-align: center;
@@ -835,6 +838,7 @@ export default {
 .card p {
   color: var(--text2);
   font-size: 0.95rem;
+  line-height: 1.6 !important;
 }
 
 /* ========= PROBLEM / SOLUTION ========= */
@@ -958,8 +962,8 @@ export default {
   font-size: clamp(1.1rem, 2.5vw, 1.4rem);
   color: var(--text2);
   max-width: 800px;
-  margin: 0 auto 2.5rem;
-  line-height: 1.6;
+  margin: 0 auto 2.5rem !important;
+  line-height: 1.6 !important;
 }
 .hero-sub strong {
   color: var(--text);
@@ -1154,7 +1158,7 @@ export default {
 .trait-desc {
   font-size: 0.8rem;
   color: var(--text2);
-  margin: 0;
+  margin: 0 !important;
 }
 
 /* ========= USE CASES ========= */
@@ -1192,6 +1196,7 @@ export default {
 .use-card p {
   color: var(--text2);
   font-size: 0.9rem;
+  line-height: 1.6 !important;
 }
 
 /* ========= TABS ========= */
@@ -1329,7 +1334,7 @@ export default {
 }
 .footer-tagline {
   color: var(--text2);
-  margin-bottom: 1rem;
+  margin-bottom: 1rem !important;
   font-size: 0.95rem;
 }
 .footer-author-link {
