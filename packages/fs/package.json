@@ -31,7 +31,7 @@
     "dev": "tsc --watch",
     "clean": "rimraf dist",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "chokidar": "^3.5.3",

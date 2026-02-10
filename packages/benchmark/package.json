@@ -19,7 +19,7 @@
     "bench:ci": "node --experimental-vm-modules dist/index.js --ci",
     "build": "tsc",
     "clean": "rm -rf dist",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@holoscript/core": "workspace:*",

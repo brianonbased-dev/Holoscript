@@ -7,16 +7,10 @@ export default [
   'packages/lsp/vitest.config.ts',
   'packages/vscode-extension/vitest.config.ts',
   'packages/adapter-postgres/vitest.config.ts',
+  'packages/mcp-server/vitest.config.ts',
+  'packages/partner-sdk/vitest.config.ts',
 
   // ── Packages without a vitest.config.ts (inline) ──────────────────────
-  {
-    test: {
-      name: 'partner-sdk',
-      root: './packages/partner-sdk',
-      include: ['src/**/*.test.ts'],
-      exclude: ['**/dist/**', '**/node_modules/**'],
-    },
-  },
   {
     test: {
       name: 'marketplace-api',

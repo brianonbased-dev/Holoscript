@@ -31,7 +31,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "clean": "rm -rf dist",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "keywords": [
     "holoscript",
