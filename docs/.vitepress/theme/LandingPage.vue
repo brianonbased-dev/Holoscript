@@ -619,14 +619,20 @@ export default {
 .landing-page h1,
 .landing-page h2,
 .landing-page h3,
+.landing-page h4,
 .landing-page p {
-  margin: 0;
-  padding: 0;
-  border: none;
-  line-height: 1.3;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  letter-spacing: normal !important;
+}
+.landing-page h1,
+.landing-page h2,
+.landing-page h3 {
+  line-height: 1.3 !important;
 }
 .landing-page p {
-  line-height: 1.6;
+  line-height: 1.6 !important;
 }
 
 /* ========= NAV ========= */
@@ -702,18 +708,27 @@ export default {
 }
 .section-title {
   text-align: center;
-  font-size: clamp(2rem, 4vw, 3rem);
-  margin-bottom: 1rem;
-  line-height: 1.3;
-  padding-bottom: 0.05em;
+  font-size: clamp(2rem, 4vw, 3rem) !important;
+  margin-bottom: 1rem !important;
+  line-height: 1.3 !important;
+  padding-bottom: 0.05em !important;
+}
+/* When section-title has no .section-sub sibling, add more bottom margin */
+.section-title:last-child,
+.section-title + .grid-3,
+.section-title + .grid-4 {
+  margin-top: 0;
+}
+.section-title + .grid-3 {
+  margin-top: 2rem;
 }
 .section-sub {
   text-align: center;
   color: var(--text2);
   font-size: 1.125rem;
   max-width: 700px;
-  margin: 0 auto 3rem;
-  line-height: 1.6;
+  margin: 0 auto 3rem !important;
+  line-height: 1.6 !important;
 }
 
 /* ========= BUTTONS ========= */
@@ -754,7 +769,7 @@ export default {
 /* ========= GRIDS ========= */
 .grid-3 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
 }
 .grid-4 {
@@ -780,11 +795,11 @@ export default {
 }
 .card-icon {
   font-size: 2.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1rem !important;
 }
 .card-title {
-  font-size: 1.25rem;
-  margin-bottom: 0.75rem;
+  font-size: 1.25rem !important;
+  margin-bottom: 0.75rem !important;
 }
 .card-title--red {
   color: #ef4444;
@@ -805,11 +820,12 @@ export default {
 .problem-icon,
 .solution-icon {
   font-size: 3rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1rem !important;
   display: block;
 }
 .solution-icon {
   font-size: 4rem;
+  margin-bottom: 1rem !important;
 }
 
 /* ========= HERO ========= */
@@ -872,14 +888,14 @@ export default {
   user-select: none;
 }
 #hero h1 {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-size: clamp(2.5rem, 6vw, 4.5rem) !important;
   background: var(--gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 1.5rem;
-  line-height: 1.3;
-  padding-bottom: 0.1em;
+  margin-bottom: 1.5rem !important;
+  line-height: 1.3 !important;
+  padding-bottom: 0.1em !important;
 }
 .hero-sub {
   font-size: clamp(1.1rem, 2.5vw, 1.4rem);
@@ -1090,6 +1106,7 @@ export default {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 2rem;
+  text-align: center;
   position: relative;
   overflow: hidden;
   transition: all 0.3s;
@@ -1105,14 +1122,15 @@ export default {
 }
 .use-card:hover {
   transform: translateY(-4px);
+  border-color: rgba(0, 255, 255, 0.25);
 }
 .use-icon {
   font-size: 2.5rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.75rem !important;
 }
 .use-card h3 {
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
 }
 .use-card p {
   color: var(--text2);
@@ -1186,8 +1204,8 @@ export default {
   font-size: 1.125rem;
   font-style: italic;
   color: var(--text2);
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
+  margin-bottom: 1.5rem !important;
+  line-height: 1.6 !important;
   position: relative;
   z-index: 1;
 }
@@ -1204,6 +1222,8 @@ export default {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  margin-bottom: 0.5rem !important;
+  line-height: 1.2 !important;
 }
 
 /* ========= CTA ========= */
@@ -1215,14 +1235,14 @@ export default {
   padding: 4rem 2rem;
 }
 .cta-title {
-  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-size: clamp(2rem, 4vw, 2.75rem) !important;
   background: var(--gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  line-height: 1.3;
-  padding-bottom: 0.1em;
-  margin-bottom: 1rem;
+  line-height: 1.3 !important;
+  padding-bottom: 0.1em !important;
+  margin-bottom: 1rem !important;
 }
 
 /* ========= FOOTER ========= */
@@ -1274,6 +1294,17 @@ export default {
   .section {
     padding: 4rem 0;
   }
+  .hero-logos {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .hero-logo {
+    height: 56px;
+    width: 56px;
+  }
+  .hero-logo-x {
+    font-size: 1.2rem;
+  }
   .hero-buttons {
     flex-direction: column;
     align-items: center;
@@ -1288,6 +1319,10 @@ export default {
   }
   .traits-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .grid-3 {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 }
 </style>
