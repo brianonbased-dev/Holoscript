@@ -97,3 +97,39 @@ export {
 // Implementations
 export { NetworkClientImpl, createNetworkClient } from './NetworkClientImpl';
 export { StateSynchronizerImpl, createStateSynchronizer } from './StateSynchronizerImpl';
+
+// SyncProtocol and Transports
+export {
+  SyncProtocol,
+  createSyncProtocol,
+  createLocalSync,
+  DeltaEncoder,
+  InterestManager,
+  WebSocketTransport,
+  WebRTCTransport,
+  LocalBroadcastTransport,
+  type Transport,
+  type SyncProtocolConfig,
+  type SyncOptimizations,
+  type SyncState,
+  type SyncMessage,
+  type TransportType,
+} from './SyncProtocol';
+
+// Production WebRTC Transport (Sprint 2)
+export {
+  ProductionWebRTCTransport,
+  createWebRTCTransport,
+  type WebRTCTransportConfig,
+} from './ProductionWebRTCTransport';
+
+// Transport Fallback Manager (Sprint 2)
+export {
+  TransportFallbackManager,
+  createTransportFallback,
+  type TransportFallbackConfig,
+  type TransportPriority,
+} from './TransportFallback';
+
+// Signaling (Sprint 2)
+export * from './signaling';

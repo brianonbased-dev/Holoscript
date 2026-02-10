@@ -28,7 +28,7 @@ await init();
 // Parse HoloScript source code
 const ast = JSON.parse(
   parse(`
-  orb cube {
+  composition cube {
     @grabbable
     @physics { mass: 1.5 }
     color: "red"
@@ -40,7 +40,7 @@ const ast = JSON.parse(
 console.log(ast);
 
 // Validate without full parse
-const isValid = validate(`orb test { color: "blue" }`);
+const isValid = validate(`composition test { color: "blue" }`);
 console.log('Valid:', isValid);
 
 // Get version
@@ -54,7 +54,7 @@ const { parse, validate, version } = require('@holoscript/wasm');
 
 const source = `
   composition "My Scene" {
-    orb player {
+    composition player {
       @networked
       position: [0, 0, 0]
     }
@@ -81,7 +81,7 @@ async function setupParser() {
 }
 
 const parser = await setupParser();
-const ast = parser.parse(`orb test { color: "green" }`);
+const ast = parser.parse(`composition test { color: "green" }`);
 ```
 
 ## API

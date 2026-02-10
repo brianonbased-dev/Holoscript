@@ -30,7 +30,7 @@ describe('Null Coalescing Assignment (??=)', () => {
     // Note: Property assignment usually uses : or =
     // This test verifies if the lexer handles the token correctly at least
     const code = `
-      orb "Test" {
+      composition "Test" {
         prop ??= "value"
       }
     `;

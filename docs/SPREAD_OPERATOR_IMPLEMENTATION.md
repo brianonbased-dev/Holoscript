@@ -24,7 +24,7 @@ template "Button" {
   scale: 1.0
 }
 
-orb myButton {
+composition myButton {
   ...Button          // Spread all Button properties
   scale: 2.0         // Override scale
   text: "Click Me"   // Add new properties
@@ -38,10 +38,10 @@ Properties are merged left-to-right; later values override earlier ones.
 Spread arrays and collections:
 
 ```holoscript
-orb container {
+composition container {
   children: [
     ...baseChildren      // Items from baseChildren array
-    orb newChild {}      // Additional items
+    composition newChild {}      // Additional items
     ...additionalItems   // More items
   ]
 }
@@ -59,7 +59,7 @@ Spread configuration into trait parameters:
   mass: 2.0
   gravity: 1.5
 )
-orb rigidBody {}
+composition rigidBody {}
 ```
 
 ### 4. **Nested Context Support**
@@ -67,7 +67,7 @@ orb rigidBody {}
 Spreads work in all nested contexts:
 
 ```holoscript
-orb item {
+composition item {
   properties: {
     config: {
       ...baseConfig      // Nested object spread
@@ -141,7 +141,7 @@ Spreads are represented as objects within parent containers:
 ```
 children: [
   { type: 'spread', argument: { __ref: 'baseArray' } },
-  orb normalChild {}
+  composition normalChild {}
 ]
 ```
 
@@ -200,7 +200,7 @@ template "LargeButton" {
   color: "#00ff00"
 }
 
-orb myButton using "LargeButton" {}
+composition myButton using "LargeButton" {}
 ```
 
 ### Composing Object Properties
@@ -213,12 +213,12 @@ composition "Scene" {
     version: "1.0.0"
   }
 
-  orb player {
+  composition player {
     ...ActorTemplate
     @networked
     children: [
       ...bodyParts
-      orb customItem {}
+      composition customItem {}
     ]
   }
 }
@@ -287,7 +287,7 @@ Existing HoloScript code without spreads is unaffected.
 ### Before (Still Supported)
 
 ```holoscript
-orb item {
+composition item {
   color: "blue"
   scale: 1.0
 }
@@ -296,7 +296,7 @@ orb item {
 ### After (With Spreads)
 
 ```holoscript
-orb item {
+composition item {
   ...BaseProperties  // New feature
   color: "blue"
   scale: 1.0

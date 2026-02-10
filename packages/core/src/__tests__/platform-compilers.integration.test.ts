@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Platform Compiler Integration Tests
  *
  * End-to-end tests verifying compilation from .holo source to platform output:

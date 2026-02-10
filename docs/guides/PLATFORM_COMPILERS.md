@@ -1,6 +1,6 @@
 # Platform Compilers Guide
 
-HoloScript compiles to **18 different platforms** from a single `.holo` source file. This guide covers the new platform compilers added in v3.1.
+HoloScript compiles to **18 different platforms** from a single `.holo` source file. This guide covers the new platform compilers added in v3.4.
 
 ## Quick Reference
 

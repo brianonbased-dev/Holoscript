@@ -315,8 +315,7 @@ export class RegistryClient {
 
     for (let attempt = 0; attempt < this.config.retries; attempt++) {
       try {
-        // Simulate API call (in production, use fetch)
-        const response = await this.simulateRequest<T>(method, endpoint, body);
+        const response = await this.executeRequest<T>(_url, method, headers, body);
 
         // Update rate limit tracking
         if (response.rateLimit) {
@@ -363,78 +362,63 @@ export class RegistryClient {
   }
 
   /**
-   * Simulate API request (for SDK testing without backend)
+   * Execute authenticated API request
    */
-  private async simulateRequest<T>(
+  private async executeRequest<T>(
+    url: string,
     method: string,
-    endpoint: string,
-    _body?: unknown
+    headers: Record<string, string>,
+    body?: unknown
   ): Promise<ApiResponse<T>> {
-    // Simulate network delay
-    await this.sleep(50);
+    const options: RequestInit = {
+      method,
+      headers,
+    };
 
-    // Return mock data for common endpoints
-    if (endpoint.includes('/packages/') && method === 'GET') {
-      const packageName = endpoint.split('/packages/')[1]?.split('/')[0];
-      if (packageName && !endpoint.includes('/search')) {
-        return {
-          success: true,
-          data: {
-            name: decodeURIComponent(packageName),
-            version: '1.0.0',
-            description: 'A mock package',
-            downloads: { total: 1000, lastMonth: 100, lastWeek: 25 },
-            certified: true,
-            publishedAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            maintainers: [{ name: 'Partner', email: 'partner@example.com' }],
-          } as T,
-          rateLimit: {
-            remaining: 999,
-            limit: 1000,
-            resetAt: new Date(Date.now() + 3600000).toISOString(),
-          },
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      const rateLimitHeader = response.headers.get('X-RateLimit-Remaining');
+      const rateLimitResetHeader = response.headers.get('X-RateLimit-Reset');
+
+      const result = (await response.json()) as ApiResponse<T>;
+
+      if (rateLimitHeader && rateLimitResetHeader) {
+        result.rateLimit = {
+          remaining: parseInt(rateLimitHeader, 10),
+          limit: parseInt(response.headers.get('X-RateLimit-Limit') || '1000', 10),
+          resetAt: new Date(parseInt(rateLimitResetHeader, 10) * 1000).toISOString(),
         };
       }
-    }
 
-    if (endpoint.includes('/search')) {
-      return {
-        success: true,
-        data: {
-          packages: [],
-          total: 0,
-          page: 1,
-          pageSize: 20,
-        } as T,
-        rateLimit: {
-          remaining: 999,
-          limit: 1000,
-          resetAt: new Date(Date.now() + 3600000).toISOString(),
-        },
-      };
-    }
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new RateLimitError(
+            parseInt(response.headers.get('Retry-After') || '60', 10),
+            result.rateLimit?.limit || 1000
+          );
+        }
+        if (response.status === 401 || response.status === 403) {
+          throw new AuthenticationError(result.error?.message || 'Authentication failed');
+        }
+        throw new Error(result.error?.message || `Request failed with status ${response.status}`);
+      }
 
-    if (endpoint === '/partner/validate') {
-      return {
-        success: true,
-        data: {
-          valid: true,
-          partnerId: this.config.credentials.partnerId,
-          tier: 'standard',
-        } as T,
-      };
+      return result;
+    } catch (error) {
+      if ((error as any).name === 'AbortError') {
+        throw new Error(`Request timed out after ${this.config.timeout}ms`);
+      }
+      throw error;
     }
-
-    return {
-      success: true,
-      data: {} as T,
-      rateLimit: {
-        remaining: 999,
-        limit: 1000,
-        resetAt: new Date(Date.now() + 3600000).toISOString(),
-      },
-    };
   }
 
   private sleep(ms: number): Promise<void> {

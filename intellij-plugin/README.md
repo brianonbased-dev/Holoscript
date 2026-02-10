@@ -57,7 +57,7 @@ cd intellij-plugin
 | Abbreviation | Description            |
 | ------------ | ---------------------- |
 | `comp`       | Create a composition   |
-| `orb`        | Create an orb object   |
+| `orb`        | Create an composition object   |
 | `entity`     | Create an entity       |
 | `@grab`      | Add grabbable trait    |
 | `@phys`      | Add physics trait      |

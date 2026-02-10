@@ -7,7 +7,7 @@ Objects are the fundamental building blocks of HoloScript. Everything in a scene
 ### .hs and .hsplus Syntax
 
 ```hs
-orb objectName {
+composition objectName {
   property: value
   anotherProperty: value
 }
@@ -30,7 +30,7 @@ object "Object Name" {
 Every object can have position, rotation, and scale:
 
 ```hs
-orb myObject {
+composition myObject {
   position: [0, 1.6, -2]     // Vector [x, y, z]
   rotation: [0, 45, 0]       // Euler angles in degrees
   scale: 1.5                 // Uniform scale
@@ -41,7 +41,7 @@ orb myObject {
 ### Visual Properties
 
 ```hs
-orb myObject {
+composition myObject {
   color: "#00ffff"           // Hex color
   color: [0, 255, 255]       // RGB array
   opacity: 0.8               // 0.0 - 1.0
@@ -58,7 +58,7 @@ orb myObject {
 Add any custom properties:
 
 ```hs
-orb player {
+composition player {
   health: 100
   maxHealth: 100
   speed: 5
@@ -93,7 +93,7 @@ position: player.position
 Add interactivity with traits (`.hsplus` and `.holo` only):
 
 ```hsplus
-orb ball {
+composition ball {
   @grabbable           // Can be picked up
   @throwable           // Can be thrown
   @physics             // Has physics
@@ -107,7 +107,7 @@ orb ball {
 ### Traits with Parameters
 
 ```hsplus
-orb ball {
+composition ball {
   @grabbable(snap_to_hand: true, haptic_on_grab: 0.5)
   @throwable(velocity_multiplier: 1.5)
   @glowing(color: "#00ffff", intensity: 2.0, range: 5)
@@ -127,7 +127,7 @@ See [VR Traits Reference](/api/traits) for all 55 traits.
 For object-specific reactive state:
 
 ```hsplus
-orb enemy {
+composition enemy {
   @destructible
 
   position: [10, 0, 10]
@@ -153,7 +153,7 @@ Shared state for the entire scene (`.hsplus`):
   gameActive: false
 }
 
-orb scoreDisplay {
+composition scoreDisplay {
   text: "Score: ${@state.score}"
 }
 ```
@@ -165,7 +165,7 @@ orb scoreDisplay {
 Objects respond to events:
 
 ```hsplus
-orb button {
+composition button {
   @clickable
   @hoverable
 
@@ -212,7 +212,7 @@ orb button {
 ### By Name
 
 ```hs
-orb door {
+composition door {
   position: [5, 0, 0]
 }
 
@@ -226,7 +226,7 @@ function open_door() {
 Inside an object, `this` refers to itself:
 
 ```hsplus
-orb self_destruct_box {
+composition self_destruct_box {
   @clickable
 
   on_click: {
@@ -256,7 +256,7 @@ let nearest = find_nearest("powerup", player.position)
 
 ```hs
 // Static (defined in file)
-orb staticBall {
+composition staticBall {
   position: [0, 1, 0]
 }
 
@@ -296,7 +296,7 @@ clone.position = [0, 0, 5]
 Objects bounce off each other:
 
 ```hsplus
-orb ball {
+composition ball {
   @physics
   @collidable
 
@@ -313,7 +313,7 @@ orb ball {
 Objects pass through but detect entry:
 
 ```hsplus
-orb checkpoint {
+composition checkpoint {
   @trigger
   visible: false
 

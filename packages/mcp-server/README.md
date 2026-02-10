@@ -87,7 +87,7 @@ Add to your MCP configuration (Claude Code, Cursor, Copilot, etc.):
 "Create a VR scene with a grabbable ball and physics"
 # Claude uses generate_scene + suggest_traits automatically
 
-"Fix this HoloScript code: orb ball { @graable }"
+"Fix this HoloScript code: composition ball { @graable }"
 # Claude uses hs_ai_fix_code -> corrects @graable to @grabbable
 
 "Show me the architecture of this .holo file"
@@ -101,7 +101,7 @@ import { tools, handleTool } from '@holoscript/mcp-server';
 
 // Parse code
 const result = await handleTool('parse_hs', {
-  code: 'orb Ball @grabbable { position: [0, 1, 0] }',
+  code: 'composition Ball @grabbable { position: [0, 1, 0] }',
 });
 
 // Get graph structure

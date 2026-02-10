@@ -173,7 +173,7 @@ case '.ai': {
 
 ```
 $ holoscript repl
-hs> orb myObject { color: "#ff0000" }
+hs> composition myObject { color: "#ff0000" }
 => { type: "orb", ... }
 hs>
 ```
@@ -194,7 +194,7 @@ Phase: READY  │  Compression: --  │  LLM: ✓ Ollama
 hs> .ai a red sphere that bounces when grabbed
 Generating... ●●●○○○
 
-orb bouncingSphere @grabbable @physics {
+composition bouncingSphere @grabbable @physics {
   geometry: "sphere"
   color: "#ff0000"
 
@@ -270,4 +270,4 @@ The terminal should reflect the 7-phase workflow:
 
 ---
 
-_Research conducted via uAA2++ Protocol v3.0_
+_Research conducted via uAA2++ Protocol v3.3_

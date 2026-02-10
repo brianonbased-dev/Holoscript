@@ -21,7 +21,7 @@ Properties in HoloScript are organized into categories:
 The location in 3D space as `[x, y, z]`:
 
 ```hs
-orb cube {
+composition cube {
   position: [0, 1.5, -2]
   // x: 0 (center)
   // y: 1.5 (1.5 meters up)
@@ -40,7 +40,7 @@ orb cube {
 Euler angles in degrees as `[pitch, yaw, roll]`:
 
 ```hs
-orb rotated {
+composition rotated {
   rotation: [45, 180, 0]
   // pitch: 45° (tilted forward)
   // yaw: 180° (facing backward)
@@ -54,12 +54,12 @@ Size multiplier (uniform or `[x, y, z]`):
 
 ```hs
 // Uniform scaling
-orb big {
+composition big {
   scale: 2    // 2x size in all dimensions
 }
 
 // Non-uniform scaling
-orb stretched {
+composition stretched {
   scale: [1, 2, 0.5]  // Normal width, 2x height, half depth
 }
 ```
@@ -69,7 +69,7 @@ orb stretched {
 The rotation/scale center point:
 
 ```hs
-orb door {
+composition door {
   pivot: [-0.5, 0, 0]    // Pivot at left edge for door-like rotation
   rotation: [0, 90, 0]   // Open 90 degrees
 }
@@ -82,7 +82,7 @@ orb door {
 Object color using hex or color names:
 
 ```hs
-orb colors {
+composition colors {
   color: "#ff5733"      // Hex color
   color: "coral"        // CSS color name
   color: "rgb(255,87,51)"  // RGB format
@@ -94,7 +94,7 @@ orb colors {
 Transparency from 0 (invisible) to 1 (opaque):
 
 ```hs
-orb ghost {
+composition ghost {
   color: "#ffffff"
   opacity: 0.3     // 70% transparent
 }
@@ -105,7 +105,7 @@ orb ghost {
 Toggle visibility:
 
 ```hs
-orb hidden {
+composition hidden {
   visible: false   // Invisible but still exists in scene
 }
 ```
@@ -115,7 +115,7 @@ orb hidden {
 Comprehensive material definition:
 
 ```hs
-orb detailed {
+composition detailed {
   material: {
     // Base color
     color: "#4a90d9"
@@ -151,7 +151,7 @@ orb detailed {
 Shadow behavior:
 
 ```hs
-orb shadowCaster {
+composition shadowCaster {
   castShadow: true       // This object casts shadows
   receiveShadow: false   // But doesn't receive them
 }
@@ -164,7 +164,7 @@ Different geometry types have specific properties:
 ### Cube / Box
 
 ```hs
-orb box {
+composition box {
   geometry: "cube"
   width: 1       // X dimension
   height: 2      // Y dimension
@@ -175,7 +175,7 @@ orb box {
 ### Sphere
 
 ```hs
-orb ball {
+composition ball {
   geometry: "sphere"
   radius: 0.5
   widthSegments: 32      // Horizontal detail
@@ -186,7 +186,7 @@ orb ball {
 ### Cylinder
 
 ```hs
-orb column {
+composition column {
   geometry: "cylinder"
   radiusTop: 0.3
   radiusBottom: 0.5      // Tapered
@@ -199,7 +199,7 @@ orb column {
 ### Plane
 
 ```hs
-orb floor {
+composition floor {
   geometry: "plane"
   width: 10
   height: 10
@@ -211,7 +211,7 @@ orb floor {
 ### Torus (Donut)
 
 ```hs
-orb donut {
+composition donut {
   geometry: "torus"
   radius: 1.0            // Distance from center
   tube: 0.3              // Tube thickness
@@ -226,7 +226,7 @@ orb donut {
 Custom properties for your application logic:
 
 ```hs
-orb player {
+composition player {
   // Game state
   health: 100
   score: 0
@@ -249,7 +249,7 @@ orb player {
 Access state in event handlers:
 
 ```hs
-orb enemy {
+composition enemy {
   health: 100
 
   onHit: {
@@ -268,7 +268,7 @@ Properties can reference other values:
 ### Static Values
 
 ```hs
-orb static {
+composition static {
   size: 2
   position: [0, this.size / 2, 0]  // Computed from size
 }
@@ -284,7 +284,7 @@ template Button {
     size: number = 1
   }
 
-  orb button {
+  composition button {
     geometry: "cube"
     scale: params.size
     material: { color: params.color }
@@ -300,7 +300,7 @@ Button { label: "Submit", color: "#00ff00", size: 1.5 }
 Properties that change over time:
 
 ```hs
-orb spinner {
+composition spinner {
   geometry: "cube"
 
   animation spin {
@@ -339,7 +339,7 @@ Animatable properties:
 ## Complete Example
 
 ```hs
-orb interactiveObject {
+composition interactiveObject {
   // Transform
   position: [0, 1.5, -2]
   rotation: [0, 45, 0]

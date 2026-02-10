@@ -20,7 +20,8 @@ describe('Types', () => {
   });
 
   it('should define TraitCategory type', async () => {
-    const categories: (await import('../types.js')).TraitCategory[] = [
+    const types = await import('../types.js');
+    const categories: (typeof types)['TraitCategory'][] = [
       'rendering', 'physics', 'networking', 'audio', 'ui',
       'ai', 'blockchain', 'utility', 'animation', 'input', 'data', 'debug'
     ];
@@ -28,7 +29,8 @@ describe('Types', () => {
   });
 
   it('should define Platform type', async () => {
-    const platforms: (await import('../types.js')).Platform[] = [
+    const types = await import('../types.js');
+    const platforms: (typeof types)['Platform'][] = [
       'web', 'nodejs', 'unity', 'unreal', 'godot', 'native', 'wasm', 'all'
     ];
     expect(platforms.length).toBe(8);

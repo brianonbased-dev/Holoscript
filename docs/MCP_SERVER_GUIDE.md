@@ -46,7 +46,7 @@ Add to `claude_desktop_config.json`:
 **Example:**
 
 ```
-parse_hs({ code: "orb player { @grabbable position: [0, 1, 0] }" })
+parse_hs({ code: "composition player { @grabbable position: [0, 1, 0] }" })
 ```
 
 ### Validation
@@ -58,7 +58,7 @@ parse_hs({ code: "orb player { @grabbable position: [0, 1, 0] }" })
 **Example:**
 
 ```
-validate_holoscript({ code: "orb test { @unknownTrait }" })
+validate_holoscript({ code: "composition test { @unknownTrait }" })
 → { valid: false, errors: [{ line: 1, message: "Unknown trait: @unknownTrait" }] }
 ```
 
@@ -88,7 +88,7 @@ suggest_traits({ description: "a sword that can be picked up" })
 
 ```
 generate_object({ description: "a glowing blue crystal", format: "hsplus" })
-→ "orb crystal { @glowing(intensity: 0.8) color: \"#0066ff\" position: [0, 1, -2] }"
+→ "composition crystal { @glowing(intensity: 0.8) color: \"#0066ff\" position: [0, 1, -2] }"
 ```
 
 ### Documentation
@@ -138,7 +138,7 @@ More specific descriptions yield better code:
 
 ```
 ❌ "create an orb"
-✅ "create a glowing blue orb at player height that can be grabbed with one hand"
+✅ "create a glowing blue composition at player height that can be grabbed with one hand"
 ```
 
 ---

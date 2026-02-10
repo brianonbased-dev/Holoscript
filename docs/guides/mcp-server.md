@@ -81,7 +81,7 @@ Generate a HoloScript object from a natural language description.
 
 ```json
 {
-  "description": "a glowing blue orb that can be grabbed and thrown",
+  "description": "a glowing blue composition that can be grabbed and thrown",
   "format": "hsplus"
 }
 ```
@@ -89,7 +89,7 @@ Generate a HoloScript object from a natural language description.
 **Output:**
 
 ```hsplus
-orb glowing_orb {
+composition glowing_composition {
   @grabbable
   @throwable
   @glowing
@@ -135,7 +135,7 @@ Check code for syntax errors and semantic issues.
 
 ```json
 {
-  "code": "orb test { @grabbble position: [0, 1, 0] }",
+  "code": "composition test { @grabbble position: [0, 1, 0] }",
   "format": "hsplus"
 }
 ```
@@ -194,7 +194,7 @@ Get a plain English explanation of HoloScript code.
 
 ```json
 {
-  "code": "orb portal { @trigger @glowing on_trigger_enter(player) { teleport(player, destination) } }"
+  "code": "composition portal { @trigger @glowing on_trigger_enter(player) { teleport(player, destination) } }"
 }
 ```
 
@@ -287,7 +287,7 @@ Parse `.hs` or `.hsplus` code and return the AST.
 
 ```json
 {
-  "code": "orb ball { position: [0, 1, 0] }"
+  "code": "composition ball { position: [0, 1, 0] }"
 }
 ```
 

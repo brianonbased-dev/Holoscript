@@ -153,14 +153,14 @@ composition "Meditation Space" {
     }
 
     when @state.is_night {
-      // Increase orb glow at night
-      find_all("CalmingOrb").forEach(orb => {
+      // Increase composition glow at night
+      find_all("CalmingOrb").forEach(composition => {
         orb.glow_intensity = 2.5
       })
     }
 
     when !@state.is_night {
-      find_all("CalmingOrb").forEach(orb => {
+      find_all("CalmingOrb").forEach(composition => {
         orb.glow_intensity = 1.5
       })
     }

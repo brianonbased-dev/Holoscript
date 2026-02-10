@@ -24,9 +24,9 @@ import type {
   TraitCategory,
   RateLimitInfo,
   RateLimitTier,
-  RATE_LIMITS,
   DailyDownloads,
 } from './types.js';
+import { RATE_LIMITS } from './types.js';
 import { TraitRegistry } from './TraitRegistry.js';
 import { DependencyResolver } from './DependencyResolver.js';
 import { VerificationService, RateLimiter, SpamDetector } from './VerificationService.js';

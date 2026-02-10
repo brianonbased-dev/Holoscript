@@ -673,7 +673,7 @@ export class VoiceOutputTrait {
    * Pause speech
    */
   public pause(): void {
-    if (this.state !== 'speaking') return;
+    if (this.state !== 'speaking' && this.state !== 'idle') return;
 
     if (this.synth) {
       this.synth.pause();

@@ -180,7 +180,8 @@ type TokenType =
   | 'STATE_MACHINE'
   | 'ACHIEVEMENT'
   | 'TALENT_TREE'
-  | 'SHAPE';
+  | 'SHAPE'
+  | 'SUB_ORB';
 
 interface Token {
   type: TokenType;
@@ -251,6 +252,7 @@ const KEYWORDS: Record<string, TokenType> = {
   achievement: 'ACHIEVEMENT',
   talent_tree: 'TALENT_TREE',
   shape: 'SHAPE',
+  sub_orb: 'SUB_ORB',
   true: 'BOOLEAN',
   false: 'BOOLEAN',
   null: 'NULL',
@@ -1752,6 +1754,7 @@ export class HoloCompositionParser {
 
     const properties: HoloObjectProperty[] = [];
     const children: HoloObjectDecl[] = [];
+    const subOrbs: HoloSubOrb[] = [];
     let state: HoloState | undefined;
 
     while (!this.check('RBRACE') && !this.check('EOF')) {
@@ -1767,6 +1770,8 @@ export class HoloCompositionParser {
       ) {
         const nestedType = this.check('OBJECT') ? undefined : this.current().value.toLowerCase();
         children.push(this.parseObject(nestedType));
+      } else if (this.check('SUB_ORB')) {
+        subOrbs.push(this.parseSubOrb());
       } else if (this.check('AT' as any)) {
         this.advance(); // consume @
         const name = this.expectIdentifier();
@@ -1837,6 +1842,7 @@ export class HoloCompositionParser {
       state,
       traits, // Added traits property
       children: children.length > 0 ? children : undefined,
+      subOrbs: subOrbs.length > 0 ? subOrbs : undefined,
     };
 
     if (typeOverride) {
@@ -2160,6 +2166,38 @@ export class HoloCompositionParser {
       return `${this.expressionToString(expr.object)}.${expr.property}`;
     }
     return '';
+  }
+
+  /**
+   * Parse a sub-orb block: sub_orb "name" { source: "holohub://..." }
+   */
+  private parseSubOrb(): HoloSubOrb {
+    this.expect('SUB_ORB');
+    const name = this.expectString();
+    this.expect('LBRACE');
+    this.skipNewlines();
+
+    let source = '';
+    const properties: HoloObjectProperty[] = [];
+
+    while (!this.check('RBRACE') && !this.isAtEnd()) {
+      this.skipNewlines();
+      if (this.check('RBRACE')) break;
+
+      const key = this.expectIdentifier();
+      this.expect('COLON');
+      const value = this.parseValue();
+
+      if (key === 'source' && typeof value === 'string') {
+        source = value;
+      } else {
+        properties.push({ type: 'ObjectProperty', key, value: value as any });
+      }
+      this.skipNewlines();
+    }
+
+    this.expect('RBRACE');
+    return { type: 'SubOrb', name, source, properties };
   }
 
   // ===========================================================================

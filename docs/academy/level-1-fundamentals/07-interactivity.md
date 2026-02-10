@@ -7,7 +7,7 @@ Welcome to Lesson 1.7! In this lesson, you'll learn how to make your VR scenes i
 Event handlers respond to user actions and system events:
 
 ```hs
-orb button {
+composition button {
   @clickable
 
   onClick: {
@@ -24,7 +24,7 @@ orb button {
 Triggered when the user clicks or triggers:
 
 ```hs
-orb clickable {
+composition clickable {
   @clickable
   geometry: "cube"
   color: "#0066ff"
@@ -40,7 +40,7 @@ orb clickable {
 Triggered when pointer enters or leaves:
 
 ```hs
-orb hoverable {
+composition hoverable {
   @hoverable
   geometry: "sphere"
   scale: 1.0
@@ -62,7 +62,7 @@ orb hoverable {
 Triggered while being pointed at:
 
 ```hs
-orb target {
+composition target {
   @pointable
   geometry: "sphere"
 
@@ -80,7 +80,7 @@ orb target {
 Triggered when grabbed or released in VR:
 
 ```hs
-orb grabbableItem {
+composition grabbableItem {
   @grabbable
   geometry: "cube"
 
@@ -101,7 +101,7 @@ orb grabbableItem {
 Events provide context information:
 
 ```hs
-orb detailed {
+composition detailed {
   @grabbable
 
   onGrab(event): {
@@ -119,7 +119,7 @@ orb detailed {
 Triggered when objects enter/exit a trigger zone:
 
 ```hs
-orb doorZone {
+composition doorZone {
   @trigger
   geometry: "cube"
   scale: [2, 2, 1]
@@ -142,7 +142,7 @@ orb doorZone {
 Triggered when physics objects collide:
 
 ```hs
-orb ball {
+composition ball {
   @physics
   @collidable
   geometry: "sphere"
@@ -169,7 +169,7 @@ orb ball {
 Track animation lifecycle:
 
 ```hs
-orb animated {
+composition animated {
   @animated
 
   animation fadeIn {
@@ -196,7 +196,7 @@ orb animated {
 Called when object is created:
 
 ```hs
-orb managed {
+composition managed {
   onCreate: {
     console.log("Object created!")
     this.startTime = Date.now()
@@ -209,7 +209,7 @@ orb managed {
 Called every frame:
 
 ```hs
-orb rotating {
+composition rotating {
   geometry: "cube"
   rotationSpeed: 1
 
@@ -224,7 +224,7 @@ orb rotating {
 Called before object is removed:
 
 ```hs
-orb cleanup {
+composition cleanup {
   onDestroy: {
     console.log("Cleaning up...")
     this.saveState()
@@ -237,7 +237,7 @@ orb cleanup {
 Event handlers can modify any property:
 
 ```hs
-orb interactive {
+composition interactive {
   @clickable
   @hoverable
 
@@ -268,7 +268,7 @@ orb interactive {
 Reference other objects in the scene:
 
 ```hs
-orb button {
+composition button {
   @clickable
   geometry: "cube"
   color: "#ff0000"
@@ -280,13 +280,13 @@ orb button {
   }
 }
 
-orb lamp {
+composition lamp {
   @glowing
   geometry: "sphere"
   visible: true
 }
 
-orb door {
+composition door {
   geometry: "cube"
   scale: [1, 2, 0.1]
 }
@@ -297,7 +297,7 @@ orb door {
 Trigger sounds in event handlers:
 
 ```hs
-orb button {
+composition button {
   @clickable
   geometry: "cube"
 
@@ -306,7 +306,7 @@ orb button {
   }
 }
 
-orb enemy {
+composition enemy {
   @collidable
 
   onCollision: {
@@ -324,7 +324,7 @@ orb enemy {
 Use if/else in handlers:
 
 ```hs
-orb toggle {
+composition toggle {
   @clickable
 
   state: "off"
@@ -351,7 +351,7 @@ Here's a complete interactive scene:
 composition "Interactive Room" {
 
   // Light switch
-  orb lightSwitch {
+  composition lightSwitch {
     @clickable
     @hoverable
 
@@ -377,7 +377,7 @@ composition "Interactive Room" {
   }
 
   // Room light
-  orb roomLight {
+  composition roomLight {
     @glowing {
       color: "#ffffee"
       distance: 10
@@ -389,7 +389,7 @@ composition "Interactive Room" {
   }
 
   // Grabbable ball
-  orb ball {
+  composition ball {
     @grabbable
     @throwable
     @physics { mass: 0.3, restitution: 0.9 }
@@ -415,7 +415,7 @@ composition "Interactive Room" {
   }
 
   // Target that reacts to ball
-  orb target {
+  composition target {
     @collidable
     @trigger
 
@@ -438,7 +438,7 @@ composition "Interactive Room" {
   }
 
   // Score display
-  orb score {
+  composition score {
     @billboard
     geometry: "plane"
     position: [0, 2, -3]

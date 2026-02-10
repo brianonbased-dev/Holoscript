@@ -7,7 +7,7 @@ Welcome to Lesson 1.6! In this lesson, you'll learn about **traits** - the power
 Traits are HoloScript's way of adding reusable behaviors to objects. Instead of writing complex code, you simply add a trait with the `@` symbol:
 
 ```hs
-orb box {
+composition box {
   @grabbable    // Now this object can be grabbed in VR!
   geometry: "cube"
 }
@@ -20,7 +20,7 @@ orb box {
 Allows users to pick up and hold the object:
 
 ```hs
-orb ball {
+composition ball {
   @grabbable
   geometry: "sphere"
   position: [0, 1.5, -1]
@@ -32,7 +32,7 @@ orb ball {
 Enables throwing with velocity based on hand movement:
 
 ```hs
-orb throwingBall {
+composition throwingBall {
   @grabbable
   @throwable
   geometry: "sphere"
@@ -48,7 +48,7 @@ orb throwingBall {
 Makes the object respond to pointing/laser pointer:
 
 ```hs
-orb button {
+composition button {
   @pointable
   geometry: "cube"
   scale: [0.3, 0.1, 0.3]
@@ -64,7 +64,7 @@ orb button {
 Detects when the user's hand or pointer is near:
 
 ```hs
-orb hotspot {
+composition hotspot {
   @hoverable
   geometry: "sphere"
 
@@ -83,7 +83,7 @@ orb hotspot {
 Responds to click/trigger actions:
 
 ```hs
-orb clickableButton {
+composition clickableButton {
   @clickable
   geometry: "cube"
 
@@ -100,7 +100,7 @@ orb clickableButton {
 Adds realistic physics simulation:
 
 ```hs
-orb fallingCube {
+composition fallingCube {
   @physics
   geometry: "cube"
   position: [0, 5, 0]  // Will fall due to gravity
@@ -110,7 +110,7 @@ orb fallingCube {
 With parameters:
 
 ```hs
-orb heavyBall {
+composition heavyBall {
   @physics {
     mass: 5.0
     restitution: 0.8    // Bouncy
@@ -125,7 +125,7 @@ orb heavyBall {
 Enables collision detection:
 
 ```hs
-orb wall {
+composition wall {
   @collidable
   geometry: "cube"
   scale: [5, 3, 0.2]
@@ -137,7 +137,7 @@ orb wall {
 Creates trigger zones (no physical collision):
 
 ```hs
-orb doorTrigger {
+composition doorTrigger {
   @trigger
   geometry: "cube"
   scale: [2, 2, 1]
@@ -158,7 +158,7 @@ orb doorTrigger {
 Control gravity on individual objects:
 
 ```hs
-orb floatingOrb {
+composition floatingcomposition {
   @gravity { enabled: false }
   geometry: "sphere"
 }
@@ -171,7 +171,7 @@ orb floatingOrb {
 Makes the object emit light:
 
 ```hs
-orb lamp {
+composition lamp {
   @glowing {
     color: "#ffffaa"
     intensity: 2.0
@@ -187,7 +187,7 @@ orb lamp {
 Auto-animates the object:
 
 ```hs
-orb spinner {
+composition spinner {
   @animated {
     property: "rotation.y"
     speed: 45    // degrees per second
@@ -202,7 +202,7 @@ orb spinner {
 Always faces the camera:
 
 ```hs
-orb label {
+composition label {
   @billboard
   geometry: "plane"
   material: { map: "textures/label.png" }
@@ -214,7 +214,7 @@ orb label {
 Creates mirror-like surfaces:
 
 ```hs
-orb mirror {
+composition mirror {
   @reflective
   geometry: "plane"
   scale: [2, 3, 1]
@@ -228,7 +228,7 @@ orb mirror {
 Syncs object across multiple users:
 
 ```hs
-orb sharedBall {
+composition sharedBall {
   @networked
   @grabbable
   geometry: "sphere"
@@ -242,7 +242,7 @@ orb sharedBall {
 Mark specific properties to sync:
 
 ```hs
-orb scoreboard {
+composition scoreboard {
   @synced { properties: ["score", "playerName"] }
   score: 0
   playerName: ""
@@ -254,7 +254,7 @@ orb scoreboard {
 Traits work together seamlessly:
 
 ```hs
-orb interactiveBall {
+composition interactiveBall {
   @grabbable         // Can pick it up
   @throwable         // Can throw it
   @physics {         // Realistic physics
@@ -387,7 +387,7 @@ Test your understanding:
 Create a basketball that can be grabbed, thrown, bounces on the floor, and makes a sound on collision:
 
 ```hs
-orb basketball {
+composition basketball {
   // Add your traits here
 
   geometry: "sphere"

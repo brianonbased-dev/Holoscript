@@ -63,7 +63,7 @@ holoscript compile gallery.holo --target threejs
 2. AI-friendly: Language designed for code generation
 3. Real compilers: Not transpiling to JS, generating native Unity C#, Unreal C++, Swift, Kotlin
 
-**Status:** v3.0 just released, MIT licensed
+**Status:** v3.3 just released, MIT licensed
 
 GitHub: https://github.com/brianonbased-dev/Holoscript
 Docs: https://holoscript.dev
@@ -86,7 +86,7 @@ HoloScript 3.0: A declarative language that compiles to 18 VR/AR platforms (Unit
 ### Content
 ```
 
-I've released v3.0 of HoloScript, a programming language designed specifically for VR/AR development.
+I've released v3.3 of HoloScript, a programming language designed specifically for VR/AR development.
 
 ## What is it?
 
@@ -164,7 +164,7 @@ Released HoloScript 3.0 – Write VR games once, export to Unity, Unreal, VRChat
 ### Content
 ```
 
-Just shipped v3.0 of my side project. It's a domain-specific language for VR/AR that compiles to multiple game engines.
+Just shipped v3.3 of my side project. It's a domain-specific language for VR/AR that compiles to multiple game engines.
 
 **Example:**
 
@@ -264,7 +264,7 @@ That's it. The compiler handles the Unity components, Unreal actors, or Three.js
 
 ```
 
-3/ 18 compile targets in v3.0:
+3/ 18 compile targets in v3.3:
 
 ✅ Three.js, Babylon.js, A-Frame, WebXR
 ✅ Unity, Unreal 5, Godot 4
@@ -328,7 +328,7 @@ holoscript compile scene.holo --target threejs
 
 📦 GitHub: https://github.com/brianonbased-dev/Holoscript
 📖 Docs: https://holoscript.dev
-📝 Release Notes: https://github.com/brianonbased-dev/Holoscript/releases/tag/v3.0.0
+📝 Release Notes: https://github.com/brianonbased-dev/Holoscript/releases/tag/v3.3.0
 
 Let us know what you build! 🎮
 

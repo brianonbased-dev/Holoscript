@@ -496,7 +496,7 @@ Accessibility configuration.
 Define reusable functions within objects.
 
 ```hsplus
-orb controller {
+composition controller {
   function toggle_lights(state: boolean) {
     lights.forEach(light => light.enabled = state)
   }
@@ -512,7 +512,7 @@ orb controller {
 Built-in lifecycle and interaction handlers.
 
 ```hsplus
-orb game_manager {
+composition game_manager {
   on_scene_load: {
     initialize_game()
     spawn_players()
@@ -563,14 +563,14 @@ template "Interactable Button" {
 Use templates with the `using` keyword.
 
 ```hsplus
-orb start_button using "Interactable Button" {
+composition start_button using "Interactable Button" {
   position: [0, 1, -2]
   label: "Start Game"
 
   on_click: { start_game() }  // Override
 }
 
-orb settings_button using "Interactable Button" {
+composition settings_button using "Interactable Button" {
   position: [2, 1, -2]
   label: "Settings"
   color: "#808080"  // Override default color

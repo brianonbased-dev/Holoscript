@@ -523,7 +523,7 @@ All traits include comprehensive test suites:
 
 ## Next Steps
 
-1. **Orb Property Extensions**: Update OrbNode type with visual properties
+1. **composition Property Extensions**: Update OrbNode type with visual properties
 2. **HoloScript+ Integration**: Add @material, @lighting, @rendering traits to DSL
 3. **Hololand Graphics Pipeline**: Implement GPU-accelerated rendering backend
 4. **PBR Material System**: Create Hololand's material shader system

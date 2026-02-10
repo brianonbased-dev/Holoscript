@@ -1,6 +1,6 @@
-# v3.0.x Stabilization Exit Gate Checklist
+# v3.3.0 Stabilization Exit Gate Checklist
 
-> This checklist defines the criteria that must be met before proceeding to v3.1 feature work.
+> This checklist defines the criteria that must be met before proceeding to v3.4 feature work.
 
 ## Core Stabilization ✅
 
@@ -39,7 +39,7 @@
 
 ## Exit Gate Criteria
 
-### Must Pass Before v3.1
+### Must Pass Before v3.4
 
 - [x] All 6 critical trait stubs implemented
 - [x] CI/CD pipeline running on all PRs
@@ -50,7 +50,7 @@
 - [x] All linting errors resolved ✅ (0 errors, 1940 warnings)
 - [ ] Documentation updated in ROADMAP.md
 
-### Recommended Before v3.1
+### Recommended Before v3.4
 
 - [ ] Coverage ≥ 40% (stretch goal) - Currently at 39.57% lines
 - [ ] E2E tests for NetworkedTrait
@@ -86,7 +86,7 @@ pnpm build
 pnpm benchmark
 ```
 
-## Files Changed in v3.0.x Sprint
+## Files Changed in v3.3.0 Sprint
 
 ### Enhanced Traits
 - `packages/core/src/traits/NetworkedTrait.ts` - SyncProtocol integration
@@ -108,5 +108,5 @@ pnpm benchmark
 
 ---
 
-**Last Updated:** v3.0.x Stabilization Sprint
-**Next Milestone:** v3.1 (March 2026) - Agentic Choreography
+**Last Updated:** v3.3.0 Stabilization Sprint
+**Next Milestone:** v3.4 (March 2026) - Agentic Choreography

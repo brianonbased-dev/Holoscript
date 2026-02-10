@@ -165,7 +165,7 @@ composition "My VR World" {
   }
 
   // Interactive objects
-  orb treasure {
+  composition treasure {
     @grabbable
     @networked { ownership: "first_grab" }
     @physics { mass: 0.5 }

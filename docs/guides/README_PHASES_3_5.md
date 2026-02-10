@@ -42,7 +42,7 @@ All three phases successfully implemented in parallel with 100% test passing rat
 **Enables declarative graphics configuration in HoloScript+ code:**
 
 ```holoscript
-orb "goldMetal" {
+composition "goldMetal" {
   position: [0, 2, 0]
   @material {
     type: pbr,
@@ -196,7 +196,7 @@ const parser = new HoloScriptPlusParser();
 
 ```typescript
 const code = `
-  orb myObject {
+  composition myObject {
     @material { type: pbr, metallic: 0.8 }
     @rendering { platform: desktop, quality: high }
   }

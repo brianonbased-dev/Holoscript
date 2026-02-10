@@ -248,4 +248,4 @@ KNOWLEDGE_HUB_URL=http://localhost:3001  # Development
 
 ---
 
-_Research conducted via uAA2++ Protocol v3.0_
+_Research conducted via uAA2++ Protocol v3.3_

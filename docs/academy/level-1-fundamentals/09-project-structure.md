@@ -236,7 +236,7 @@ import { Button, Slider, Panel } from "../templates/ui"
 Keep assets organized and reference them relatively:
 
 ```hs
-orb character {
+composition character {
   geometry: "model/characters/hero.glb"
   material: {
     map: "textures/characters/hero_diffuse.png"
@@ -244,7 +244,7 @@ orb character {
   }
 }
 
-orb ambient {
+composition ambient {
   @spatial_audio
   sound: "audio/ambient/forest.mp3"
 }

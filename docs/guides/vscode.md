@@ -59,7 +59,7 @@ Quick templates for common patterns:
 
 | Prefix  | Expands To           |
 | ------- | -------------------- |
-| `orb`   | Basic orb object     |
+| `orb`   | Basic composition object     |
 | `comp`  | Composition skeleton |
 | `temp`  | Template definition  |
 | `obj`   | Object with traits   |

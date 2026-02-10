@@ -1,6 +1,6 @@
 # HoloScript VR Traits Reference
 
-Complete API reference for all 71+ VR traits in HoloScript v3.0.
+Complete API reference for all **1,525+ VR traits** in HoloScript v3.3.0. Traits are now modularized into 61 specialized categories (Physics, AI, Magic, etc.).
 
 ---
 
@@ -58,6 +58,9 @@ interface TraitContext {
 
 ### @grabbable
 
+**Category:** Interaction
+**Tags:** physics, hands, grab, movement
+
 Hand-based grab interactions for VR objects.
 
 ```hsplus
@@ -87,6 +90,9 @@ object Ball @grabbable(grab_distance: 0.5, require_trigger: true) {
 ---
 
 ### @throwable
+
+**Category:** Interaction
+**Tags:** physics, throw, velocity, ballistic
 
 Physics-based throwing when released from grab.
 
@@ -394,6 +400,9 @@ object Vase @destruction(fracture_count: 8, break_threshold: 50) {
 
 ### @llm_agent
 
+**Category:** AI
+**Tags:** llm, agent, processing, autonomy, brain
+
 LLM-powered decision-making with tool calling.
 
 ```hsplus
@@ -431,6 +440,9 @@ object NPC @llm_agent(model: 'gpt-4', temperature: 0.7) {
 ---
 
 ### @behavior_tree
+
+**Category:** AI
+**Tags:** bt, logic, decision, npc, state
 
 Behavior tree AI with node-based logic.
 
@@ -485,6 +497,9 @@ object Worker @goal_oriented {
 ---
 
 ### @perception
+
+**Category:** AI
+**Tags:** vision, hearing, sense, detection, npc
 
 Sensory perception with line-of-sight and detection.
 
@@ -572,6 +587,9 @@ object Historian @memory(capacity: 100, consolidation_interval: 60000) {
 
 ### @spatial_audio
 
+**Category:** Audio
+**Tags:** 3d, sound, spatial, hrtf, immersion
+
 3D spatial audio with HRTF.
 
 ```hsplus
@@ -650,6 +668,9 @@ zone VoiceArea @voice_proximity(falloff_start: 1, falloff_end: 10) {
 ## Accessibility Traits
 
 ### @alt_text
+
+**Category:** Accessibility
+**Tags:** screen-reader, vision-impairment, description, text
 
 Alternative text for screen readers.
 
@@ -742,6 +763,9 @@ object VideoPlayer @subtitle {
 ## AR/Spatial Traits
 
 ### @anchor
+
+**Category:** AR/Spatial
+**Tags:** anchor, persistence, world, tracking
 
 AR world anchor.
 
@@ -1215,9 +1239,96 @@ object SpectatorCam @spectator {
 
 ## IoT/Integration Traits
 
+### @twin_sync
+
+**Category:** IoT/Industrial
+**Tags:** iot, twin, synchronization, sensors, industry
+
+Bidirectional synchronization between HoloScript objects and real-world industrial sensors or digital twins.
+
+```hsplus
+object IndustrialArm @twin_sync(topic: "factory/cell_01/arm", interval: 100) {
+  geometry: "models/arm.glb"
+}
+```
+
+| Config     | Type   | Default | Description                          |
+| ---------- | ------ | ------- | ------------------------------------ |
+| `topic`    | string | null    | MQTT/REST endpoint or topic name     |
+| `interval` | number | 100     | Sync frequency in milliseconds       |
+| `mode`     | string | 'push'  | 'push' (real → virtual), 'pull', 'both' |
+| `protocol` | string | 'mqtt'  | 'mqtt', 'opc-ua', 'rest'             |
+
+**State:**
+
+- `lastUpdate` - Timestamp of last sync
+- `sensorData` - Raw data from the twin
+- `isConnected` - Connection status
+
+**Events:**
+
+- `twin_connect` - Connection established
+- `twin_data` - New data received
+- `twin_disconnect` - Connection lost
+- `twin_error` - Synchronization error
+
+### @twin_actuator
+
+**Category:** IoT/Industrial
+**Tags:** actuator, control, physical, bridge
+
+Triggers physical actions from virtual interactions.
+
+```hsplus
+object FactorySwitch @twin_actuator(actuator_id: "arm_01_reset") {
+  geometry: "models/switch.glb"
+  onInteraction: {
+    emit "twin_trigger" { action: "reset" }
+  }
+}
+```
+
+| Config        | Type   | Default | Description                          |
+| ------------- | ------ | ------- | ------------------------------------ |
+| `actuator_id` | string | null    | Unique ID of the physical hardware   |
+| `protocol`    | string | 'mqtt'  | 'mqtt', 'rest'                       |
+
+**Events:**
+
+- `twin_trigger` - Emitted to target physical hardware
+- `twin_actuated` - Confirmed completion from physical hardware
+
 ### @mqtt_source
 
 MQTT message subscription.
+
+## AI/Autonomous Traits
+
+### @mitosis
+
+**Category:** AI/Sovereignty
+**Tags:** mitosis, agent, spawn, delegation
+
+Enables an object or agent to recursively spawn sub-compositions via specialized sub-agents.
+
+```hsplus
+object MasterBuilder @mitosis(strategy: "collaborative") {
+  onInteraction: {
+    mitotic_spawn "lighting" "Create a volumetric scene for this room"
+  }
+}
+```
+
+| Config     | Type   | Default         | Description                          |
+| ---------- | ------ | --------------- | ------------------------------------ |
+| `strategy` | string | 'collaborative' | 'collaborative', 'autonomous', 'gated' |
+| `max_subs` | number | 5               | Maximum allowable sub-compositions   |
+
+**Events:**
+
+- `mitosis_spawned` - Sub-composition successfully loaded
+- `mitosis_failed` - Delegation failure
+- `mitosis_synced` - Child state merged with parent
 
 ```hsplus
 object SensorDisplay @mqtt_source {
@@ -1380,11 +1491,11 @@ object Fan @spinning(axis: 'y', speed: 2.0) {
 Gentle floating/bobbing animation effect.
 
 ```hsplus
-object Orb @floating {
+object composition @floating {
   geometry: 'sphere'
 }
 
-object Orb @floating(amplitude: 0.5, speed: 0.5) {
+object composition @floating(amplitude: 0.5, speed: 0.5) {
   geometry: 'sphere'
 }
 ```

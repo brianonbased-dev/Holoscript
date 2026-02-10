@@ -160,7 +160,7 @@ Interactive HoloScript REPL.
 ```bash
 holoscript repl
 
-> orb Test { position: [0, 1, 0] }
+> composition Test { position: [0, 1, 0] }
 AST: { type: "orb", name: "Test", ... }
 ```
 

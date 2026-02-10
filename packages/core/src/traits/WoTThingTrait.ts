@@ -111,12 +111,13 @@ export const wotThingHandler: TraitHandler<WoTThingConfig> = {
     const nodeState = context.getState();
     const stateHash = JSON.stringify(nodeState);
     const cachedHash = (node as any).__wotThingStateHash;
+    const hadPreviousHash = cachedHash !== undefined;
 
     if (stateHash !== cachedHash) {
       (node as any).__wotThingStateHash = stateHash;
 
-      // Mark TD as stale
-      if (state.tdGenerated) {
+      // Mark TD as stale only if we had a previous hash (not the first update)
+      if (hadPreviousHash && state.tdGenerated) {
         state.cachedTD = null;
         context.emit('wot_thing_stale', {
           nodeId: node.name,

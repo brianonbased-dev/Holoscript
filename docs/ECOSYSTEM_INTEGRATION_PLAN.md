@@ -126,7 +126,7 @@ const holoScriptPattern: PatternEntry = {
   category: 'syntax',
   name: 'Trait Composition Pattern',
   description: 'Composing multiple traits on a single object',
-  example: `orb sphere { @physics { mass: 1 } @grabbable @networked }`,
+  example: `composition sphere { @physics { mass: 1 } @grabbable @networked }`,
   confidence: 0.95,
 };
 ```

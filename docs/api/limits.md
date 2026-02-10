@@ -129,7 +129,7 @@ object "DetailedBuilding" {
 ### Disable Distant Physics
 
 ```hsplus
-orb distantObject {
+composition distantObject {
   @physics(enabled: distance_to_player < 50)
   @collidable(enabled: distance_to_player < 30)
 }

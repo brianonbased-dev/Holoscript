@@ -6,9 +6,9 @@ The simplest HoloScript program - a glowing greeting orb.
 
 ```hs
 // hello-world.hs
-// A simple greeting orb that displays a welcome message
+// A simple greeting composition that displays a welcome message
 
-orb greeting {
+composition greeting {
   message: "Hello, HoloScript World!"
   color: "#00ffff"
   glow: true
@@ -57,7 +57,7 @@ composition "Hello World" {
 1. **Creates an orb** at eye level, 2 meters in front of the user
 2. **Makes it glow** with a cyan color
 3. **Displays text** saying "Hello, HoloScript World!"
-4. **Pulses** the orb when the scene loads
+4. **Pulses** the composition when the scene loads
 
 ## Try It
 

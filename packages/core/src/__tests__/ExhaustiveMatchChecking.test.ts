@@ -23,7 +23,7 @@ describe('Exhaustive Match Checking', () => {
   describe('Parser - Match Expression Parsing', () => {
     it('should parse a basic match expression', () => {
       const code = `
-orb "status_display" {
+composition "status_display" {
   render: match state {
     "idle" => show_placeholder()
     "loading" => show_spinner()
@@ -42,7 +42,7 @@ orb "status_display" {
 
     it('should parse match with wildcard (_) pattern', () => {
       const code = `
-orb "handler" {
+composition "handler" {
   output: match value {
     "known" => handle_known()
     _ => handle_default()
@@ -58,7 +58,7 @@ orb "handler" {
 
     it('should parse match with number literal patterns', () => {
       const code = `
-orb "counter" {
+composition "counter" {
   display: match count {
     0 => "none"
     1 => "single"
@@ -77,7 +77,7 @@ orb "counter" {
 
     it('should parse match with boolean literal patterns', () => {
       const code = `
-orb "toggle" {
+composition "toggle" {
   label: match isEnabled {
     true => "Enabled"
     false => "Disabled"
@@ -95,7 +95,7 @@ orb "toggle" {
 
     it('should parse match with binding pattern', () => {
       const code = `
-orb "processor" {
+composition "processor" {
   result: match input {
     "special" => handle_special()
     x => process(x)
@@ -112,7 +112,7 @@ orb "processor" {
 
     it('should parse match with block body', () => {
       const code = `
-orb "complex" {
+composition "complex" {
   result: match state {
     "start" => {
       init()
@@ -127,7 +127,7 @@ orb "complex" {
     });
 
     it('should preserve source location information', () => {
-      const code = `orb "test" {
+      const code = `composition "test" {
   x: match state {
     "a" => 1
   }
@@ -499,7 +499,7 @@ orb "complex" {
   describe('Integration - Parser + Type Checker', () => {
     it('should parse and validate a complete match expression', () => {
       const code = `
-orb "status_display" {
+composition "status_display" {
   state: "idle"
 
   render: match state {
@@ -530,7 +530,7 @@ orb "status_display" {
 
     it('should detect missing case in parsed match expression', () => {
       const code = `
-orb "status_display" {
+composition "status_display" {
   state: "idle"
 
   render: match state {

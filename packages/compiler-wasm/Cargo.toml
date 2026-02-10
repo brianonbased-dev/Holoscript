@@ -23,6 +23,12 @@ js-sys = "0.3"
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
 
+# Sprint 2: Performance Optimization
+# Optimized release profile for smallest bundle size
 [profile.release]
-opt-level = "s"
-lto = true
+opt-level = "z"           # Optimize for size (smaller than 's')
+lto = true                # Enable link-time optimization
+codegen-units = 1         # Better inlining, single codegen unit
+panic = "abort"           # Smaller panic handling (no unwinding)
+strip = true              # Strip symbols from binary
+

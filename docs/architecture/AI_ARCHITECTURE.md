@@ -32,7 +32,7 @@ graph TD
 
 The official client for AI-driven development.
 
-- **Natural Language to Code**: "Create a red bouncing ball" → `orb @prop { ... }`
+- **Natural Language to Code**: "Create a red bouncing ball" → `composition @prop { ... }`
 - **Platform Optimization**: Auto-tunes assets for VR vs Mobile.
 - **Self-Healing**: Automatically fixes syntax errors in generated code.
 

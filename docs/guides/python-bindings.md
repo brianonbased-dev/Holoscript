@@ -178,7 +178,7 @@ from holoscript import generate_object
 
 obj = generate_object(
     name="MagicOrb",
-    description="A glowing orb that floats and can be grabbed",
+    description="A glowing composition that floats and can be grabbed",
     geometry="sphere"
 )
 print(obj.code)

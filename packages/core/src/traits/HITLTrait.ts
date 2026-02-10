@@ -18,6 +18,9 @@
  */
 
 import type { TraitHandler } from './TraitTypes';
+import { HITLAuditLogger } from '../utils/HITLAuditLogger';
+import { logger } from '../logger';
+import { ConstitutionalValidator, constitutionalRule } from '../utils/ConstitutionalValidator';
 
 // =============================================================================
 // TYPES
@@ -72,6 +75,8 @@ interface AuditLogEntry {
   outcome?: 'success' | 'failure' | 'partial' | 'rollback';
   rollbackAvailable: boolean;
   rollbackId?: string;
+  isViolation?: boolean;
+  violations?: any[];
 }
 
 interface RollbackCheckpoint {
@@ -95,6 +100,7 @@ interface HITLState {
   lastEscalationTime: number;
   activeApprover: string | null;
   sessionStartTime: number;
+  permissions: Record<string, { approvals: number; confidenceBonus: number }>;
 }
 
 interface HITLConfig {
@@ -126,6 +132,8 @@ interface HITLConfig {
   notification_webhook: string;
   /** Approved human operators (wallet addresses or user IDs) */
   approved_operators: string[];
+  /** Agent Constitution - high-level spatial rules */
+  constitution: constitutionalRule[];
 }
 
 // =============================================================================
@@ -167,6 +175,7 @@ export const hitlHandler: TraitHandler<HITLConfig> = {
     rollback_retention: 86400000, // 24 hours
     notification_webhook: '',
     approved_operators: [],
+    constitution: [],
   },
 
   onAttach(node, config, context) {
@@ -180,6 +189,7 @@ export const hitlHandler: TraitHandler<HITLConfig> = {
       lastEscalationTime: 0,
       activeApprover: null,
       sessionStartTime: Date.now(),
+      permissions: {},
     };
     (node as any).__hitlState = state;
 
@@ -267,11 +277,12 @@ export const hitlHandler: TraitHandler<HITLConfig> = {
           metadata: Record<string, unknown>;
         };
 
-      const decision = evaluateAction(state, config, {
+      const decision = evaluateAction(node, state, config, {
         action,
         category,
         confidence,
         riskScore,
+        description,
       });
 
       if (decision.approved) {
@@ -293,6 +304,8 @@ export const hitlHandler: TraitHandler<HITLConfig> = {
             decision: 'autonomous',
             confidence,
             riskScore,
+            isViolation: decision.isViolation,
+            violations: decision.violations,
           });
         }
 
@@ -304,6 +317,14 @@ export const hitlHandler: TraitHandler<HITLConfig> = {
         });
       } else {
         // Require approval
+        if (decision.isViolation) {
+          context.emit?.('hitl_violation_caught', {
+            node,
+            action,
+            violations: decision.violations,
+          });
+        }
+
         const approval = createApprovalRequest(state, config, {
           action,
           category,
@@ -359,6 +380,16 @@ export const hitlHandler: TraitHandler<HITLConfig> = {
             approver: operator,
             reason,
           });
+
+          // Stateful Permission Tracking: Update approvals for this action category
+          if (approved) {
+            const permKey = `${approval.category}:${approval.action}`;
+            const perm = state.permissions[permKey] || { approvals: 0, confidenceBonus: 0 };
+            perm.approvals++;
+            // For every 5 approvals, give a 0.05 confidence bonus (max 0.2)
+            perm.confidenceBonus = Math.min(0.2, Math.floor(perm.approvals / 5) * 0.05);
+            state.permissions[permKey] = perm;
+          }
         }
 
         context.emit?.('hitl_approval_resolved', {
@@ -428,19 +459,45 @@ interface ActionEvaluation {
   category: ActionCategory;
   confidence: number;
   riskScore: number;
+  description?: string;
 }
 
 interface EvaluationResult {
   approved: boolean;
   reason: string;
   escalationLevel: EscalationLevel;
+  isViolation?: boolean;
+  violations?: any[];
 }
 
 function evaluateAction(
+  node: any,
   state: HITLState,
   config: HITLConfig,
   action: ActionEvaluation
 ): EvaluationResult {
+  // 1. Constitutional Gating (New in v3.4)
+  const validation = ConstitutionalValidator.validate({
+    name: action.action,
+    category: action.category,
+    description: action.description || ''
+  }, config.constitution);
+
+  if (!validation.allowed) {
+    return {
+      approved: false,
+      reason: 'constitutional_violation',
+      escalationLevel: validation.escalationLevel,
+      isViolation: true,
+      violations: validation.violations
+    };
+  }
+
+  // 2. Permission Persistence (Confidence Buffer)
+  const permKey = `${action.category}:${action.action}`;
+  const bonus = state.permissions[permKey]?.confidenceBonus || 0;
+  const effectiveConfidence = action.confidence + bonus;
+
   // Manual mode requires all approvals
   if (state.currentMode === 'manual') {
     return { approved: false, reason: 'manual_mode', escalationLevel: 'hard_block' };
@@ -456,9 +513,9 @@ function evaluateAction(
     return { approved: false, reason: 'category_requires_approval', escalationLevel: 'hard_block' };
   }
 
-  // Check confidence threshold
-  if (action.confidence < config.confidence_threshold) {
-    const level = action.confidence < 0.5 ? 'hard_block' : 'soft_block';
+  // Check confidence threshold with effective confidence
+  if (effectiveConfidence < config.confidence_threshold) {
+    const level = effectiveConfidence < 0.5 ? 'hard_block' : 'soft_block';
     return { approved: false, reason: 'low_confidence', escalationLevel: level };
   }
 
@@ -552,6 +609,8 @@ function logAction(
     riskScore: number;
     approver?: string;
     reason?: string;
+    isViolation?: boolean;
+    violations?: any[];
   }
 ): void {
   const entry: AuditLogEntry = {
@@ -565,21 +624,45 @@ function logAction(
     approver: params.approver,
     reason: params.reason,
     rollbackAvailable: true,
+    isViolation: params.isViolation,
+    violations: params.violations,
   };
   state.auditLog.push(entry);
+
+  // Persistent logging
+  HITLAuditLogger.log(entry).catch((err) => {
+    logger.error(`[HITLTrait] Persistent logging failed: ${err}`);
+  });
 }
 
-function notifyApprovers(
+async function notifyApprovers(
   config: HITLConfig,
   approval: ApprovalRequest,
   context: any
-): void {
+): Promise<void> {
   if (config.notification_webhook) {
-    context.emit?.('hitl_notify', {
-      webhook: config.notification_webhook,
-      approval,
-      operators: config.approved_operators,
-    });
+    try {
+      context.emit?.('hitl_notify', {
+        webhook: config.notification_webhook,
+        approval,
+        operators: config.approved_operators,
+      });
+
+      // Real backend request
+      if (typeof fetch !== 'undefined') {
+        await fetch(config.notification_webhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'hitl_approval_request',
+            approval,
+            timestamp: Date.now(),
+          }),
+        });
+      }
+    } catch (error) {
+      logger.error(`[HITLTrait] Failed to notify approvers: ${error}`);
+    }
   }
 }
 

@@ -5,6 +5,7 @@
  * Any changes to formatting logic will trigger snapshot updates.
  */
 
+import { describe, test, expect, beforeEach } from 'vitest';
 import { HoloScriptFormatter, DEFAULT_CONFIG } from '../index';
 
 describe('Formatter Visual Regression', () => {

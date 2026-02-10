@@ -347,10 +347,8 @@ async function connectToZora(
 ): Promise<void> {
   try {
     // Fetch existing coins for this creator
-    const response = await simulateApiCall(`${ZORA_API_BASE}/coins`, {
-      creator: config.creator_wallet,
-      chain: config.default_chain,
-    });
+    const url = `${ZORA_API_BASE}/coins?creator=${config.creator_wallet}&chain=${config.default_chain}`;
+    const response = await executeZoraApiCall<any>('GET', url);
 
     state.isConnected = true;
     state.coins = response.coins || [];
@@ -424,8 +422,8 @@ async function mintCoin(
   try {
     pendingMint.status = 'minting';
 
-    // In production, this would call the Zora SDK
-    const result = await simulateMinting(pendingMint, config, params);
+    // Real Zora API call
+    const result = await executeMinting(pendingMint, config, params);
 
     pendingMint.status = 'complete';
     pendingMint.txHash = result.txHash;
@@ -606,33 +604,66 @@ function checkMintStatus(
   // In production, this would check the blockchain for tx confirmation
 }
 
-// Simulation helpers
-async function simulateApiCall(_url: string, _data: any): Promise<any> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        coins: [],
-        collections: [],
-        totalRoyalties: '0.5',
-        rewardsBalance: '0.1',
-      });
-    }, 100);
-  });
+// Production API helpers
+async function executeZoraApiCall<T>(
+  method: string,
+  url: string,
+  data?: any
+): Promise<T> {
+  const options: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  };
+
+  if (data && method !== 'GET') {
+    options.body = JSON.stringify(data);
+  }
+
+  const response = await fetch(url, options);
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Zora API request failed: ${response.status}`);
+  }
+
+  return response.json();
 }
 
-async function simulateMinting(
-  _mint: PendingMint,
-  _config: ZoraCoinsConfig,
+/**
+ * Real Zora Minting Logic
+ * In a real environment, this might interact with a wallet or a backend relay.
+ * Here we use the Zora API to initiate the minting process.
+ */
+async function executeMinting(
+  mint: PendingMint,
+  config: ZoraCoinsConfig,
   _params: any
 ): Promise<{ txHash: string; contractAddress: string }> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
-        contractAddress: `0x${Math.random().toString(16).substr(2, 40)}`,
-      });
-    }, 1000);
+  // Call Zora API to prepare minting
+  const response = await executeZoraApiCall<{
+    success: boolean;
+    txHash: string;
+    contractAddress: string;
+  }>('POST', `${ZORA_API_BASE}/mint`, {
+    creator: config.creator_wallet,
+    name: mint.config.name,
+    symbol: mint.config.symbol,
+    description: mint.config.description,
+    royalty: mint.config.royaltyPercentage,
+    initialSupply: mint.config.initialSupply,
+    chain: config.default_chain,
+    metadata: {
+      holoFileHash: mint.holoFileHash,
+    }
   });
+
+  return {
+    txHash: response.txHash,
+    contractAddress: response.contractAddress,
+  };
 }
 
 // =============================================================================

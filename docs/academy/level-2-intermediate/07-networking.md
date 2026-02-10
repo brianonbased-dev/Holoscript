@@ -26,7 +26,7 @@ composition "Multiplayer Room" {
   }
 
   // Networked objects are synced automatically
-  orb sharedBall {
+  composition sharedBall {
     @networked
     @grabbable
     @physics
@@ -42,7 +42,7 @@ composition "Multiplayer Room" {
 Make any object sync across clients:
 
 ```hs
-orb syncedCube {
+composition syncedCube {
   @networked  // Position, rotation, scale sync automatically
   @grabbable
 
@@ -56,7 +56,7 @@ orb syncedCube {
 Choose what to sync:
 
 ```hs
-orb player {
+composition player {
   @networked {
     sync: ["position", "rotation", "health", "score"]
     rate: 20  // Updates per second
@@ -74,7 +74,7 @@ orb player {
 ### Automatic Ownership
 
 ```hs
-orb grabbableItem {
+composition grabbableItem {
   @networked
   @grabbable
 
@@ -89,7 +89,7 @@ orb grabbableItem {
 ### Request Ownership
 
 ```hs
-orb sharedResource {
+composition sharedResource {
   @networked { ownership: "request" }
 
   onClick: {
@@ -112,7 +112,7 @@ orb sharedResource {
 ### Host-Only Objects
 
 ```hs
-orb gameManager {
+composition gameManager {
   @networked
   @host_only  // Only host can modify
 
@@ -142,19 +142,19 @@ template PlayerAvatar {
   geometry: "capsule"
   scale: [0.3, 0.9, 0.3]
 
-  orb nameTag {
+  composition nameTag {
     @billboard
     text: params.playerName
     position: [0, 1.2, 0]
   }
 
-  orb leftHand {
+  composition leftHand {
     @networked
     geometry: "sphere"
     scale: 0.1
   }
 
-  orb rightHand {
+  composition rightHand {
     @networked
     geometry: "sphere"
     scale: 0.1
@@ -179,7 +179,7 @@ network.onPlayerLeft(player => {
 ### Player List
 
 ```hs
-orb playerList {
+composition playerList {
   @networked
 
   onUpdate: {
@@ -251,7 +251,7 @@ network.onRoomFull(() => {
 ### Define RPCs
 
 ```hs
-orb gameController {
+composition gameController {
   @networked
 
   // RPC that runs on all clients
@@ -279,7 +279,7 @@ orb gameController {
 ### Call RPCs
 
 ```hs
-orb trigger {
+composition trigger {
   @clickable
 
   onClick: {
@@ -300,7 +300,7 @@ orb trigger {
 ### Snapshot Interpolation
 
 ```hs
-orb smoothObject {
+composition smoothObject {
   @networked {
     interpolation: true
     interpolationDelay: 100  // ms
@@ -313,7 +313,7 @@ orb smoothObject {
 ### Prediction
 
 ```hs
-orb playerBall {
+composition playerBall {
   @networked {
     prediction: true
     reconciliation: true  // Correct mispredictions
@@ -422,7 +422,7 @@ composition "Combat Arena" {
 
 ```hs
 // Client predicts, server validates
-orb ball {
+composition ball {
   @networked {
     authority: "host"
     prediction: true

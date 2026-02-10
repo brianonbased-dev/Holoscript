@@ -27,7 +27,7 @@ export function createMockContext(): MockContext {
 }
 
 export function createMockNode(id: string = 'test-node'): Record<string, unknown> {
-  return { id };
+  return { id, name: id };
 }
 
 export function getLastEvent(ctx: MockContext, eventType: string) {

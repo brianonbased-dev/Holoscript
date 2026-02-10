@@ -142,6 +142,7 @@ import { vpsHandler } from './VPSTrait';
 import { poiHandler } from './POITrait';
 import { nftHandler } from './NFTTrait';
 import { tokenGatedHandler } from './TokenGatedTrait';
+import { zkPrivateHandler } from './ZKPrivateTrait';
 import { walletHandler } from './WalletTrait';
 import { marketplaceHandler } from './MarketplaceTrait';
 import { portableHandler } from './PortableTrait';
@@ -1453,6 +1454,7 @@ export {
   // Phase 12: Web3 & Ownership
   nftHandler,
   tokenGatedHandler,
+  zkPrivateHandler,
   walletHandler,
   marketplaceHandler,
   portableHandler,

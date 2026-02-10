@@ -1,7 +1,71 @@
 /**
- * Mock VS Code API for testing
+ * Minimal mock of the VS Code API for unit testing.
+ *
+ * Only the parts used by the production code at module-load time need real
+ * behaviour; the rest can be stubs.
  */
 
+// ---------------------------------------------------------------------------
+// SemanticTokensLegend - used at the top level in semanticTokensProvider.ts
+// ---------------------------------------------------------------------------
+export class SemanticTokensLegend {
+  tokenTypes: string[];
+  tokenModifiers: string[];
+  constructor(tokenTypes: string[], tokenModifiers: string[]) {
+    this.tokenTypes = tokenTypes;
+    this.tokenModifiers = tokenModifiers;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SemanticTokensBuilder - used inside the provider methods
+// ---------------------------------------------------------------------------
+export class SemanticTokensBuilder {
+  private legend: SemanticTokensLegend;
+  constructor(legend: SemanticTokensLegend) {
+    this.legend = legend;
+  }
+  push(
+    _line: number,
+    _startChar: number,
+    _length: number,
+    _tokenType: number,
+    _tokenModifiers: number
+  ) {}
+  build() {
+    return { data: new Uint32Array(0) };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Position / Range - used in the range provider
+// ---------------------------------------------------------------------------
+export class Position {
+  line: number;
+  character: number;
+  constructor(line: number, character: number) {
+    this.line = line;
+    this.character = character;
+  }
+}
+
+export class Range {
+  start: Position;
+  end: Position;
+  constructor(start: Position | number, end: Position | number, endChar?: number) {
+    if (typeof start === 'number') {
+      this.start = new Position(start, end as number);
+      this.end = new Position(endChar as number, 0);
+    } else {
+      this.start = start as Position;
+      this.end = end as Position;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Completion API - used in completionProvider.ts
+// ---------------------------------------------------------------------------
 export enum CompletionItemKind {
   Text = 0,
   Method = 1,
@@ -22,172 +86,63 @@ export enum CompletionItemKind {
   File = 16,
   Reference = 17,
   Folder = 18,
-  EnumMember = 19,
-  Constant = 20,
-  Struct = 21,
-  Event = 22,
-  Operator = 23,
-  TypeParameter = 24,
-}
-
-export class MarkdownString {
-  value: string = '';
-  isTrusted: boolean = false;
-  supportHtml: boolean = false;
-
-  constructor(value?: string) {
-    if (value) this.value = value;
-  }
-
-  appendMarkdown(value: string): this {
-    this.value += value;
-    return this;
-  }
-
-  appendCodeblock(code: string, language?: string): this {
-    this.value += '\n```' + (language || '') + '\n' + code + '\n```\n';
-    return this;
-  }
-
-  appendText(value: string): this {
-    this.value += value;
-    return this;
-  }
-}
-
-export class SnippetString {
-  value: string;
-
-  constructor(value: string) {
-    this.value = value;
-  }
 }
 
 export class CompletionItem {
   label: string;
   kind?: CompletionItemKind;
   detail?: string;
-  documentation?: string | MarkdownString;
   sortText?: string;
   insertText?: string | SnippetString;
-
+  documentation?: MarkdownString | string;
   constructor(label: string, kind?: CompletionItemKind) {
     this.label = label;
     this.kind = kind;
   }
 }
 
-export class Position {
-  line: number;
-  character: number;
-
-  constructor(line: number, character: number) {
-    this.line = line;
-    this.character = character;
+export class CompletionList {
+  items: CompletionItem[];
+  isIncomplete: boolean;
+  constructor(items: CompletionItem[] = [], isIncomplete = false) {
+    this.items = items;
+    this.isIncomplete = isIncomplete;
   }
 }
 
-export class Range {
-  start: Position;
-  end: Position;
-
-  constructor(startLine: number, startChar: number, endLine: number, endChar: number);
-  constructor(start: Position, end: Position);
-  constructor(
-    startOrStartLine: Position | number,
-    endOrStartChar: Position | number,
-    endLine?: number,
-    endChar?: number
-  ) {
-    if (typeof startOrStartLine === 'number') {
-      this.start = new Position(startOrStartLine, endOrStartChar as number);
-      this.end = new Position(endLine!, endChar!);
-    } else {
-      this.start = startOrStartLine;
-      this.end = endOrStartChar as Position;
-    }
+// ---------------------------------------------------------------------------
+// SnippetString / MarkdownString
+// ---------------------------------------------------------------------------
+export class SnippetString {
+  value: string;
+  constructor(value: string) {
+    this.value = value;
   }
 }
 
-export class Hover {
-  contents: MarkdownString | MarkdownString[];
-  range?: Range;
-
-  constructor(contents: MarkdownString | MarkdownString[], range?: Range) {
-    this.contents = contents;
-    this.range = range;
+export class MarkdownString {
+  value: string;
+  constructor(value = '') {
+    this.value = value;
+  }
+  appendMarkdown(value: string): MarkdownString {
+    this.value += value;
+    return this;
+  }
+  appendCodeblock(value: string, _language?: string): MarkdownString {
+    this.value += value;
+    return this;
   }
 }
 
-export interface TextDocument {
-  getText(range?: Range): string;
-  getWordRangeAtPosition(position: Position, regex?: RegExp): Range | undefined;
-  lineAt(line: number): { text: string };
+// ---------------------------------------------------------------------------
+// CancellationToken stub
+// ---------------------------------------------------------------------------
+export class CancellationTokenSource {
+  token = {
+    isCancellationRequested: false,
+    onCancellationRequested: () => ({ dispose: () => {} }),
+  };
+  cancel() {}
+  dispose() {}
 }
-
-export interface CancellationToken {
-  isCancellationRequested: boolean;
-  onCancellationRequested: unknown;
-}
-
-export interface CompletionContext {
-  triggerKind: number;
-  triggerCharacter?: string;
-}
-
-export const workspace = {
-  getConfiguration: () => ({
-    get: () => undefined,
-  }),
-};
-
-export const window = {
-  showInformationMessage: () => Promise.resolve(),
-  showErrorMessage: () => Promise.resolve(),
-};
-
-export class SemanticTokensBuilder {
-  tokens: Array<{ line: number; char: number; length: number; type: number; modifiers: number }> =
-    [];
-
-  push(line: number, char: number, length: number, type: number, modifiers: number = 0): void {
-    this.tokens.push({ line, char, length, type, modifiers });
-  }
-
-  build(): { data: number[] } {
-    return { data: [] };
-  }
-}
-
-export class SemanticTokensLegend {
-  tokenTypes: string[];
-  tokenModifiers: string[];
-
-  constructor(tokenTypes: string[], tokenModifiers: string[] = []) {
-    this.tokenTypes = tokenTypes;
-    this.tokenModifiers = tokenModifiers;
-  }
-}
-
-export class SemanticTokens {
-  data: Uint32Array;
-
-  constructor(data: Uint32Array) {
-    this.data = data;
-  }
-}
-
-export default {
-  CompletionItemKind,
-  MarkdownString,
-  SnippetString,
-  CompletionItem,
-  Position,
-  Range,
-  Hover,
-  workspace,
-  window,
-  SemanticTokensBuilder,
-  SemanticTokensLegend,
-  SemanticTokens,
-};

@@ -84,7 +84,7 @@ The visual graph converts to valid HoloScript:
 Generates:
 
 ```hsplus
-orb myButton {
+composition myButton {
   @clickable
 
   on_click: {

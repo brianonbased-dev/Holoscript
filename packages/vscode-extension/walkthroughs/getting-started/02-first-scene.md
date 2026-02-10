@@ -36,7 +36,7 @@ composition "My First VR World" {
 ## What This Does
 
 - Creates a scene with a sunset skybox
-- Places a glowing orb that can be grabbed in VR
-- The orb glows brighter when grabbed
+- Places a glowing composition that can be grabbed in VR
+- The composition glows brighter when grabbed
 
 Click **Next** to learn about VR traits!

@@ -558,12 +558,14 @@ export class TraitRegistry {
    * Get a trait by ID
    */
   async getTrait(traitId: string, version?: string): Promise<TraitPackage | null> {
+    // Normalize traitId to support both raw names and pre-normalized IDs
+    const normalizedId = this.generateTraitId(traitId);
     if (version) {
-      const trait = await this.db.getTraitById(traitId);
+      const trait = await this.db.getTraitById(normalizedId);
       if (!trait) return null;
       return this.db.getTraitVersion(trait.name, version);
     }
-    return this.db.getTraitById(traitId);
+    return this.db.getTraitById(normalizedId);
   }
 
   /**

@@ -17,7 +17,7 @@ Complete reference for HoloScript syntax across all three file formats.
 ### Objects (Orbs)
 
 ```hs
-orb objectName {
+composition objectName {
   property: value
   nested: { x: 0, y: 1, z: 2 }
 }
@@ -55,7 +55,7 @@ execute functionName
 ### VR Traits (.hsplus only)
 
 ```hsplus
-orb interactiveObject {
+composition interactiveObject {
   @grabbable
   @throwable
   @physics
@@ -67,7 +67,7 @@ orb interactiveObject {
 **Trait with parameters:**
 
 ```hsplus
-orb configuredObject {
+composition configuredObject {
   @grabbable(snap_to_hand: true, haptic_on_grab: 0.7)
   @physics(mass: 2.0, drag: 0.1)
   @networked(sync_rate: 30hz)
@@ -83,7 +83,7 @@ orb configuredObject {
   items: []
 }
 
-orb player {
+composition player {
   health: ${state.health}
 
   @on_damage => state.health -= 10

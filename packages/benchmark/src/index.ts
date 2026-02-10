@@ -8,6 +8,7 @@
 import { Bench } from 'tinybench';
 import { runParserBench } from './suites/parser.bench.js';
 import { runCompilerBench } from './suites/compiler.bench.js';
+import { runSyncBench } from './suites/sync.bench.js';
 
 // =============================================================================
 // TYPES
@@ -162,6 +163,11 @@ async function main(): Promise<void> {
   if (!isJson) console.log('Running compiler benchmarks...');
   const compilerBench = await runCompilerBench();
   suites.push(extractResults(compilerBench, 'Compiler'));
+
+  // Run sync benchmarks (Sprint 2)
+  if (!isJson) console.log('Running sync benchmarks...');
+  const syncBench = await runSyncBench();
+  suites.push(extractResults(syncBench, 'HighFrequencySync'));
 
   const allResults: AllResults = {
     version: '2.1.0',

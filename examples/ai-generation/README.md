@@ -49,7 +49,7 @@ const object = await mcp.call('generate_object', {
   description: 'a glowing blue crystal that floats',
   format: 'hsplus',
 });
-// → orb Crystal @glowing @animated { ... }
+// → composition Crystal @glowing @animated { ... }
 
 // 3. Generate complete scene
 const scene = await mcp.call('generate_scene', {

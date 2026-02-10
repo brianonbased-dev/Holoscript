@@ -1853,6 +1853,28 @@ export {
 } from './network';
 
 // =============================================================================
+// WASM Parser Bridge (v3.3 Performance Optimization)
+// =============================================================================
+
+export * as wasm from './wasm';
+export { WasmModuleCache, type CachedModule, type WasmModuleCacheConfig } from './wasm';
+export { WasmParserBridge, type ParseResult, type WasmParserConfig } from './wasm';
+
+// =============================================================================
+// High-Frequency Sync (v3.3 60Hz Spatial Optimization)
+// =============================================================================
+
+export * as sync from './sync';
+export {
+  quantizePosition,
+  dequantizePosition,
+  compressQuaternion,
+  decompressQuaternion,
+  PriorityScheduler,
+  JitterBuffer,
+} from './sync';
+
+// =============================================================================
 // LOD Module (v3.3 Level of Detail System)
 // =============================================================================
 
@@ -1894,3 +1916,80 @@ export { createEmptySceneGraph, createEmptyNode, createDefaultMaterial } from '.
 
 // USDZ Pipeline
 export { USDZPipeline, type USDZPipelineOptions } from './compiler/USDZPipeline';
+
+// =============================================================================
+// HITL Backend Service (v3.3 Sprint 3: Safety & Testing)
+// =============================================================================
+
+export * as hitl from './hitl';
+export {
+  HITLBackendService,
+  getHITLBackend,
+  configureHITLBackend,
+  HITLNotificationService,
+  getNotificationService,
+  configureNotifications,
+} from './hitl';
+
+// =============================================================================
+// Security Utilities (v3.3 Sprint 3: Safety & Testing)
+// =============================================================================
+
+export * as security from './security';
+export {
+  sha256,
+  sha512,
+  hmacSha256,
+  verifyHmacSha256,
+  encrypt,
+  decrypt,
+  generateEncryptionKey,
+  randomBytes,
+  randomHex,
+  randomUUID,
+  validateWalletAddress,
+  validateApiKey,
+  sanitizeInput,
+  validateUrl,
+  checkRateLimit,
+  resetRateLimit,
+} from './security';
+
+// =============================================================================
+// OpenTelemetry Integration (Sprint 9 - Observability)
+// =============================================================================
+
+export {
+  HoloScriptTelemetry,
+  SpanFactory,
+  MetricsCollector,
+  generateTraceId,
+  generateSpanId,
+  createSpanObject,
+  type TelemetryConfig,
+  type Span as TelemetrySpan,
+  type SpanEvent as TelemetrySpanEvent,
+  type Metric as TelemetryMetric,
+  type MetricEntry as TelemetryMetricEntry,
+  type HistogramStats,
+} from './telemetry';
+
+// =============================================================================
+// Audit Logging & Compliance (Sprint 9 - Priority 6)
+// =============================================================================
+
+export {
+  AuditLogger,
+  InMemoryAuditStorage,
+  AuditQuery,
+  ComplianceReporter,
+  type AuditEvent,
+  type AuditEventInput,
+  type AuditQueryFilter,
+  type AuditStorageBackend,
+  type DateRange,
+  type ReportSection,
+  type ReportItem,
+  type ReportSummary,
+  type ComplianceReport,
+} from './audit';

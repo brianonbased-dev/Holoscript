@@ -59,7 +59,7 @@ composition "My VR Room" {
   }
 
   // A floating welcome orb
-  orb welcomeOrb {
+  composition welcomecomposition {
     @grabbable
     @glowing { color: "#4A90D9", intensity: 0.6 }
 
@@ -78,7 +78,7 @@ composition "My VR Room" {
   }
 
   // A physics-enabled cube
-  orb physicsCube {
+  composition physicsCube {
     @grabbable
     @physics {
       mass: 1.0
@@ -97,7 +97,7 @@ composition "My VR Room" {
   }
 
   // A clickable button
-  orb button {
+  composition button {
     @clickable
     @hoverable
 
@@ -121,7 +121,7 @@ composition "My VR Room" {
   }
 
   // Floor
-  orb floor {
+  composition floor {
     @collidable
 
     position: [0, 0, 0]
@@ -163,7 +163,7 @@ Environment settings affect the entire scene - lighting, skybox, fog, etc.
 
 ### Interactive Orbs
 
-Each orb has:
+Each composition has:
 
 - **Traits** (`@grabbable`, `@physics`) - behaviors
 - **Properties** (`position`, `scale`, `color`) - visual attributes
@@ -202,7 +202,7 @@ group table {
   position: [0, 0, -3]
 
   // Table top
-  orb top {
+  composition top {
     position: [0, 0.8, 0]
     scale: [1.5, 0.05, 0.8]
     color: "#8B4513"
@@ -210,7 +210,7 @@ group table {
   }
 
   // Table leg 1
-  orb leg1 {
+  composition leg1 {
     position: [-0.6, 0.4, 0.3]
     scale: [0.1, 0.8, 0.1]
     color: "#8B4513"
@@ -220,7 +220,7 @@ group table {
   // ... more legs
 
   // Items on table
-  orb vase {
+  composition vase {
     @grabbable
     @physics { mass: 0.5 }
 
@@ -234,14 +234,14 @@ group table {
 
 ## Exercise: Customize Your Room
 
-1. **Add a light switch** - Create an orb that toggles the ambient light on/off
+1. **Add a light switch** - Create an composition that toggles the ambient light on/off
 2. **Create a bouncy ball** - Use `@physics { restitution: 0.9 }` for bounciness
 3. **Add a teleport spot** - On click, move the player to a new position
 
 ### Solution: Light Switch
 
 ```hsplus
-orb lightSwitch {
+composition lightSwitch {
   @clickable
 
   position: [-3, 1.2, 0]
@@ -268,7 +268,7 @@ orb lightSwitch {
 Make sure the floor has `@collidable`:
 
 ```hsplus
-orb floor {
+composition floor {
   @collidable  // Required for physics interactions
   // ...
 }
@@ -297,7 +297,7 @@ In this lesson, you:
 
 ## Next Lesson
 
-In [Lesson 1.4: Understanding Orbs](./04-understanding-orbs.md), we'll take a deeper look at orb types, geometries, and properties.
+In [Lesson 1.4: Understanding Orbs](./04-understanding-orbs.md), we'll take a deeper look at composition types, geometries, and properties.
 
 ---
 

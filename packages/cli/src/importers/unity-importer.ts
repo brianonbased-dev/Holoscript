@@ -182,15 +182,98 @@ function parseUnityYAML(content: string): Map<string, UnityDocument> {
 function parseSimpleYAML(content: string): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   const lines = content.split('\n');
-  const stack: Array<{ indent: number; obj: Record<string, unknown> }> = [
+
+  // Track the current context: each entry has an indent level, a target object, and its key in the parent
+  const stack: Array<{ indent: number; obj: Record<string, unknown>; key?: string; parentObj?: Record<string, unknown> }> = [
     { indent: -1, obj: result },
   ];
+
+  // Track the current array being built from consecutive list items
+  let currentArray: unknown[] | null = null;
+  let currentArrayIndent = -1;
 
   for (const line of lines) {
     if (!line.trim() || line.trim().startsWith('#')) continue;
 
     const indentMatch = line.match(/^(\s*)/);
     const indent = indentMatch ? indentMatch[1].length : 0;
+    const trimmed = line.trim();
+
+    // Check if this is a YAML list item: "- key: value" or "- {inline}"
+    const listItemMatch = trimmed.match(/^-\s+(.*)$/);
+    if (listItemMatch) {
+      const itemContent = listItemMatch[1].trim();
+
+      // If we don't have a current array at this indent, convert the parent empty object to an array
+      if (currentArray === null || indent !== currentArrayIndent) {
+        // Pop stack to find the empty object placeholder that should become an array
+        while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+          stack.pop();
+        }
+
+        // The top of the stack should be the object whose parent key needs to become an array
+        // We need to go one level up: the current stack top's parent should have a key that is {}
+        const stackTop = stack[stack.length - 1];
+        if (stackTop.key && stackTop.parentObj) {
+          // Convert this empty object placeholder to an array
+          currentArray = [];
+          currentArrayIndent = indent;
+          stackTop.parentObj[stackTop.key] = currentArray;
+        } else {
+          // Fallback: search the current object for an empty-object key
+          const parentKeys = Object.keys(stackTop.obj);
+          currentArray = null;
+          for (let k = parentKeys.length - 1; k >= 0; k--) {
+            const key = parentKeys[k];
+            const val = stackTop.obj[key];
+            if (val && typeof val === 'object' && !Array.isArray(val) && Object.keys(val as Record<string, unknown>).length === 0) {
+              currentArray = [];
+              currentArrayIndent = indent;
+              stackTop.obj[key] = currentArray;
+              break;
+            }
+          }
+          if (currentArray === null) {
+            // Last resort: create a detached array
+            currentArray = [];
+            currentArrayIndent = indent;
+          }
+        }
+      }
+
+      // Parse the list item content
+      if (itemContent.startsWith('{') && itemContent.endsWith('}')) {
+        // Inline object: - {fileID: 400001}
+        currentArray.push(parseInlineObject(itemContent));
+      } else {
+        // Key-value item: - component: {fileID: 400001}
+        const kvMatch = itemContent.match(/^(\w+):\s*(.*)$/);
+        if (kvMatch) {
+          const key = kvMatch[1];
+          const valueStr = kvMatch[2].trim();
+          const itemObj: Record<string, unknown> = {};
+
+          if (valueStr.startsWith('{') && valueStr.endsWith('}')) {
+            itemObj[key] = parseInlineObject(valueStr);
+          } else if (valueStr.startsWith('[')) {
+            itemObj[key] = parseInlineArray(valueStr);
+          } else if (valueStr === '' || valueStr === '{}') {
+            itemObj[key] = {};
+          } else {
+            itemObj[key] = parsePrimitive(valueStr);
+          }
+          currentArray.push(itemObj);
+        } else {
+          // Plain value: - someValue
+          currentArray.push(parsePrimitive(itemContent));
+        }
+      }
+      continue;
+    }
+
+    // Not a list item -- reset the current array tracking
+    currentArray = null;
+    currentArrayIndent = -1;
 
     // Pop stack to find parent
     while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
@@ -198,7 +281,6 @@ function parseSimpleYAML(content: string): Record<string, unknown> {
     }
 
     const parent = stack[stack.length - 1].obj;
-    const trimmed = line.trim();
 
     // Key: value
     const kvMatch = trimmed.match(/^(\w+):\s*(.*)$/);
@@ -207,10 +289,10 @@ function parseSimpleYAML(content: string): Record<string, unknown> {
       const valueStr = kvMatch[2].trim();
 
       if (valueStr === '' || valueStr === '{}') {
-        // Nested object
+        // Nested object (may become an array if followed by list items)
         const nested: Record<string, unknown> = {};
         parent[key] = nested;
-        stack.push({ indent, obj: nested });
+        stack.push({ indent, obj: nested, key, parentObj: parent });
       } else if (valueStr.startsWith('{') && valueStr.endsWith('}')) {
         // Inline object like {x: 0, y: 1, z: 2}
         parent[key] = parseInlineObject(valueStr);
@@ -343,7 +425,7 @@ function buildSceneTree(
 
           const components = go.m_Component || [];
           for (const comp of components) {
-            if (comp.component?.fileID === fileID) {
+            if (String(comp.component?.fileID) === fileID) {
               const node = gameObjectNodes.get(goID);
               if (node) {
                 node.transform = tf;
@@ -369,7 +451,7 @@ function buildSceneTree(
 
           const components = go.m_Component || [];
           for (const comp of components) {
-            if (comp.component?.fileID === fileID) {
+            if (String(comp.component?.fileID) === fileID) {
               node.components.push({
                 type: doc.type,
                 data: doc.data,
@@ -395,12 +477,12 @@ function buildSceneTree(
       const node = gameObjectNodes.get(goID);
       if (!node) continue;
 
-      if (!tf.m_Father || tf.m_Father.fileID === '0') {
+      if (!tf.m_Father || String(tf.m_Father.fileID) === '0') {
         // Root node
         rootNodes.push(node);
       } else {
         // Find parent
-        const parentGoID = transformToGameObject.get(tf.m_Father.fileID);
+        const parentGoID = transformToGameObject.get(String(tf.m_Father.fileID));
         if (parentGoID) {
           const parent = gameObjectNodes.get(parentGoID);
           if (parent) {

@@ -6,17 +6,17 @@ describe('Parser Error Recovery', () => {
 
   it('should recover from errors and continue parsing', () => {
     const code = `
-      orb "Valid1" {
+      composition "Valid1" {
         color: "red"
       }
 
-      orb "Invalid" {
+      composition "Invalid" {
         color: "blue"
         123 // Invalid property key (must be identifier)
         scale: 1.0
       }
 
-      orb "Valid2" {
+      composition "Valid2" {
         color: "green"
       }
     `;
@@ -42,10 +42,10 @@ describe('Parser Error Recovery', () => {
 
   it('should report multiple errors', () => {
     const code = `
-      orb "Err1" {
+      composition "Err1" {
         prop1 "value1"
       }
-      orb "Err2" {
+      composition "Err2" {
         prop2 "value2"
       }
     `;

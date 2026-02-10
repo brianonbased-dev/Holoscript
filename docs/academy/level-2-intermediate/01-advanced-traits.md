@@ -16,7 +16,7 @@ By the end of this lesson, you will:
 Traits aren't just flags - they can accept complex configurations:
 
 ```hsplus
-orb advancedObject {
+composition advancedObject {
   // Simple trait (no config)
   @grabbable
 
@@ -50,7 +50,7 @@ orb advancedObject {
 Creating networked physics objects requires careful configuration:
 
 ```hsplus
-orb syncedPhysicsObject {
+composition syncedPhysicsObject {
   @physics {
     mass: 1.0
     interpolation: "interpolate"  // Smooth movement
@@ -79,7 +79,7 @@ orb syncedPhysicsObject {
 Multiple interaction traits can coexist:
 
 ```hsplus
-orb multiInteractionObject {
+composition multiInteractionObject {
   @grabbable {
     grabPoints: [
       { position: [0, 0.1, 0], rotation: [0, 0, 0] },
@@ -114,7 +114,7 @@ orb multiInteractionObject {
 When traits conflict, precedence rules apply:
 
 ```hsplus
-orb conflictExample {
+composition conflictExample {
   // Both try to control position
   @physics { kinematic: false }  // Physics controls position
   @animated { path: [...] }       // Animation controls position
@@ -156,7 +156,7 @@ template "GrabbablePhysicsObject" {
 }
 
 // Use the preset
-orb myCube {
+composition myCube {
   using "GrabbablePhysicsObject"
 
   // Override specific properties
@@ -172,7 +172,7 @@ orb myCube {
 Apply traits based on conditions:
 
 ```hsplus
-orb conditionalObject {
+composition conditionalObject {
   // Base traits always applied
   @hoverable
 
@@ -200,7 +200,7 @@ orb conditionalObject {
 Many traits emit events you can listen to:
 
 ```hsplus
-orb eventfulObject {
+composition eventfulObject {
   @physics {
     mass: 1.0
     reportCollisions: true
@@ -245,12 +245,12 @@ orb eventfulObject {
 
 ```hsplus
 // Bad: Every small object has physics
-orb debris1 { @physics { mass: 0.1 } }
-orb debris2 { @physics { mass: 0.1 } }
+composition debris1 { @physics { mass: 0.1 } }
+composition debris2 { @physics { mass: 0.1 } }
 // ... 100 more
 
 // Good: Use static colliders for non-moving objects
-orb debris1 {
+composition debris1 {
   @collidable { static: true }
   // No @physics = no simulation cost
 }
@@ -259,8 +259,8 @@ orb debris1 {
 group debrisGroup {
   @physics { mass: 5.0 }  // One physics body
   // Children are part of compound collider
-  orb debris1 { position: [...] }
-  orb debris2 { position: [...] }
+  composition debris1 { position: [...] }
+  composition debris2 { position: [...] }
 }
 ```
 
@@ -277,14 +277,14 @@ Create a puzzle where the user must:
 ```hsplus
 composition "Stacking Puzzle" {
   // Platform to stack on
-  orb platform {
+  composition platform {
     @collidable { static: true }
     position: [0, 0.5, -2]
     scale: [0.5, 0.05, 0.5]
   }
 
   // Three stackable cubes
-  orb cube1 {
+  composition cube1 {
     @grabbable
     @physics { mass: 1.0 }
     position: [1, 1, -2]

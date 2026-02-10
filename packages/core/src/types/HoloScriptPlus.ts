@@ -818,6 +818,14 @@ export interface PortableTrait extends BaseTrait {
   exportFormats?: string[];
 }
 
+export interface ZKPrivateTrait extends BaseTrait {
+  predicate?: 'proximity' | 'in_region' | 'has_attribute';
+  radius?: number;
+  bounds?: [number, number, number];
+  fallback?: 'hidden' | 'transparent' | 'dummy_model';
+  circuit_url?: string;
+}
+
 // ============================================================================
 // Physics Expansion Traits
 // ============================================================================

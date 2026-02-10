@@ -60,7 +60,7 @@ export interface DeltaChange {
 }
 
 export interface SyncMessage {
-  type: 'full-state' | 'delta' | 'request-state' | 'ack' | 'presence' | 'rpc';
+  type: 'full-state' | 'delta' | 'request-state' | 'ack' | 'presence' | 'rpc' | 'ownership-request' | 'ownership-response';
   senderId: string;
   roomId: string;
   sequence: number;
@@ -623,6 +623,9 @@ export type SyncEventType =
   | 'disconnected'
   | 'state-updated'
   | 'presence-updated'
+  | 'ownership-request'
+  | 'ownership-response'
+  | 'rpc'
   | 'error';
 export type SyncEventCallback = (event: { type: SyncEventType; data?: unknown }) => void;
 
@@ -767,6 +770,20 @@ export class SyncProtocol {
     });
   }
 
+  requestOwnership(entityId: string): void {
+    this.sendMessage({
+      type: 'ownership-request',
+      payload: { entityId, requesterId: this.clientId },
+    });
+  }
+
+  respondToOwnership(entityId: string, requesterId: string, approved: boolean): void {
+    this.sendMessage({
+      type: 'ownership-response',
+      payload: { entityId, approved, ownerId: approved ? requesterId : this.clientId },
+    });
+  }
+
   getState(entityId: string): SyncState | undefined {
     return this.deltaEncoder.getCachedState(entityId);
   }
@@ -777,6 +794,10 @@ export class SyncProtocol {
 
   getStats(): SyncStats {
     return { ...this.stats };
+  }
+
+  getClientId(): string {
+    return this.clientId;
   }
 
   on(event: SyncEventType, callback: SyncEventCallback): () => void {
@@ -819,6 +840,23 @@ export class SyncProtocol {
         const presence = message.payload as PresenceInfo;
         this.presence.set(presence.clientId, presence);
         this.emit('presence-updated', { presence });
+        break;
+      }
+      case 'ownership-request': {
+        const payload = message.payload as { entityId: string; requesterId: string };
+        this.emit('ownership-request', { ...payload, senderId: message.senderId });
+        break;
+      }
+      case 'ownership-response': {
+        const payload = message.payload as { entityId: string; approved: boolean; ownerId: string };
+        this.emit('ownership-response', payload);
+        break;
+      }
+      case 'rpc': {
+        const payload = message.payload as { method: string; args: unknown[]; target?: string; from: string };
+        if (!payload.target || payload.target === this.clientId) {
+          this.emit('rpc', payload);
+        }
         break;
       }
     }

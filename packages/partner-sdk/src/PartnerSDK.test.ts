@@ -2,7 +2,7 @@
  * Tests for HoloScript Partner SDK
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   createRegistryClient,
   createWebhookHandler,
@@ -50,14 +50,84 @@ describe('Partner SDK', () => {
 
 describe('RegistryClient', () => {
   let client: RegistryClient;
+  let originalFetch: typeof globalThis.fetch;
 
   beforeEach(() => {
+    originalFetch = globalThis.fetch;
+
+    const futureResetTimestamp = Math.floor(Date.now() / 1000) + 3600;
+
+    globalThis.fetch = vi.fn(async (input: string | URL | Request) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+
+      const rateLimitHeaders = new Headers({
+        'Content-Type': 'application/json',
+        'X-RateLimit-Remaining': '999',
+        'X-RateLimit-Limit': '1000',
+        'X-RateLimit-Reset': futureResetTimestamp.toString(),
+      });
+
+      let responseBody: unknown;
+
+      if (url.includes('/partner/validate')) {
+        responseBody = {
+          success: true,
+          data: { valid: true, partnerId: 'test-partner', tier: 'standard' },
+        };
+      } else if (url.includes('/packages/search')) {
+        responseBody = {
+          success: true,
+          data: { packages: [], total: 0, page: 1, pageSize: 20 },
+        };
+      } else if (url.includes('/versions/')) {
+        responseBody = {
+          success: true,
+          data: {
+            version: '1.0.0',
+            publishedAt: '2026-01-01T00:00:00Z',
+            downloadCount: 100,
+            tarballUrl: 'https://registry.holoscript.dev/tarballs/test-1.0.0.tgz',
+            integrity: 'sha512-abc123',
+          },
+        };
+      } else if (url.includes('/packages/')) {
+        responseBody = {
+          success: true,
+          data: {
+            name: '@test/package',
+            version: '1.0.0',
+            description: 'A test package',
+            author: 'test-author',
+            license: 'MIT',
+            downloads: { total: 5000, lastMonth: 500, lastWeek: 100 },
+            certified: true,
+            certificationGrade: 'A',
+            publishedAt: '2026-01-01T00:00:00Z',
+            updatedAt: '2026-01-15T00:00:00Z',
+            keywords: ['test'],
+            maintainers: [{ name: 'test-author' }],
+          },
+        };
+      } else {
+        responseBody = { success: true, data: {} };
+      }
+
+      return new Response(JSON.stringify(responseBody), {
+        status: 200,
+        headers: rateLimitHeaders,
+      });
+    }) as typeof globalThis.fetch;
+
     client = createRegistryClient({
       credentials: {
         partnerId: 'test-partner',
         apiKey: 'test-api-key',
       },
     });
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
   });
 
   describe('getPackage', () => {

@@ -128,7 +128,7 @@ describe('Null Coalescing Assignment (??=)', () => {
     });
 
     test('should parse in orb properties', () => {
-      const code = `orb "TestOrb" {
+      const code = `composition "TestOrb" {
         config: "value"
       }`;
       const result = parser.parse(code);

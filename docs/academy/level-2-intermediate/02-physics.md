@@ -7,7 +7,7 @@ Welcome to Lesson 2.2! In this lesson, you'll master HoloScript's physics system
 HoloScript's physics system is built on a high-performance engine optimized for VR. Enable physics on any object with the `@physics` trait:
 
 ```hs
-orb ball {
+composition ball {
   @physics
   geometry: "sphere"
   position: [0, 5, 0]  // Will fall due to gravity
@@ -21,12 +21,12 @@ orb ball {
 Mass determines how heavy an object is:
 
 ```hs
-orb lightweight {
+composition lightweight {
   @physics { mass: 0.1 }  // Light, easy to move
   geometry: "sphere"
 }
 
-orb heavyweight {
+composition heavyweight {
   @physics { mass: 10.0 }  // Heavy, hard to move
   geometry: "cube"
 }
@@ -38,7 +38,7 @@ Control how bouncy objects are:
 
 ```hs
 // Super bouncy ball
-orb bouncyBall {
+composition bouncyBall {
   @physics {
     mass: 0.5
     restitution: 0.95  // 0 = no bounce, 1 = perfect bounce
@@ -47,7 +47,7 @@ orb bouncyBall {
 }
 
 // Heavy, non-bouncy rock
-orb rock {
+composition rock {
   @physics {
     mass: 5.0
     restitution: 0.1  // Barely bounces
@@ -62,7 +62,7 @@ Control how slippery surfaces are:
 
 ```hs
 // Ice block - very slippery
-orb iceBlock {
+composition iceBlock {
   @physics {
     friction: 0.05
   }
@@ -70,7 +70,7 @@ orb iceBlock {
 }
 
 // Rubber - high friction
-orb rubber {
+composition rubber {
   @physics {
     friction: 0.9
   }
@@ -83,7 +83,7 @@ orb rubber {
 Slow down movement and rotation over time:
 
 ```hs
-orb dampedObject {
+composition dampedObject {
   @physics {
     linearDamping: 0.3   // Slow down movement
     angularDamping: 0.5  // Slow down rotation
@@ -99,7 +99,7 @@ orb dampedObject {
 Fully simulated, affected by forces:
 
 ```hs
-orb dynamic {
+composition dynamic {
   @physics { type: "dynamic" }
   geometry: "sphere"
 }
@@ -110,7 +110,7 @@ orb dynamic {
 Never moves, infinite mass:
 
 ```hs
-orb floor {
+composition floor {
   @physics { type: "static" }
   geometry: "plane"
   scale: [20, 20, 1]
@@ -123,7 +123,7 @@ orb floor {
 Controlled by animation, affects other objects:
 
 ```hs
-orb platform {
+composition platform {
   @physics { type: "kinematic" }
   geometry: "cube"
   scale: [3, 0.2, 3]
@@ -146,12 +146,12 @@ orb platform {
 By default, collision matches geometry:
 
 ```hs
-orb autoBox {
+composition autoBox {
   @physics
   geometry: "cube"  // Uses box collider
 }
 
-orb autoSphere {
+composition autoSphere {
   @physics
   geometry: "sphere"  // Uses sphere collider
 }
@@ -162,7 +162,7 @@ orb autoSphere {
 Specify explicit collision shapes:
 
 ```hs
-orb complex {
+composition complex {
   @physics {
     collider: "box"           // Box
     collider: "sphere"        // Sphere
@@ -179,7 +179,7 @@ orb complex {
 Combine multiple simple shapes:
 
 ```hs
-orb character {
+composition character {
   @physics {
     colliders: [
       { type: "capsule", height: 1.8, radius: 0.3, center: [0, 0.9, 0] },
@@ -197,7 +197,7 @@ orb character {
 Apply continuous force:
 
 ```hs
-orb rocket {
+composition rocket {
   @physics { mass: 1.0 }
   geometry: "cylinder"
 
@@ -214,7 +214,7 @@ orb rocket {
 Apply instant velocity change:
 
 ```hs
-orb ball {
+composition ball {
   @physics
   @grabbable
   @throwable
@@ -231,7 +231,7 @@ orb ball {
 Spin the object:
 
 ```hs
-orb spinner {
+composition spinner {
   @physics
 
   onGrab: {
@@ -245,7 +245,7 @@ orb spinner {
 ### Collision Events
 
 ```hs
-orb collider {
+composition collider {
   @physics
   @collidable
 
@@ -271,7 +271,7 @@ orb collider {
 Non-physical detection zones:
 
 ```hs
-orb triggerZone {
+composition triggerZone {
   @trigger
   geometry: "cube"
   scale: [3, 3, 3]
@@ -290,7 +290,7 @@ orb triggerZone {
 Cast rays to detect objects:
 
 ```hs
-orb laser {
+composition laser {
   onUpdate: {
     const hit = physics.raycast(
       this.position,           // Origin
@@ -317,11 +317,11 @@ orb laser {
 Lock objects together:
 
 ```hs
-orb handle {
+composition handle {
   @physics
 }
 
-orb blade {
+composition blade {
   @physics
 
   joint fixed {
@@ -336,7 +336,7 @@ orb blade {
 Rotational constraint (doors, wheels):
 
 ```hs
-orb door {
+composition door {
   @physics { type: "dynamic" }
 
   joint hinge {
@@ -354,7 +354,7 @@ orb door {
 Elastic connection:
 
 ```hs
-orb pendulum {
+composition pendulum {
   @physics
 
   joint spring {
@@ -376,7 +376,7 @@ composition "Physics Playground" {
   }
 
   // Static ground
-  orb ground {
+  composition ground {
     @physics { type: "static" }
     geometry: "plane"
     scale: [20, 20, 1]
@@ -424,7 +424,7 @@ composition "Physics Playground" {
   // Dominoes
   group dominoes {
     for (let i = 0; i < 10; i++) {
-      orb domino {
+      composition domino {
         @physics { mass: 0.1 }
         geometry: "cube"
         scale: [0.1, 0.5, 0.3]
@@ -434,13 +434,13 @@ composition "Physics Playground" {
   }
 
   // Swinging pendulum
-  orb pendulumAnchor {
+  composition pendulumAnchor {
     @physics { type: "static" }
     position: [3, 4, -3]
     scale: 0.1
   }
 
-  orb pendulumBall {
+  composition pendulumBall {
     @physics { mass: 2.0 }
     @grabbable
     geometry: "sphere"
@@ -466,7 +466,7 @@ composition "Physics Playground" {
 
 ```hs
 // Optimize with collision layers
-orb enemy {
+composition enemy {
   @physics {
     layer: "enemies"
     collidesWith: ["player", "projectiles", "environment"]

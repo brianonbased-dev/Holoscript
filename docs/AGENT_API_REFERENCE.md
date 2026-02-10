@@ -1,6 +1,6 @@
 # HoloScript Agent API Reference
 
-## v3.1.0 - Agentic Choreography
+## v3.4.0 - Agentic Choreography
 
 This document covers the public APIs introduced in Sprint 4 for multi-agent orchestration.
 

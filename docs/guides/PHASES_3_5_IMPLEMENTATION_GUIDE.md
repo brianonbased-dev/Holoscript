@@ -28,7 +28,7 @@ A parser extension that enables declarative graphics configuration in HoloScript
 **Example Usage:**
 
 ```holoscript
-orb myMetal {
+composition myMetal {
   position: [0, 0, 0]
   @material {
     type: pbr,
@@ -321,7 +321,7 @@ import {
 // 1. Parse HoloScript+ with traits
 const parser = new HoloScriptPlusParser();
 const ast = parser.parse(`
-  orb myMetal {
+  composition myMetal {
     @material { type: pbr, metallic: 0.8 }
   }
 `);

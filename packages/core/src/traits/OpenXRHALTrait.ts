@@ -373,28 +373,29 @@ function detectDeviceFromSession(
   session: any,
   config: OpenXRHALConfig
 ): void {
-  // Try to get input sources for device detection
   const inputSources = session.inputSources || [];
-
-  // Check for common device patterns
   let detectedProfile: Partial<XRDeviceProfile> | null = null;
 
+  // Try to determine device by examining input source profiles
   for (const source of inputSources) {
-    const profiles = source.profiles || [];
-
-    for (const profileName of profiles) {
-      // Match against known device strings
-      const profileLower = profileName.toLowerCase();
-
-      for (const [key, profile] of Object.entries(deviceProfiles)) {
-        if (profileLower.includes(key.toLowerCase().split(' ')[0])) {
-          detectedProfile = profile;
-          break;
+    if (source.profiles) {
+      for (const profileName of source.profiles) {
+        const lowerName = profileName.toLowerCase();
+        for (const [key, profile] of Object.entries(deviceProfiles)) {
+          if (lowerName.includes(key.toLowerCase()) || lowerName.includes(profile.type!)) {
+            detectedProfile = profile;
+            break;
+          }
         }
+        if (detectedProfile) break;
       }
-      if (detectedProfile) break;
     }
     if (detectedProfile) break;
+  }
+
+  // Fallback check for Vision Pro (hand tracking only, no controller profiles)
+  if (!detectedProfile && session.environmentBlendMode === 'alpha-blend' && inputSources.length === 0) {
+    detectedProfile = deviceProfiles['apple vision pro'];
   }
 
   // Build final profile
@@ -409,8 +410,8 @@ function detectDeviceFromSession(
     resolution: detectedProfile?.resolution || { width: 1920, height: 1080 },
     fov: detectedProfile?.fov || 90,
     controllers: {
-      left: createSimulatedController(),
-      right: createSimulatedController(),
+      left: detectedProfile?.controllers?.left || createSimulatedController(),
+      right: detectedProfile?.controllers?.right || createSimulatedController(),
     },
     ...config.device_overrides,
   };
@@ -428,15 +429,21 @@ function triggerHaptic(
   if (!state.session || !state.isInitialized) return false;
 
   const session = state.session as any;
+  if (session.simulated) return true; // Pretend it worked if simulated
+
   const inputSources = session.inputSources || [];
 
   for (const source of inputSources) {
     if (source.handedness === hand && source.gamepad?.hapticActuators) {
       const actuators = source.gamepad.hapticActuators;
-      if (actuators.length > 0) {
-        // Standard Gamepad haptic API
-        actuators[0].pulse?.(intensity, durationMs);
-        return true;
+      if (actuators && actuators.length > 0) {
+        // Use WebXR Gamepad Haptics API
+        try {
+          actuators[0].pulse(intensity, durationMs);
+          return true;
+        } catch {
+          return false;
+        }
       }
     }
   }

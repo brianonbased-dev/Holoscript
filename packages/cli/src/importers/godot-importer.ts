@@ -598,7 +598,7 @@ function getGeometry(
         stats.extResourcesReferenced++;
 
         // Convert .mesh to .glb reference
-        let meshPath = extRes.path.replace(/^res:\/\//, '').replace('.mesh', '.glb');
+        const meshPath = extRes.path.replace(/^res:\/\//, '').replace('.mesh', '.glb');
         return `model/${meshPath}`;
       }
     }

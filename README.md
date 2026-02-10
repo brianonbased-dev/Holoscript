@@ -1,762 +1,90 @@
-# HoloScript
+# HoloScript v3.3.0
 
-**Write less code. Build more.**
+**Write once. Run everywhere. Spatial computing for everyone.**
 
-A declarative, open-source language that compiles to 18+ platforms from one source.
-
-<p align="center">
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="MIT License"></a>
-  <a href="https://www.npmjs.com/package/@holoscript/core"><img src="https://img.shields.io/npm/v/@holoscript/core?style=for-the-badge&label=core" alt="npm"></a>
-  <a href="https://github.com/brianonbased-dev/Holoscript/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/brianonbased-dev/Holoscript/ci.yml?branch=main&style=for-the-badge&label=build" alt="Build Status"></a>
-  <a href="https://github.com/brianonbased-dev/Holoscript/releases/tag/v3.0.0"><img src="https://img.shields.io/badge/version-v3.0.0-green?style=for-the-badge" alt="v3.0.0"></a>
-</p>
+HoloScript is an AI-native, declarative language for spatial computing. It allows developers and AI agents to define interactive worlds, complex behaviors, and high-fidelity graphics that compile to 18+ platforms from a single source.
 
 <p align="center">
-  <a href="#-compile-targets"><img src="https://img.shields.io/badge/platforms-18+-purple?style=flat-square" alt="18+ Platforms"></a>
-  <a href="docs/TRAITS_REFERENCE.md"><img src="https://img.shields.io/badge/VR_traits-71+-orange?style=flat-square" alt="71+ VR Traits"></a>
-  <a href="#-editor-support"><img src="https://img.shields.io/badge/editors-VS_Code_|_Neovim_|_IntelliJ-blue?style=flat-square" alt="Editor Support"></a>
-  <a href="https://discord.gg/holoscript"><img src="https://img.shields.io/badge/discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-</p>
-
-<p align="center">
-  <img src="docs/assets/gifs/holoscript-compile-demo.gif" alt="HoloScript compiling to multiple platforms" width="650">
-  <br>
-  <em>One file → Web, VR, AR, iOS, Android, Desktop</em>
+  <a href="https://github.com/brianonbased-dev/HoloScript/releases/tag/v3.3.0"><img src="https://img.shields.io/badge/version-v3.3.0-green?style=for-the-badge" alt="v3.3.0"></a>
+  <a href="docs/getting-started/quickstart.md"><img src="https://img.shields.io/badge/Quickstart-5_min-blue?style=for-the-badge" alt="Quickstart"></a>
+  <a href="docs/TRAITS_REFERENCE.md"><img src="https://img.shields.io/badge/traits-1525+-orange?style=for-the-badge" alt="1525+ Traits"></a>
 </p>
 
 ---
 
-## 🤖 AI Agents: Read This First
+## 🚀 Quick Start (30 Seconds)
 
-**HoloScript is a language, not a library.** AI agents generate `.holo` files—the runtime executes them.
-
-### ✅ DO
-
+1. **Install CLI:** `npm install -g @holoscript/cli`
+2. **Create `hello.holo`:**
 ```holo
-// Generate HoloScript code
-object "ScoreButton" {
-  @pointable
-
-  on_point() {
-    GameState.add_score(10)
-    flash_color("#00ff00", 100ms)
-  }
-}
-```
-
-### ❌ DON'T
-
-```javascript
-// Don't write JavaScript to implement features
-button.addEventListener('click', () => {
-  score += 10;
-  button.style.background = 'green';
-});
-```
-
-### The Rule
-
-| Ask yourself                       | Action                     |
-| ---------------------------------- | -------------------------- |
-| Can this be a `.holo` composition? | **Yes → Write .holo**      |
-| Does it need TypeScript modules?   | Write `.hsplus`            |
-| Is it shared logic/protocols?      | Write `.hs`                |
-| Is it tooling (parser, CLI)?       | Only then write TypeScript |
-
-**The `.holo` file IS the source of truth.** Behaviors, state, collisions, input bindings, UI panels—all defined in HoloScript, executed by the runtime.
-
----
-
-## 📁 File Types
-
-| Format    | Purpose      | Key Features                                                                |
-| --------- | ------------ | --------------------------------------------------------------------------- |
-| `.holo`   | Compositions | Full worlds with templates, objects, actions, collision handlers, UI panels |
-| `.hsplus` | Systems      | TypeScript modules, complex behaviors, networking, physics systems          |
-| `.hs`     | Logic        | Protocols, state machines, shared utilities, AI behaviors                   |
-
-**.holo** — AI-generated worlds, game scenes, interactive experiences (composition-first)
-**.hsplus** — Game systems, networking modules, procedural generation
-**.hs** — Shared logic, protocols, reusable behaviors
-
-**All three are AI-writable.** Use together for complex projects.
-
----
-
-> 💬 **Talk or type to build.** Powered by [Infinity Assistant](https://infinityassistant.io).
->
-> - 🥽 **VR:** "Create a coffee shop with a counter and menu board"
-> - 🌍 **VRR (Virtual Reality Reality):** "Scan my storefront and make it a virtual showroom" _(coming soon)_
-> - 📱 **AR:** "Place a 3D model of this chair in my living room"
-
-```holo
-composition "Login UI" {
-  object "Form" {
+composition "Hello Holo" {
+  object "Cube" {
     @grabbable
-
-    object "EmailInput" { type: "text"; placeholder: "Email" }
-    object "PasswordInput" { type: "password" }
-    object "SubmitBtn" {
-      text: "Sign In"
-      on_click() { api.login() }
-    }
-  }
-}
-```
-
-One component. Runs on **Web, VR, AR, iOS, Android, Desktop**. No rewrites.
-
-**Real result:** We reduced our own service codebase by **90%** using HoloScript.
-
-## Why HoloScript?
-
-HoloScript stands alone as a purpose-built language for spatial computing, rather than a library or wrapper.
-
-- **Multi-Target Compilation:** Write once, compile to R3F, WebGPU, native Quest/Vision Pro, or server-side simulations.
-- **AI-Native Design:** Constrained grammar leads to higher LLM accuracy and fewer hallucinations.
-- **Compiler Optimizations:** Spatial semantics allow for automatic LOD, trait fusion, and dead environment culling.
-- **SQL of Spatial Computing:** A declarative standard that any tool can target, renderer-agnostic and platform-independent.
-- **Future-Proof:** Runtime independence means your code survives even if the underlying rendering framework changes.
-
-[**Read the full vision: Why HoloScript?**](./docs/WHY_HOLOSCRIPT.md)
-
-## 🚀 What's New (February 2026)
-
-### � Grok/X Integration (v2.2.1)
-
-Grok can now build, validate, and share VR scenes directly in X conversations!
-
-```bash
-pip install holoscript              # Python bindings
-npm i @holoscript/mcp-server         # MCP server for AI agents
-```
-
-- **16 MCP Tools** for parsing, generation, validation, and sharing
-- **Python Package** for Grok's runtime environment
-- **Render Service** for preview images and X share links
-
-[**Read the Grok/X Integration Guide**](./docs/GROK_X_IMPLEMENTATION_SUMMARY.md)
-
-### �🧠 Language & Parser (HoloScript Core)
-
-#### ⚡ Syntax Evolved (v2.1)
-
-New parser capabilities for "Wild HoloScript" support: arrow functions, raw TypeScript blocks, and natural language connections.
-[**Read the Syntax Extensions Guide**](./docs/language/SYNTAX_EXTENSIONS.md)
-
-#### ✨ Spatial Content Support
-
-HoloScript now supports high-fidelity spatial captures as declarative traits:
-
-- **Gaussian Splatting**: `@gaussian_splat` for `.splat` files
-- **NeRFs**: `@nerf` trait for Luma AI photorealistic captures
-- **Humanoid Avatars**: `@skeleton` trait with enhanced skeletal animation support
-- **Volumetric Video**: `@volumetric_video` for immersive video content
-
-#### 🎮 Game Content Generation
-
-New language constructs for RPG and game content generation:
-
-- **NPCs**: `npc` entities with behavior trees and dialogue
-- **Quests**: Quest definitions with objectives and rewards
-- **Dialogue Trees**: Branching dialogue with conditional paths
-- **Abilities**: Spell and ability systems with class requirements
-- **Achievements**: Achievement tracking and progression
-- **Talent Trees**: Class-based talent progression systems
-
-### 🚀 Runtime & Platform Features (Hololand)
-
-> **Note**: The following runtime and platform features have been migrated to [Hololand](https://github.com/brianonbased-dev/Hololand) to keep HoloScript focused on language design. Access them via `@hololand/*` packages.
-
-#### 🔊 Spatial Audio
-
-[`@hololand/audio`](https://github.com/brianonbased-dev/Hololand) — 3D positional audio with HRTF and room acoustics. Perfect for immersive VR experiences.
-
-#### 🔄 State Sync
-
-[`@hololand/network`](https://github.com/brianonbased-dev/Hololand) — CRDTs for multiplayer. Conflict-free data structures that automatically merge across peers.
-
-#### 📦 Asset Streaming
-
-[`@hololand/streaming`](https://github.com/brianonbased-dev/Hololand) — Progressive loading, LOD streaming, and smart caching for large VR worlds.
-
-#### ⚡ Unified Event System
-
-[`@hololand/events`](https://github.com/brianonbased-dev/Hololand) — Global Event Bubbling and Physics-Haptics bridging.
-
-> **Need Spatial Audio, State Sync, or Streaming?** See our [Feature Migration Guide](./docs/guides/FEATURE_MIGRATION.md) for integration instructions.
-
-### 🤖 AI Integration (HoloScript-Powered)
-
-- **Brittney MCP** — Full integration with Quantum MCP Mesh Orchestrator for high-fidelity generation.
-- **Claude Desktop/Code** — `.claude/settings.json` pre-configured
-- **GitHub Copilot** — `.github/copilot-instructions.md` with MCP guidance
-
-### 🧠 Run Brittney Locally (GGUF)
-
-To run Brittney locally for free inference:
-
-```bash
-# Full precision (7.7GB) - Best quality
-ollama run brittney-v4:latest
-
-# Quantized Q8 (4.1GB) - Smaller, faster
-ollama run brittney-v4-q8:latest
-```
-
-Configure `HoloScript MCP` to use local endpoint (`http://localhost:11434`).
-New language constructs for RPG and game content generation:
-
-```hsplus
-composition "RPG Scene" {
-  // NPCs with behavior trees
-  npc "Elder Aldric" {
-    npc_type: "quest_giver"
-    dialogue_tree: "elder_intro"
-  }
-
-  // Quest definitions with objectives and rewards
-  quest "Goblin Menace" {
-    giver: "Elder Aldric"
-    level: 1
-    type: "defeat"
-    objectives: [
-      { id: "defeat_goblins", type: "defeat", target: "goblin", count: 10 }
-    ]
-    rewards: { experience: 500, gold: 100 }
-  }
-
-  // Dialogue trees with branching options
-  dialogue "elder_intro" {
-    character: "Elder Aldric"
-    emotion: "friendly"
-    content: "Welcome, traveler!"
-    options: [
-      { text: "What troubles the village?", next: "elder_troubles" }
-    ]
-  }
-
-  // Abilities and spells
-  ability "Fireball" {
-    type: "spell"
-    class: "mage"
-    level: 5
-  }
-
-  // Achievement system
-  achievement "Village Hero" {
-    description: "Complete the Goblin Menace quest"
-    points: 50
-  }
-
-  // Talent trees with dependencies
-  talent_tree "warrior_combat" {
-    class: "warrior"
-    rows: [
-      { tier: 1, nodes: [{ id: "power_strike", name: "Power Strike", points: 1 }] }
-    ]
-  }
-}
-```
-
-**7 new constructs:** `npc`, `quest`, `ability`, `dialogue`, `state_machine`, `achievement`, `talent_tree`
-
-## 📚 Guides
-
-- **[Best Practices Guide](./docs/guides/best-practices.md)** — 10 Rules for Ergonomics & Performance (New!)
-- [VRChat Export](./docs/integration/VRCHAT_UNITY_GUIDE.md) — Export to Udon
-
-## Install
-
-```bash
-npm install @holoscript/core
-```
-
-## Quick Start
-
-```typescript
-import { HoloScriptPlusParser } from '@holoscript/core';
-
-const parser = new HoloScriptPlusParser();
-const result = parser.parse(`
-  composition "InteractiveDemo" {
-    template "GrabbableSphere" {
-      @grabbable
-      @throwable
-      geometry: "sphere"
-      color: "#00ffff"
-      glow: true
-    }
-
-    object "Sphere" using "GrabbableSphere" {
-      position: [0, 1, 0]
-    }
-  }
-`);
-```
-
-## Features
-
-### 🕹️ Trait System (119+ traits across 18 domains)
-
-| Domain                  | Example Traits                                                                   |
-| ----------------------- | -------------------------------------------------------------------------------- |
-| **Interaction**         | `@grabbable`, `@throwable`, `@pointable`, `@stretchable`, `@moldable`, `@haptic` |
-| **Humanoid/Avatar**     | `@skeleton`, `@body`, `@face`, `@expressive`, `@hair`, `@clothing`, `@hands`     |
-| **Spatial Content**     | `@gaussian_splat`, `@nerf`, `@volumetric_video`, `@photogrammetry`               |
-| **Spatial Environment** | `@plane_detection`, `@mesh_detection`, `@anchor`, `@persistent_anchor`           |
-| **Input Modality**      | `@eye_tracking`, `@hand_tracking`, `@controller`, `@spatial_accessory`           |
-| **Accessibility**       | `@accessible`, `@alt_text`, `@spatial_audio_cue`, `@sonification`, `@subtitle`   |
-| **Compute & GPU**       | `@compute`, `@gpu_particle`, `@gpu_physics`, `@gpu_buffer`                       |
-| **Autonomous Agents**   | `@behavior_tree`, `@goal_oriented`, `@llm_agent`, `@memory`, `@perception`       |
-| **Animation/Phys**      | `@cloth`, `@fluid`, `@soft_body`, `@destruction`, `@rigidbody`, `@joint`, `@ik`  |
-| **Social/Multi**        | `@co_located`, `@remote_presence`, `@shared_world`, `@voice_proximity`           |
-| **Web3 & Ownership**    | `@nft`, `@token_gated`, `@wallet`, `@marketplace`, `@portable`                   |
-| **Audio**               | `@ambisonics`, `@hrtf`, `@reverb_zone`, `@audio_occlusion`, `@spatial_audio`     |
-| **State & Logic**       | `@state`, `@reactive`, `@observable`, `@computed`, `@synced`, `@persistent`      |
-
-### 🛠️ Language Features
-
-- **environment Configuration** - Declarative scene setup in `.hsplus` files
-- **Scale Magnitude** - Build from `galactic` to `atomic` scale with seamless transitions
-- **Reactive State** - `@state { count: 0 }` with automatic updates
-- **Control Flow** - `@for`, `@if`, `while`, `forEach`, `on_break` loops
-- **Expression Interpolation** - `${variable}` in strings and properties
-- **Module System** - `@import "./other.hsplus"` for code organization
-- **Native Game Logic** - `@npc "Name" { ... }` and `@dialog` definitions
-- **TypeScript Interop** - Export and import between `.hsplus` and `.ts`
-
-### 🧰 Tooling
-
-- **LSP Support** - Full IDE integration with completions, hover, and diagnostics
-- **Voice Commands** - Build by speaking (Web Speech API)
-- **AI Building** - Natural language to code via [infinityassistant.io](https://infinityassistant.io)
-- **MCP Server** - AI agents can create and manage VR worlds
-
-## Packages
-
-### Core Language (This Repo)
-
-| Package                      | Version | What it does                              | Status |
-| ---------------------------- | ------- | ----------------------------------------- | ------ |
-| `@holoscript/core`           | 3.0.0   | Parser, runtime, types, trait definitions | ✅     |
-| `@holoscript/runtime`        | 3.0.0   | Execution engine                          | ✅     |
-| `@holoscript/cli`            | 3.0.0   | Command line tools                        | ✅     |
-| `@holoscript/formatter`      | 3.0.0   | Code formatting                           | ✅     |
-| `@holoscript/linter`         | 3.0.0   | Static analysis                           | ✅     |
-| `@holoscript/lsp`            | 3.0.0   | Language Server Protocol                  | ✅     |
-| `@holoscript/std`            | 3.0.0   | Standard library                          | ✅     |
-| `@holoscript/fs`             | 3.0.0   | File system utilities                     | ✅     |
-| `@holoscript/mcp-server`     | 3.0.0   | MCP tools for AI agents (35 tools)        | ✅     |
-| `@holoscript/sdk`            | 3.0.0   | Smart Asset SDK & HoloHub client          | ✅     |
-| `@holoscript/visual`         | 3.0.0   | Visual node-based editor (26 nodes)       | ✅     |
-| `@holoscript/registry`       | 3.0.0   | Package registry & team workspaces        | ✅     |
-| `@holoscript/partner-sdk`    | 3.0.0   | Partner integration SDK                   | ✅     |
-| `@holoscript/adapter-postgres` | 0.1.0  | PostgreSQL execution logging              | ✅     |
-| `@holoscript/neovim`         | 1.0.0   | Neovim editor plugin                      | ✅     |
-| `@holoscript/intellij`       | 1.0.0   | IntelliJ/JetBrains plugin                 | ✅     |
-| `@holoscript/compiler-wasm`  | 3.0.0   | Rust/WASM compiler (10x faster parsing)   | 🚧     |
-
-### Migrated to Hololand (Jan 2026)
-
-The following runtime/platform packages have been migrated to the [Hololand](https://github.com/brianonbased-dev/Hololand) repo where they belong as platform services. The HoloScript versions are deprecated.
-
-| Former Package               | Migrated To               | Migration Type          |
-| ---------------------------- | ------------------------- | ----------------------- |
-| `@holoscript/network`        | `@hololand/network`       | Merged (transports)     |
-| `@holoscript/multiplayer`    | `@hololand/network`       | Merged (player sync)    |
-| `@holoscript/state-sync`     | `@hololand/network`       | Merged (CRDT sync)      |
-| `@holoscript/spatial-audio`  | `@hololand/audio`         | Merged (spatial traits) |
-| `@holoscript/streaming`      | `@hololand/streaming`     | Moved                   |
-| `@holoscript/gpu`            | `@hololand/renderer`      | Merged (GPU compute)    |
-| `@holoscript/ik`             | `@hololand/animation`     | Merged (IK solvers)     |
-| `@holoscript/physics-joints` | `@hololand/world`         | Merged (joints/ragdoll) |
-| `@holoscript/haptics`        | `@hololand/haptics`       | Moved                   |
-| `@holoscript/navigation`     | `@hololand/navigation`    | Moved                   |
-| `@holoscript/pcg`            | `@hololand/pcg`           | Moved                   |
-| `@holoscript/portals`        | `@hololand/portals`       | Moved                   |
-| `@holoscript/accessibility`  | `@hololand/accessibility` | Moved                   |
-| `@holoscript/lod`            | `@hololand/lod`           | Moved                   |
-| `@holoscript/voice`          | `@hololand/voice`         | Moved                   |
-| `@holoscript/gestures`       | `@hololand/gestures`      | Moved                   |
-| `@holoscript/llm`            | `@hololand/ai`            | Merged (LLM inference)  |
-
-### Platform Adapters ([Hololand Repo](https://github.com/brianonbased-dev/Hololand))
-
-| Package                        | What it does                        | Status     |
-| ------------------------------ | ----------------------------------- | ---------- |
-| `@hololand/three-adapter`      | Three.js 3D world + physics + audio | ✅         |
-| `@hololand/babylon-adapter`    | Babylon.js 3D world                 | ✅         |
-| `@hololand/playcanvas-adapter` | PlayCanvas 3D world                 | ✅         |
-| `@hololand/unity-adapter`      | Unity C# + XR export                | ✅         |
-| `@hololand/vrchat-export`      | VRChat/UdonSharp export             | 🟡 _alpha_ |
-| `@hololand/creator-tools`      | Visual editors                      | ✅         |
-
-## 🌐 Three.js World Integration
-
-> **NEW!** Run HoloScript directly in Three.js with full VR/XR support.
-
-```bash
-npm install @hololand/three-adapter three
-```
-
-```typescript
-import { createWorld } from '@hololand/three-adapter';
-
-const world = createWorld({
-  container: document.getElementById('app')!,
-  xrEnabled: true,
-});
-
-// Load from .hsplus files
-await world.loadFile('/scenes/main.hsplus');
-world.start();
-```
-
-**Declarative world config with `environment` block:**
-
-```hsplus
-composition "DemoWorld" {
-  environment {
-    backgroundColor: "#16213e"
-    fog: { type: "linear", color: "#16213e", near: 10, far: 100 }
-    shadows: "high"
-    lighting: "outdoor"
-    camera: { position: [0, 2, 10], fov: 60 }
-  }
-
-  template "Player" {
-    @grabbable
-    geometry: "sphere"
-    color: "#00ffff"
-  }
-
-  object "Player" using "Player" {
+    @physics
+    geometry: "box"
     position: [0, 1, 0]
   }
 }
 ```
+3. **Preview:** `holoscript preview hello.holo`
 
-**Three loading patterns:**
-
-```typescript
-// 1. Load single file
-await world.loadFile('/scenes/main.hsplus');
-
-// 2. Auto-load index.hsplus from directory
-await world.loadDirectory('/scenes/level1');
-
-// 3. Load from config manifest
-await world.loadConfig('/project/holoscript.config.hsplus');
-```
+**[View Full 5-Minute Tutorial →](./docs/getting-started/quickstart.md)**
 
 ---
 
-## 🌐 Multiplayer Networking
+## 🔥 Key Features
 
-> **NEW!** Sync `@networked` entities across clients with WebSocket/WebRTC.
-
-```bash
-npm install @hololand/network
-```
-
-```typescript
-import { createNetworkManager } from '@hololand/network';
-
-const network = createNetworkManager();
-
-// Connect to a multiplayer session
-const roomId = await network.connect({
-  serverUrl: 'wss://your-server.com',
-  transport: 'websocket', // or 'webrtc'
-  syncRate: 20,
-});
-
-// Register networked entities
-const networkId = network.registerEntity(playerMesh, 'player', {
-  sync: 'owner',
-  properties: ['position', 'rotation'],
-});
-
-// Listen for remote events
-network.on('peerJoined', (event) => {
-  console.log('Player joined:', event.peer.peerId);
-});
-
-network.on('entitySpawned', (event) => {
-  // Create visual for remote entity
-  createRemotePlayer(event.entity);
-});
-```
-
-**HoloScript+ `@networked` trait:**
-
-```hsplus
-composition "NetworkedDemo" {
-  template "NetworkedPlayer" {
-    @networked
-    @grabbable
-    geometry: "sphere"
-    color: "#00ffff"
-  }
-
-  template "SharedObject" {
-    @networked
-    geometry: "box"
-    sync: "shared"
-  }
-
-  object "Player" using "NetworkedPlayer" {
-    position: [0, 1, 0]
-  }
-
-  object "SharedCube" using "SharedObject" {
-    position: [5, 0, 0]
-  }
-}
-```
-
-**Example signaling server included** in `examples/network-server/`.
+- ✅ **1,525+ VR Traits** - `@grabbable`, `@physics`, `@ai_agent`, `@teleport`, and more.
+- ✅ **600+ Visual Traits** - PBR materials, procedural textures, and mood-based lighting.
+- ✅ **18 Compile Targets** - VRChat, Unreal Engine, iOS/ARKit, Android/ARCore, Unity, WebAssembly, and more.
+- ✅ **AI-Native** - Built for LLMs with 34 high-level MCP tools for real-time generation.
+- ✅ **Brave Rendering** - Native support for R3F, WebGPU, and VisionOS.
 
 ---
 
-## 🎮 VRChat Alpha
+## 🏗️ 18+ Compile Targets
 
-> **NEW!** Export HoloScript directly to VRChat worlds. Write once, deploy to VRChat.
-
-```bash
-npm install @hololand/vrchat-export
-```
-
-```holoscript
-// Define a VRChat-ready world
-composition "MyClub" {
-  @vrchat
-  spawn_point: [0, 0, 0]
-  max_players: 32
-
-  template "DanceFloor" {
-    @grabbable
-    @synced
-    geometry: "plane"
-    material: "neon_tiles"
-    on_step: trigger_lights()
-  }
-
-  template "DJ" {
-    @talkable
-    dialog: "Welcome to the club!"
-    animations: ["idle", "wave", "dance"]
-  }
-
-  object "DanceFloor" using "DanceFloor" {
-    position: [0, 0, 0]
-  }
-
-  npc "DJ" using "DJ" {
-    position: [5, 0, 0]
-  }
-}
-```
-
-```bash
-# Export to VRChat SDK
-holoscript export --target vrchat my_world.hsplus
-
-# Output: Unity project with Udon scripts ready for upload
-```
-
-**What's included:**
-
-- ✅ Automatic Udon graph generation
-- ✅ Synced object state (multiplayer-ready)
-- ✅ Trait mapping (`@grabbable` → VRC_Pickup)
-- ✅ NPC dialog system with voice support
-- 🟡 Custom shaders (coming soon)
-- 🟡 Avatar interactions (coming soon)
-
-[📖 VRChat Export Guide](./docs/integration/VRCHAT_UNITY_GUIDE.md) | [🎥 Demo Video](#)
+| Platform | Target | Support |
+| --- | --- | --- |
+| **VR Platforms** | VRChat (Udon), Quest (OpenXR), SteamVR | ✅ Stable |
+| **Game Engines** | Unreal Engine 5, Unity, Godot | ✅ Stable |
+| **Mobile AR** | iOS (ARKit), Android (ARCore), Vision Pro | ✅ Stable |
+| **Web** | React Three Fiber, WebGPU, WebAssembly | ✅ Stable |
+| **Advanced** | Robotics (URDF), Digital Twins (DTDL), Gazebo | ✅ Stable |
 
 ---
 
-## 🧪 Experimental
+## 📚 Documentation
 
-| Package                   | Status       | Description                       |
-| ------------------------- | ------------ | --------------------------------- |
-| `@hololand/vrchat-export` | 🎮 **Alpha** | Compile HoloScript to VRChat Udon |
-| `@holoscript/commerce`    | 🧪           | In-world payments & inventory     |
+- 📗 **[Quickstart](./docs/getting-started/quickstart.md)** - Start building in minutes.
+- 📘 **[Traits Reference](./docs/TRAITS_REFERENCE.md)** - Explore the massive library of 1,525+ VR traits.
+- 📙 **[Academy](./docs/academy/README.md)** - Master HoloScript through interactive lessons.
+- 📕 **[Troubleshooting](./docs/guides/troubleshooting.md)** - Solutions to common issues.
+- 🔘 **[Architecture](./docs/architecture/README.md)** - Deep dive into the engine and compiler.
 
-## Build with AI
+---
 
-```typescript
-import { InfinityBuilderClient } from '@infinity-assistant/sdk';
+## 🛠️ Tooling
 
-const client = new InfinityBuilderClient({
-  apiKey: process.env.INFINITY_BUILDER_API_KEY,
-});
+- **VS Code Extension** - Syntax highlighting and trait IntelliSense.
+- **MCP Server** - Give your AI agents the power to build spatial worlds.
+- **HoloScript CLI** - Parse, validate, and compile from your terminal.
 
-const result = await client.build('Create a login form');
-console.log(result.holoScript); // Ready to deploy
-```
+---
 
-## Deploy Targets
+## 🤝 Contributing
 
-| Platform             | Compiler                           | Status           |
-| -------------------- | ---------------------------------- | ---------------- |
-| Web (R3F/Babylon)    | R3FCompiler, BabylonCompiler       | ✅               |
-| WebXR (VR)           | OpenXRCompiler                     | ✅               |
-| WebGPU               | WebGPUCompiler                     | ✅               |
-| WASM                 | WASMCompiler                       | ✅               |
-| iOS (ARKit/SwiftUI)  | IOSCompiler                        | ✅               |
-| Android (ARCore)     | AndroidCompiler, AndroidXRCompiler | ✅               |
-| Vision Pro           | VisionOSCompiler                   | ✅               |
-| Unity                | UnityCompiler                      | ✅               |
-| Unreal Engine 5      | UnrealCompiler                     | ✅               |
-| Godot                | GodotCompiler                      | ✅               |
-| VRChat               | VRChatCompiler                     | ✅               |
-| Robotics (URDF)      | URDFCompiler                       | ✅               |
-| Digital Twins (DTDL) | DTDLCompiler                       | ✅               |
-| SDF (Gazebo)         | SDFCompiler                        | ✅               |
-| Flutter              | -                                  | 🟡 _coming soon_ |
-| Tauri                | -                                  | 🟡 _coming soon_ |
-
-## Examples
-
-```holoscript
-// Interactive counter with VR support
-composition "Counter" {
-  state { count: 0 }
-
-  template "CounterUI" {
-    @grabbable
-    geometry: "box"
-
-    text { "Count: ${state.count}" }
-
-    on_click() { state.count++ }
-    on_grab(hand) { haptics.pulse(hand, 0.5) }
-  }
-
-  object "Counter" using "CounterUI" {
-    position: [0, 1, -2]
-  }
-}
-```
-
-```holoscript
-// Shopping cart
-composition "ShoppingCart" {
-  state { items: [] }
-
-  template "CartDisplay" {
-    geometry: "plane"
-  }
-
-  object "Cart" using "CartDisplay" {
-    @for item in state.items {
-      text { "${item.name} - $${item.price}" }
-    }
-    text { "Total: $${state.items.reduce((a,b) => a + b.price, 0)}" }
-  }
-}
-```
-
-```holoscript
-// Scale magnitude - universe to atom
-composition "ScaleMagnitude" {
-  scale galactic {
-    template "Star" {
-      geometry: "sphere"
-      color: "#ffcc00"
-      glow: true
-    }
-
-    template "Planet" {
-      geometry: "sphere"
-    }
-
-    object "Sun" using "Star" {
-      position: [0, 0, 0]
-    }
-
-    object "Earth" using "Planet" {
-      position: [50, 0, 0]
-    }
-  }
-
-  focus sun {
-    scale atomic {
-      object "Nucleus" using "Sphere" {
-        color: "#ff0000"
-        position: [0, 0, 0]
-      }
-
-      object "Electron" using "Sphere" {
-        position: [1, 0, 0]
-        scale: [0.1, 0.1, 0.1]
-      }
-    }
-  }
-}
-```
-
-## Ecosystem
-
-HoloScript is open source. Infrastructure and platform services are separately licensed:
-
-| Layer                                                        | What                                                         | License    |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ---------- |
-| **HoloScript Core**                                          | Language, parser, 139 traits, 16 compilers, CLI, runtime     | MIT        |
-| **Infrastructure**                                           | Networking, multiplayer, state sync, streaming, LSP, MCP     | ELv2       |
-| **[Hololand](https://github.com/brianonbased-dev/Hololand)** | VR/AR platform — cloud anchors, asset CDN, marketplace       | Commercial |
-| **[Infinity Assistant](https://infinityassistant.io)**       | AI building — natural language to .holo, agent orchestration | Commercial |
-
-Write `.holo` anywhere for free. Use infrastructure packages in your apps. Deploy on Hololand. Build with Infinity Assistant.
-
-## CLI
+HoloScript is **MIT licensed** and open-source. We welcome contributions to the core engine, compilers, and documentation.
 
 ```bash
-npm install -g @holoscript/cli
-
-holoscript run app.hsplus       # Run a file
-holoscript parse app.hsplus     # Show AST
-holoscript repl                 # Interactive mode
-```
-
-## 🛠️ Tools
-
-### VS Code Extension
-
-The official **HoloScript** extension provides:
-
-- Syntax highlighting for `.holo` and `.hsplus`
-- IntelliSense for Traits (`@grabbable`, `@npc`)
-- Snippets for common patterns
-
-**Install**: Search "HoloScript" in VS Code Marketplace or install from `.vsix`.
-
-## Contributing
-
-MIT license. PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup and guidelines.
-
-```bash
-git clone https://github.com/brianonbased-dev/holoscript.git
+git clone https://github.com/brianonbased-dev/HoloScript.git
 cd HoloScript
 pnpm install
-pnpm build
 pnpm test
 ```
 
-## License
-
-HoloScript is **MIT licensed** — use it anywhere, for anything. See [LICENSE](./LICENSE).
-
-The following packages use the **Elastic License 2.0** (ELv2) — free to use and modify, but cannot be offered as a managed service competing with Hololand or Infinity Assistant:
-
-`@holoscript/lsp` `@holoscript/network` `@holoscript/multiplayer` `@holoscript/state-sync` `@holoscript/streaming` `@holoscript/mcp-server`
-
-All other packages (core, runtime, traits, compilers, CLI, std, etc.) are MIT. See [NOTICE](./NOTICE) for full details.
-
 ---
 
-**Questions?** Open an [issue](https://github.com/brianonbased-dev/holoscript/issues) or visit [infinityassistant.io](https://infinityassistant.io)
+[Website](https://holoscript.dev) | [Discord](https://discord.gg/holoscript) | [Twitter](https://twitter.com/holoscript)
+
+© 2026 HoloScript Foundation.

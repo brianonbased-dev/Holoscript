@@ -4,6 +4,7 @@
  * Tests for importing Godot .tscn scene files into HoloScript.
  */
 
+import { describe, it, expect } from 'vitest';
 import { parseGodotScene, buildNodeTree, generateHoloCode, importGodot } from './godot-importer';
 import * as fs from 'fs';
 import * as path from 'path';

@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-A comprehensive audit of HoloScript v3.0 documentation against actual implementation. This audit identifies what's working, what's documented but unimplemented, and what needs attention.
+A comprehensive audit of HoloScript v3.3.0 documentation against actual implementation. This audit identifies what's working, what's documented but unimplemented, and what needs attention.
 
 | Category                  | Status        | Notes                                                   |
 | ------------------------- | ------------- | ------------------------------------------------------- |
@@ -248,4 +248,4 @@ A comprehensive audit of HoloScript v3.0 documentation against actual implementa
 
 ---
 
-**Audit Conclusion**: HoloScript v3.0 is now feature-complete for trait implementations. All 38 non-trivial trait handlers are fully implemented with comprehensive test coverage (122 dedicated trait tests). Objects using templates via the `using` keyword correctly inherit traits like `@grabbable`, `@physics`, etc. The remaining gaps are platform export wiring (VRChat/Unity) and module execution. A working demo is available at `examples/three-demo/index.html`.
+**Audit Conclusion**: HoloScript v3.3.0 is now feature-complete for trait implementations. All 38 non-trivial trait handlers are fully implemented with comprehensive test coverage (122 dedicated trait tests). Objects using templates via the `using` keyword correctly inherit traits like `@grabbable`, `@physics`, etc. The remaining gaps are platform export wiring (VRChat/Unity) and module execution. A working demo is available at `examples/three-demo/index.html`.

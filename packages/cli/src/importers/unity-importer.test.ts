@@ -4,6 +4,7 @@
  * Tests for importing Unity scene and prefab files into HoloScript.
  */
 
+import { describe, it, expect } from 'vitest';
 import { parseUnityYAML, buildSceneTree, generateHoloCode, importUnity } from './unity-importer';
 import * as fs from 'fs';
 import * as path from 'path';

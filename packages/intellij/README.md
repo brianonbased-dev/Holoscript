@@ -107,7 +107,7 @@ The plugin includes live templates for common patterns:
 
 | Abbreviation | Expansion             |
 | ------------ | --------------------- |
-| `orb`        | New orb object        |
+| `orb`        | New composition object        |
 | `grab`       | Grabbable object      |
 | `anim`       | Animation block       |
 | `on`         | Event handler         |

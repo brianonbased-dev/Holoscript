@@ -198,7 +198,7 @@ pip install holoscript
 
 | Extension | Purpose                     | Example                            |
 | --------- | --------------------------- | ---------------------------------- |
-| `.hs`     | Classic HoloScript          | `orb player { ... }`               |
+| `.hs`     | Classic HoloScript          | `composition player { ... }`               |
 | `.hsplus` | HoloScript Plus with traits | `object Player @grabbable { ... }` |
 | `.holo`   | Declarative compositions    | `composition "Scene" { ... }`      |
 

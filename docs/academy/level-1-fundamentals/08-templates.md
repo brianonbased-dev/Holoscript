@@ -8,7 +8,7 @@ Without templates, you'd repeat code:
 
 ```hs
 // Repetitive - Don't do this!
-orb button1 {
+composition button1 {
   @clickable
   geometry: "cube"
   scale: [0.2, 0.1, 0.2]
@@ -16,7 +16,7 @@ orb button1 {
   onClick: { audio.play("click.mp3") }
 }
 
-orb button2 {
+composition button2 {
   @clickable
   geometry: "cube"
   scale: [0.2, 0.1, 0.2]
@@ -24,7 +24,7 @@ orb button2 {
   onClick: { audio.play("click.mp3") }
 }
 
-orb button3 {
+composition button3 {
   @clickable
   geometry: "cube"
   scale: [0.2, 0.1, 0.2]
@@ -168,28 +168,28 @@ template Table {
   scale: [1, 0.05, 0.6]
   color: "#8B4513"
 
-  orb leg1 {
+  composition leg1 {
     geometry: "cylinder"
     scale: [0.05, 0.4, 0.05]
     position: [-0.4, -0.22, -0.25]
     color: "#8B4513"
   }
 
-  orb leg2 {
+  composition leg2 {
     geometry: "cylinder"
     scale: [0.05, 0.4, 0.05]
     position: [0.4, -0.22, -0.25]
     color: "#8B4513"
   }
 
-  orb leg3 {
+  composition leg3 {
     geometry: "cylinder"
     scale: [0.05, 0.4, 0.05]
     position: [-0.4, -0.22, 0.25]
     color: "#8B4513"
   }
 
-  orb leg4 {
+  composition leg4 {
     geometry: "cylinder"
     scale: [0.05, 0.4, 0.05]
     position: [0.4, -0.22, 0.25]
@@ -230,14 +230,14 @@ object infoPanel using Panel {
   position: [0, 1.5, -2]
 
   header: {
-    orb title {
+    composition title {
       @billboard
       text: "Welcome"
     }
   }
 
   content: {
-    orb description {
+    composition description {
       @billboard
       text: "Click to continue"
     }

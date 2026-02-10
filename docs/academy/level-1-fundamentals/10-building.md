@@ -130,7 +130,7 @@ holoscript analyze
 
 ```hs
 // Use lower-poly models for VR
-orb character {
+composition character {
   geometry: "models/character_lod2.glb"  // Use LOD version
 }
 
@@ -141,7 +141,7 @@ material: {
 
 // Limit draw calls with instancing
 @instanced { count: 100 }
-orb tree {
+composition tree {
   geometry: "models/tree.glb"
 }
 ```

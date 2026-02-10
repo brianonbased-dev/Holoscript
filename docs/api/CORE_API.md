@@ -76,7 +76,7 @@ import { HoloScriptPlusParser } from '@holoscript/core';
 
 const parser = new HoloScriptPlusParser();
 const result = parser.parse(`
-  orb Player {
+  composition Player {
     @grabbable
     @physics(mass: 2.0)
     position: [0, 1.6, 0]

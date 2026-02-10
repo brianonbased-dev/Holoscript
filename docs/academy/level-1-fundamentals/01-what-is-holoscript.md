@@ -25,8 +25,8 @@ Here's what HoloScript looks like:
 
 ```hsplus
 composition "My First VR Room" {
-  // A glowing orb that users can grab
-  orb welcomeOrb {
+  // A glowing composition that users can grab
+  composition welcomecomposition {
     @grabbable
     @glowing { color: "#4A90D9", intensity: 0.8 }
 
@@ -60,7 +60,7 @@ composition "Scene Name" {
 **Orbs** are the building blocks of your scene - 3D objects with properties:
 
 ```hsplus
-orb myObject {
+composition myObject {
   position: [x, y, z]
   scale: 1.0
   color: "#FF0000"
@@ -72,7 +72,7 @@ orb myObject {
 **Traits** are reusable behaviors you add with the `@` symbol:
 
 ```hsplus
-orb button {
+composition button {
   @grabbable        // Can be picked up
   @physics          // Has physical properties
   @networked        // Syncs across multiplayer
@@ -84,7 +84,7 @@ orb button {
 **Event handlers** respond to user interactions:
 
 ```hsplus
-orb button {
+composition button {
   onClick: {
     // Do something when clicked
   }
@@ -110,7 +110,7 @@ Creating a simple grabbable object in Unity or Unreal requires:
 ### With HoloScript
 
 ```hsplus
-orb cube {
+composition cube {
   @grabbable
   @physics
   @networked
@@ -151,7 +151,7 @@ HoloScript isn't just a language - it's an ecosystem:
 1. Visit the [HoloScript Playground](https://play.holoscript.dev)
 2. Try modifying the example scene
 3. Change the orb's color and position
-4. Add a second orb to the scene
+4. Add a second composition to the scene
 
 ## Summary
 

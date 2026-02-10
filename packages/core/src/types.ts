@@ -291,6 +291,7 @@ export type VRTraitName =
   | 'wind'
   | 'buoyancy'
   | 'destruction'
+  | 'zk_private'
   | 'proactive';
 
 export { VRHand } from './types/HoloScriptPlus';

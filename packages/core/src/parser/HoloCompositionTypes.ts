@@ -327,6 +327,14 @@ export interface HoloObjectDecl extends HoloNode {
   state?: HoloState;
   traits: HoloObjectTrait[];
   children?: HoloObjectDecl[];
+  subOrbs?: HoloSubOrb[];
+}
+
+export interface HoloSubOrb extends HoloNode {
+  type: 'SubOrb';
+  name: string;
+  source: string;
+  properties: HoloObjectProperty[];
 }
 
 export interface HoloObjectTrait extends HoloNode {

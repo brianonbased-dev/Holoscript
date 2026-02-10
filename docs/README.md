@@ -24,11 +24,13 @@
 
 ### 📖 Development Guides
 
+- [Quick Start Guide](guides/quick-start.md) - Get up and running in 5 minutes
 - [Phase 1-2 Guide](guides/PHASE_1_2_IMPLEMENTATION_GUIDE.md) - Core language features
 - [Phase 3 DSL Traits](guides/PHASE_3_DSL_TRAITS.md) - Domain-specific traits
 - [Phases 3-5 Overview](guides/PHASES_3_5_IMPLEMENTATION_GUIDE.md) - Mid-phase development
 - [Phase 5 Performance](guides/PHASE_5_PERFORMANCE.md) - Optimization & benchmarks
 - [Phase 6 UI Components](guides/PHASE_6_UI_COMPONENTS_GUIDE.md) - UI trait system
+- [Troubleshooting Guide](guides/troubleshooting.md) - Common issues and solutions
 
 ### 🔗 Integration
 
@@ -39,7 +41,7 @@
 
 ### 🔧 API Reference
 
-- [Traits Reference](api/traits.md) - VR trait documentation (165+ traits)
+- [Traits Reference](TRAITS_REFERENCE.md) - VR trait documentation (1,525+ traits)
 - [Directives Reference](api/directives.md) - Structural directives (16 directives)
 - [TypeDoc API](api/index.html) - Auto-generated API documentation
 

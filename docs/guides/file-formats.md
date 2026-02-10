@@ -31,13 +31,13 @@ The original format. Simple, focused on individual objects.
 
 ```hs
 // Objects
-orb player {
+composition player {
   position: { x: 0, y: 1.6, z: 0 }
   health: 100
   color: "#00ffff"
 }
 
-orb enemy {
+composition enemy {
   position: { x: 5, y: 0, z: 5 }
   health: 50
   color: "#ff0000"
@@ -85,7 +85,7 @@ Extended format with VR traits and reactive state.
 }
 
 // Objects with VR traits
-orb player {
+composition player {
   @collidable
   @physics
   @networked
@@ -104,7 +104,7 @@ orb player {
   }
 }
 
-orb weapon {
+composition weapon {
   @grabbable(snap_to_hand: true)
   @throwable(velocity_multiplier: 2.0)
   @glowing(color: "#00ffff")
@@ -270,7 +270,7 @@ composition "My Game Level" {
 
 | Feature        | .hs                  | .hsplus              | .holo                |
 | -------------- | -------------------- | -------------------- | -------------------- |
-| Objects        | `orb name {}`        | `orb name {}`        | `object "name" {}`   |
+| Objects        | `composition name {}`        | `composition name {}`        | `object "name" {}`   |
 | Functions      | `function name() {}` | `function name() {}` | `action name() {}`   |
 | VR Traits      | ❌                   | `@grabbable`         | `@grabbable`         |
 | Reactive State | ❌                   | `@state {}`          | `state {}`           |
@@ -289,14 +289,14 @@ Add VR traits as needed:
 
 ```hs
 // Before (.hs)
-orb ball {
+composition ball {
   position: [0, 1, -2]
 }
 ```
 
 ```hsplus
 // After (.hsplus)
-orb ball {
+composition ball {
   @grabbable
   @physics
   position: [0, 1, -2]
@@ -309,7 +309,7 @@ Wrap in composition, convert orbs to objects:
 
 ```hsplus
 // Before (.hsplus)
-orb ball {
+composition ball {
   @grabbable
   position: [0, 1, -2]
 }
