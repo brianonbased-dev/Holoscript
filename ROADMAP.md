@@ -87,9 +87,9 @@ See [V3_EXIT_GATE_CHECKLIST.md](./docs/V3_EXIT_GATE_CHECKLIST.md) for exit crite
 | Task | Priority | Status |
 | ---- | -------- | ------ |
 | Improve Spatial module coverage (56.71% → 80%) | High | ✅ Complete (91.84%) |
-| Add tests for 0% coverage traits | Medium | ⬜ Not Started |
-| Create v3.1 tutorials | Medium | ⬜ Not Started |
-| Add v3.1 feature examples | Medium | ⬜ Not Started |
+| Add tests for 0% coverage traits | Medium | ✅ Complete (293 tests added) |
+| Create v3.1 tutorials | Medium | ✅ Complete (4 tutorials) |
+| Add v3.1 feature examples | Medium | ✅ Complete (4 examples) |
 | Final integration testing | High | ✅ Complete (4712 tests passing) |
 
 See [IMPLEMENTATION_AUDIT_2025.md](./IMPLEMENTATION_AUDIT_2025.md) for detailed gap analysis.
@@ -246,7 +246,7 @@ state_machine GameController {
 
 **Capabilities:**
 
-- **Orb Definitions** — 3D objects with properties and behaviors
+- **composition Definitions** — 3D objects with properties and behaviors
 - **Trait System** — 165+ built-in traits (@grabbable, @physics, @audio, etc.)
 - **Templates** — Reusable object patterns with inheritance
 - **Spatial Layout** — Position, rotation, scale, parenting
@@ -269,18 +269,18 @@ template "ArtFrame" {
   depth: 0.05
 }
 
-orb gallery_room {
+composition gallery_room {
   @environment(preset: "museum")
   @audio_zone(reverb: 0.6)
 
   children: [
-    orb painting_1 using "ArtFrame" {
+    composition painting_1 using "ArtFrame" {
       position: [0, 1.6, -3]
       texture: "assets/monet.jpg"
       @info_panel(title: "Water Lilies", artist: "Claude Monet")
     },
 
-    orb bench {
+    composition bench {
       position: [0, 0.4, 0]
       @sittable
       @physics(mass: 50, kinematic: true)
@@ -481,7 +481,7 @@ import { Interactable } from "./shared/protocols.hs"
 // Reference environment from .holo
 @use_environment("./environments/day.holo")
 
-orb player implements Interactable {
+composition player implements Interactable {
   state: PlayerState = PlayerState.idle
   controller: GameController
 
@@ -1177,12 +1177,12 @@ describe('Gallery Scene', () => {
 ```hsplus
 template "Base" { color: "red", scale: 1 }
 
-orb item {
+composition item {
   ...Base           // Spread template properties
   scale: 2          // Override
   children: [
     ...existingChildren,
-    orb newChild {}
+    composition newChild {}
   ]
 }
 ```
@@ -1212,7 +1212,7 @@ if (this.match('...')) {
 
 **Acceptance criteria:**
 
-- [ ] Object spread in orb definitions
+- [ ] Object spread in composition definitions
 - [ ] Array spread in children/collections
 - [ ] Template property spreading
 - [ ] Type checking for spread targets
@@ -1227,7 +1227,7 @@ if (this.match('...')) {
 **What to build:**
 
 ```hsplus
-orb item {
+composition item {
   // Assign only if null/undefined
   color ??= "default"
 
@@ -1334,7 +1334,7 @@ Only re-parse changed portions of files, not entire document.
 │  Source File                            │
 ├─────────────────────────────────────────┤
 │  Chunk 1: @manifest { ... }    [cached] │
-│  Chunk 2: orb item { ... }     [dirty]  │  ← Only re-parse this
+│  Chunk 2: composition item { ... }     [dirty]  │  ← Only re-parse this
 │  Chunk 3: template "X" { ... } [cached] │
 └─────────────────────────────────────────┘
 ```
@@ -1380,8 +1380,8 @@ interface ParseCache {
 
 **Acceptance criteria:**
 
-- [ ] Edits within orb only re-parse that orb
-- [ ] Adding new orb doesn't invalidate others
+- [ ] Edits within composition only re-parse that orb
+- [ ] Adding new composition doesn't invalidate others
 - [ ] Reference changes propagate correctly
 - [ ] Memory usage stays bounded (LRU eviction)
 
@@ -1454,7 +1454,7 @@ Browser-based HoloScript editor with live preview.
 │    title: "X"   │  │                    │   │
 │  }              │  │   Live Scene       │   │
 │                 │  │                    │   │
-│  orb cube {     │  └────────────────────┘   │
+│  composition cube {     │  └────────────────────┘   │
 │    @grabbable   │                            │
 │  }              │  [Console Output]          │
 ├─────────────────┴────────────────────────────┤
@@ -1528,7 +1528,7 @@ Step-by-step tutorial teaching HoloScript basics.
 
 ```
 Lesson 1: Hello Orb
-├── Concept: Basic orb syntax
+├── Concept: Basic composition syntax
 ├── Interactive: Type your first orb
 ├── Challenge: Change the color
 └── Next: Properties
@@ -1549,7 +1549,7 @@ Lesson 3: Traits
 
 **10 Lessons:**
 
-1. Hello Orb - Basic syntax
+1. Hello composition - Basic syntax
 2. Properties - Position, scale, color
 3. Traits - @grabbable, @physics
 4. Templates - Reusable definitions
@@ -1574,7 +1574,7 @@ lets users pick up objects in VR.
 
 ## Your turn:
 
-Add `@physics` to make the orb fall with gravity.
+Add `@physics` to make the composition fall with gravity.
 
 [Check Answer] [Hint] [Skip]
 ```
@@ -1787,7 +1787,7 @@ Infer types without explicit annotations.
 **Current (requires annotation):**
 
 ```hsplus
-orb item {
+composition item {
   count: number = 0
   name: string = "Item"
 }
@@ -1796,7 +1796,7 @@ orb item {
 **Target (inferred):**
 
 ```hsplus
-orb item {
+composition item {
   count = 0           // Inferred: number
   name = "Item"       // Inferred: string
   position = [0,0,0]  // Inferred: vec3
@@ -1820,11 +1820,11 @@ orb item {
 
 ```hsplus
 // Context provides expected type
-orb item {
+composition item {
   @physics(mass: 1.5)  // mass expects number, 1.5 is number ✓
 
   children: [
-    orb child {}  // children expects Orb[], orb is Orb ✓
+    composition child {}  // children expects Orb[], composition is composition ✓
   ]
 }
 ```
@@ -1857,7 +1857,7 @@ type Position = [number, number, number]
 type Handler = (event: Event) => void
 
 // Use in definitions
-orb item {
+composition item {
   color: Color = "#ff0000"
   position: Position = [0, 1, 0]
   on_click: Handler = (e) => { ... }
@@ -2066,7 +2066,7 @@ Ensure all cases are handled in conditional/match expressions.
 // Type definition
 type State = "idle" | "loading" | "success" | "error"
 
-orb status_display {
+composition status_display {
   state: State = "idle"
 
   // ERROR: Missing case "error"
@@ -2303,7 +2303,7 @@ Source:    value = item.property
 ```json
 {
   "x_google_ignoreList": [0, 1], // Ignore generated helper files
-  "x_scopes": [{ "name": "orb cube", "start": 10, "end": 50 }]
+  "x_scopes": [{ "name": "composition cube", "start": 10, "end": 50 }]
 }
 ```
 
@@ -2410,9 +2410,9 @@ Identify unused orbs, templates, functions, and properties.
 1. **Unused orbs:**
 
 ```hsplus
-orb helper { }      // Never referenced → WARNING
-orb main_scene {
-  children: [orb used_child {}]
+composition helper { }      // Never referenced → WARNING
+composition main_scene {
+  children: [composition used_child {}]
 }
 ```
 
@@ -2421,13 +2421,13 @@ orb main_scene {
 ```hsplus
 template "OldButton" { }  // Never instantiated → WARNING
 template "Button" { }     // Used below
-orb btn using "Button" {}
+composition btn using "Button" {}
 ```
 
 3. **Unused properties:**
 
 ```hsplus
-orb item {
+composition item {
   old_color: "red"  // Never read → WARNING
   color: "blue"     // Used in on_click
   on_click: { log(this.color) }
@@ -2437,7 +2437,7 @@ orb item {
 4. **Unused functions:**
 
 ```hsplus
-orb controller {
+composition controller {
   function deprecated_helper() {}  // Never called → WARNING
   function active_helper() {}      // Called below
   on_click: { this.active_helper() }
@@ -2493,7 +2493,7 @@ trait clickable { ... }
 template "Button" { ... }
 
 // In properties
-orb item {
+composition item {
   @deprecated("Use 'tint' instead")
   color: string
 }
@@ -2506,7 +2506,7 @@ src/scene.hsplus:15:3
   warning: '@clickable' is deprecated. Use @interactive instead.
            Deprecated in v2.3, will be removed in v3.0.
 
-  14 | orb button {
+  14 | composition button {
 > 15 |   @clickable
      |   ^^^^^^^^^^
   16 | }
@@ -2547,7 +2547,7 @@ Automated code migration between HoloScript versions.
 **Use cases:**
 
 1. v2.1 → v2.5 (trait renames, syntax changes)
-2. v2.x → v3.0 (breaking changes)
+2. v2.x → v3.3 (breaking changes)
 
 **Migration script format:**
 
@@ -2640,7 +2640,7 @@ Measure code complexity for maintainability.
    - Max depth of nested blocks
    - Threshold: >4 = warning
 
-3. **Orb Size:**
+3. **composition Size:**
    - Lines, properties, children count
    - Threshold: >100 lines = warning
 
@@ -3074,7 +3074,7 @@ Node-based visual programming interface for HoloScript.
 OnClick → PlaySound("click.mp3") → SetColor("#ff0000")
 
 // Generated HoloScript
-orb button {
+composition button {
   on_click: {
     audio.play("click.mp3")
     this.color = "#ff0000"
@@ -3142,7 +3142,7 @@ AI-powered code suggestions beyond basic completion.
 1. **Smart completions:**
 
 ```hsplus
-orb player {
+composition player {
   @physics
   @  // AI suggests: @grabbable (players usually want to grab things)
      //              @collidable (physics needs collision)
@@ -3152,7 +3152,7 @@ orb player {
 2. **Code generation from comments:**
 
 ```hsplus
-orb game {
+composition game {
   // Create a countdown timer that shows 3, 2, 1, Go!
   // [Tab to generate]
 
@@ -3181,7 +3181,7 @@ Error: Property 'colr' does not exist. Did you mean 'color'?
 4. **Trait recommendations:**
 
 ```hsplus
-orb door {
+composition door {
   // AI: "This looks like a door. Consider adding:"
   //     @animated - for open/close animation
   //     @audio - for sound effects
@@ -3421,7 +3421,7 @@ await init(); // Load WASM
 
 const ast = JSON.parse(
   parse_to_json(`
-  orb cube {
+  composition cube {
     @grabbable
     color: "red"
   }
@@ -3768,7 +3768,7 @@ const runtime = new HoloScriptRuntime({
 });
 
 runtime.load(`
-  orb cube {
+  composition cube {
     @physics
     color: "red"
   }

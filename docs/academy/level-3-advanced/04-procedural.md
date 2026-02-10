@@ -116,7 +116,7 @@ function generateTerrain(width, depth, resolution) {
   return createMesh(vertices, width, depth)
 }
 
-orb terrain {
+composition terrain {
   geometry: generateTerrain(100, 100, 1)
   material: {
     map: "textures/terrain_diffuse.jpg"

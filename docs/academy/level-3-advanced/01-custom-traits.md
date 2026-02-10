@@ -17,7 +17,7 @@ Traits in HoloScript follow a component-based architecture:
 
 ```
 ┌─────────────────────────────────────────────┐
-│                   Orb                        │
+│                   composition │
 ├─────────────────────────────────────────────┤
 │  @trait1  │  @trait2  │  @trait3  │  ...    │
 ├───────────┼───────────┼───────────┼─────────┤
@@ -206,7 +206,7 @@ export default defineConfig({
 
 ```hsplus
 composition "Combat Demo" {
-  orb enemy {
+  composition enemy {
     @health {
       maxHealth: 50
       regeneration: 2
@@ -234,7 +234,7 @@ composition "Combat Demo" {
   }
 
   // Weapon that deals damage
-  orb sword {
+  composition sword {
     @grabbable
 
     position: [1, 1, -2]
@@ -367,7 +367,7 @@ holoscript add @myteam/combat-traits
 
 ```hsplus
 // Automatically available after install
-orb player {
+composition player {
   @health { maxHealth: 100 }
   @armor { damageReduction: 0.2 }
 }
