@@ -23,7 +23,7 @@ composition "My First Scene" {
     ambient_light: 0.4
   }
 
-  object "FloatingOrb" {
+  object "FloatingBox" {
     @grabbable
     @glowing
 
@@ -47,10 +47,10 @@ Open the Command Palette (`Ctrl+Shift+P`) and type **"HoloScript: Open Examples"
 
 | #   | Example                              | What You'll Learn                                  |
 | --- | ------------------------------------ | -------------------------------------------------- |
-| 1   | 1-floating-cyan-orb.holo             | Basic scene structure with @grabbable and @glowing |
+| 1   | 1-floating-cyan-box.holo             | Basic scene structure with @grabbable and @glowing |
 | 2   | 2-red-cube-teal-button.holo          | VR traits: @throwable, @physics, @clickable        |
 | 3   | 3-ball-ramp-with-bouncy-spheres.holo | Physics simulation with @physics and @collidable   |
-| 4   | 4-networked-spheres.holo             | Multiplayer with @networked and state sync         |
+| 4   | 4-networked-entities.holo            | Multiplayer with @networked and state sync         |
 | 5   | 5-color-button-panel.holo            | Interactive UI with multiple clickable buttons     |
 
 ## 5. Compile to Target Platform
@@ -59,19 +59,31 @@ Open the Command Palette (`Ctrl+Shift+P`) and type **"HoloScript: Open Examples"
 # Install CLI
 npm install -g @holoscript/cli
 
-# Compile to Three.js
+# Compile to Three.js (web)
 holoscript compile hello.holo --target threejs
 
-# Compile to Unity
+# Compile to Unity (C#)
 holoscript compile hello.holo --target unity
 
-# Compile to VRChat
+# Compile to Godot (GDScript)
+holoscript compile hello.holo --target godot
+
+# Compile to visionOS (Swift/RealityKit)
+holoscript compile hello.holo --target visionos
+
+# Compile to VRChat (UdonSharp)
 holoscript compile hello.holo --target vrchat
+
+# Compile to URDF (ROS 2 robotics)
+holoscript compile hello.holo --target urdf
+
+# 18+ targets available: unity, unreal, godot, vrchat, threejs,
+# babylon, webgpu, visionos, androidxr, urdf, sdf, dtdl, wot, usda...
 ```
 
 ## What's Next?
 
-- [VR Traits](./traits) - Add interactivity with @grabbable, @physics, @networked
+- [Traits Reference](./traits) - 1,525 traits across 61 categories
 - [Compositions](./compositions) - Build complex multi-object scenes
 - [Best Practices](../best-practices.md) - Learn the 10 rules for great VR experiences
 - [AI Integration](./ai-agents) - Use MCP server with Claude, GPT, or Brittney

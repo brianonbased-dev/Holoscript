@@ -38,11 +38,29 @@ A full VR battle arena in ~100 lines.
 
 ### [AI Integration](/examples/ai-agent)
 
-Use MCP server for AI-generated content.
+Use MCP server (34+ tools) for AI-generated content.
 
 ### [Multi-Platform Export](/examples/export)
 
-Compile to Unity, Three.js, VRChat.
+Compile to 18+ targets: Unity, Unreal, Godot, VRChat, Babylon, WebGPU, visionOS, Android XR, and more.
+
+## Cross-Domain Examples
+
+### Robotics (URDF/SDF)
+
+Compile HoloScript scenes to URDF for ROS 2 robots or SDF for Gazebo simulation.
+
+### Digital Twins (DTDL)
+
+Define IoT digital twins that compile to Azure DTDL interfaces.
+
+### IoT Interop (W3C WoT)
+
+Export scene objects as W3C Web of Things Thing Descriptions for IoT device interop.
+
+### OpenUSD Pipeline
+
+Compile scenes to USDA for the Pixar/Apple/NVIDIA OpenUSD ecosystem.
 
 ---
 

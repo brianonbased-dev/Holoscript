@@ -1,6 +1,6 @@
 # Introduction to HoloScript
 
-HoloScript is the **spatial programming language** for VR, AR, and 3D applications. It removes the abstraction barrier between humans and computation—instead of writing text that a machine interprets, you **manipulate computation directly** as spatial objects.
+HoloScript is a **full programming language** for VR, AR, robotics, IoT, and digital twins. It compiles to **18+ targets** including Unity, Unreal, Godot, visionOS, Android XR, WebGPU, URDF (ROS 2), SDF (Gazebo), DTDL (Azure Digital Twins), W3C WoT, and OpenUSD — from a single source file.
 
 ## Why HoloScript?
 
@@ -18,9 +18,10 @@ HoloScript is the **spatial programming language** for VR, AR, and 3D applicatio
 
 ### For Computing
 
-- **One source → 9 platforms** - Web, VR, AR, mobile, desktop, Unity, Unreal, VRChat
+- **One source → 18+ targets** - Unity, Unreal, Godot, VRChat, Babylon.js, WebGPU, visionOS, Android XR, URDF, SDF, DTDL, WoT, OpenUSD, Three.js, GLTF, OpenXR, iOS, WASM
 - **50,000 → 500 lines** - Declarative syntax eliminates boilerplate
-- **Built for collaboration** - Human and AI work in the same space
+- **Cross-domain** - VR, AR, robotics, IoT, and digital twins from one source
+- **Dual parser** - TypeScript + Rust/WASM with full LSP, linter, and formatter
 
 ## File Formats
 
@@ -61,4 +62,4 @@ composition "Hello World" {
 
 - [Quick Start Guide](./quick-start) - Build your first HoloScript app
 - [File Formats](./file-formats) - Deep dive into .hs, .hsplus, and .holo
-- [VR Traits](./traits) - All 55 built-in traits explained
+- [Traits Reference](./traits) - 1,525 traits across 61 categories

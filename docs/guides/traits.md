@@ -1,6 +1,34 @@
-# VR Traits
+# Traits Reference
 
-HoloScript includes **55 built-in traits** that make objects spatial and interactive. Add traits with the `@` prefix.
+HoloScript includes **1,525 built-in traits** across **61 categories** that cover VR/AR interaction, physics, networking, audio, AI, robotics, IoT, and more. Add traits with the `@` prefix.
+
+> **Note:** This page shows a curated selection of commonly used traits. The full 1,525 traits are organized in 61 category modules in the HoloScript core package. Use `holoscript list-traits` or the MCP tool `list_traits` to browse all available traits.
+
+## Trait Categories Overview
+
+| Category | Examples | Count |
+| -------- | -------- | ----- |
+| Core VR | @grabbable, @physics, @collidable | 25+ |
+| Interaction | @clickable, @hoverable, @draggable | 30+ |
+| Visual/Effects | @glowing, @particle_system, @weather | 40+ |
+| Physics | @rigid, @kinematic, @cloth, @fluid | 25+ |
+| Networking | @networked, @synced, @persistent | 20+ |
+| Audio | @spatial_audio, @ambient, @voice_activated | 15+ |
+| AI/Agents | @behavior_tree, @pathfinding, @npc | 30+ |
+| Humanoid | @avatar, @hand_tracked, @eye_tracked | 35+ |
+| Locomotion | @teleport, @flying, @climbing | 20+ |
+| UI | @billboard, @tooltip, @menu | 25+ |
+| Platform | @visionos, @quest, @webxr | 15+ |
+| Environment | @skybox, @terrain, @water | 30+ |
+| Nature | @flora, @fauna, @ecosystem | 25+ |
+| Game | @inventory, @health, @scoreboard | 40+ |
+| Magic/Sci-Fi | @spell, @shield, @hologram | 50+ |
+| Building | @snappable, @resizable, @blueprint | 30+ |
+| Emotion/Mood | @expression, @ambient_mood | 20+ |
+| Social | @voice_chat, @emote, @presence | 20+ |
+| Media | @video_player, @screen_share | 15+ |
+| Accessibility | @screen_reader, @haptic_guide | 15+ |
+| ...and 41 more categories | | |
 
 ## Interaction Traits
 

@@ -39,7 +39,7 @@ npm install -g @holoscript/cli
 
 ```bash
 holoscript --version
-# HoloScript CLI v1.0.0
+# HoloScript CLI v3.3.0
 ```
 
 ### Basic Commands
@@ -54,10 +54,21 @@ holoscript validate scene.holo
 # Preview locally
 holoscript preview scene.holo
 
-# Compile to target
+# Compile to target (18+ targets available)
 holoscript compile scene.holo --target threejs
 holoscript compile scene.holo --target unity
+holoscript compile scene.holo --target unreal
+holoscript compile scene.holo --target godot
 holoscript compile scene.holo --target vrchat
+holoscript compile scene.holo --target babylon
+holoscript compile scene.holo --target webgpu
+holoscript compile scene.holo --target visionos
+holoscript compile scene.holo --target androidxr
+holoscript compile scene.holo --target urdf       # ROS 2 robotics
+holoscript compile scene.holo --target sdf        # Gazebo simulation
+holoscript compile scene.holo --target dtdl       # Azure Digital Twins
+holoscript compile scene.holo --target wot        # W3C Web of Things
+holoscript compile scene.holo --target usda       # OpenUSD
 
 # Watch mode
 holoscript watch src/ --target threejs
@@ -99,6 +110,12 @@ Add to Claude Desktop config (`~/.claude/settings.json`):
 | `validate_holoscript` | Check code for errors            |
 | `suggest_traits`      | Get trait recommendations        |
 | `explain_code`        | Get plain English explanation    |
+| `compile_scene`       | Compile to any of 18+ targets    |
+| `list_traits`         | Browse all 1,525 traits          |
+| `query_scene_graph`   | Inspect scene structure          |
+| `parse_holoscript`    | Parse to AST                     |
+
+34+ tools available in total. See [MCP Server Guide](/guides/mcp-server) for full documentation.
 
 See [MCP Server Guide](/guides/mcp-server) for full documentation.
 
@@ -118,7 +135,7 @@ npm install @holoscript/core
 import { parse } from '@holoscript/core';
 
 const ast = parse(`
-  orb hello {
+  composition hello {
     message: "Hello World"
   }
 `);
@@ -185,7 +202,7 @@ my-vr-game/
 {
   "entry": "src/scenes/main.holo",
   "outDir": "dist",
-  "targets": ["threejs", "unity"],
+  "targets": ["threejs", "unity", "godot", "urdf"],
   "assets": {
     "models": "src/assets/models",
     "sounds": "src/assets/sounds"

@@ -1,7 +1,7 @@
 ---
 layout: page
-title: HoloScript - Create VR Worlds Without the Complexity
-description: Open-source language for building VR/AR experiences as simple as HTML
+title: HoloScript - One Language, Every Platform
+description: Open-source programming language compiling to 18+ targets — Unity, Unreal, Godot, visionOS, robotics, IoT, and more
 ---
 
 <LandingPage />
