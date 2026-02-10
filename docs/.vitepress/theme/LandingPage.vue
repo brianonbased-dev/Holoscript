@@ -891,6 +891,38 @@ export default {
   justify-content: center;
   gap: 1.5rem;
   margin-bottom: 2rem;
+  position: relative;
+}
+.hero-logos::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 280px;
+  height: 280px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(0, 255, 255, 0.18) 0%,
+    rgba(139, 92, 246, 0.12) 35%,
+    rgba(255, 107, 157, 0.06) 60%,
+    transparent 75%
+  );
+  border-radius: 50%;
+  filter: blur(30px);
+  animation: logoPulse 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes logoPulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
 }
 .hero-logo-link {
   display: block;
@@ -1322,6 +1354,10 @@ export default {
   .hero-logos {
     gap: 1rem;
     margin-bottom: 1.5rem;
+  }
+  .hero-logos::before {
+    width: 200px;
+    height: 200px;
   }
   .hero-logo {
     height: 56px;
