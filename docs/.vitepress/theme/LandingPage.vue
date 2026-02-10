@@ -640,6 +640,7 @@ export default {
   text-align: center;
   font-size: clamp(2rem, 4vw, 3rem);
   margin-bottom: 1rem;
+  line-height: 1.3;
 }
 .section-sub {
   text-align: center;
@@ -784,7 +785,8 @@ export default {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 1.5rem;
-  line-height: 1.15;
+  line-height: 1.3;
+  padding-bottom: 0.1em;
 }
 .hero-sub {
   font-size: clamp(1.1rem, 2.5vw, 1.4rem);
@@ -1123,6 +1125,8 @@ export default {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1.3;
+  padding-bottom: 0.1em;
 }
 
 /* ========= FOOTER ========= */
