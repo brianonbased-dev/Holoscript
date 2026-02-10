@@ -964,6 +964,7 @@ export default {
   max-width: 800px;
   margin: 0 auto 2.5rem !important;
   line-height: 1.6 !important;
+  text-align: center !important;
 }
 .hero-sub strong {
   color: var(--text);
