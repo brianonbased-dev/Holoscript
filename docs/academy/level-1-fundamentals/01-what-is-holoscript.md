@@ -12,7 +12,7 @@ By the end of this lesson, you will:
 
 ## What is HoloScript?
 
-**HoloScript** is a domain-specific language (DSL) designed specifically for creating VR and XR (Extended Reality) experiences. Unlike general-purpose programming languages, HoloScript is optimized for the unique requirements of spatial computing:
+**HoloScript** is a full programming language designed specifically for creating VR and XR (Extended Reality) experiences. Purpose-built for spatial computing, HoloScript features a dual parser (TypeScript + Rust/WASM), its own AST, type system, standard library, LSP, package ecosystem, and compiles to 15+ targets:
 
 - **Declarative 3D scenes** - Describe what you want, not how to build it
 - **Built-in VR interactions** - Grabbing, pointing, and physics out of the box
@@ -155,7 +155,7 @@ HoloScript isn't just a language - it's an ecosystem:
 
 ## Summary
 
-- HoloScript is a domain-specific language for VR/XR development
+- HoloScript is a full programming language for VR/XR development
 - It uses **compositions**, **orbs**, **traits**, and **event handlers**
 - The `@` symbol adds behaviors (traits) to objects
 - HoloScript dramatically reduces code compared to traditional engines

@@ -19,7 +19,7 @@ I've been working on HoloScript, a declarative language for VR/AR development th
 Building a VR app today means choosing Unity, Unreal, or WebXR and being locked in. Want to publish on Quest AND VRChat AND the web? Rewrite everything 3 times.
 
 **The Solution:**
-HoloScript is a declarative DSL where you describe *what* you want, not *how* to render it:
+HoloScript is a declarative language where you describe *what* you want, not *how* to render it:
 
 ```holo
 composition "VR Gallery" {
@@ -90,7 +90,7 @@ I've released v3.3 of HoloScript, a programming language designed specifically f
 
 ## What is it?
 
-A declarative DSL where you describe 3D scenes once and compile to any major platform:
+A declarative language where you describe 3D scenes once and compile to any major platform:
 
 ```holo
 composition "Interactive Scene" {
@@ -164,7 +164,7 @@ Released HoloScript 3.0 – Write VR games once, export to Unity, Unreal, VRChat
 ### Content
 ```
 
-Just shipped v3.3 of my side project. It's a domain-specific language for VR/AR that compiles to multiple game engines.
+Just shipped v3.3 of my side project. It's a programming language for VR/AR that compiles to multiple game engines.
 
 **Example:**
 

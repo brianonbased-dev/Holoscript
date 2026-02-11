@@ -5,7 +5,7 @@ Language support for HoloScript+ - a declarative language for spatial computing 
 ## Features
 
 - **Syntax Highlighting** for `.holo`, `.hs`, and `.hsplus` files
-- **56 VR Traits** - Built-in traits for XR interactions
+- **1,535 VR Traits** - Built-in traits for XR interactions across 61 categories
 - **IntelliSense** - Autocomplete for traits, objects, and properties
 - **Hover Documentation** - Trait and keyword documentation on hover
 - **Semantic Tokens** - Rich syntax coloring (15 token types, 6 modifiers)
@@ -23,7 +23,7 @@ Language support for HoloScript+ - a declarative language for spatial computing 
 
 `orb`, `sphere`, `cube`, `box`, `cylinder`, `cone`, `plane`, `mesh`, `avatar`, `light`, `camera`, `scene`, `group`, `text`, `panel`, `button`, `slider`, `zone`
 
-### VR Traits (56)
+### VR Traits (1,535 across 61 categories, highlights below)
 
 **Interaction:** `@grabbable`, `@throwable`, `@hoverable`, `@clickable`, `@draggable`, `@pointable`, `@collidable`, `@physics`, `@gravity`, `@trigger`, `@teleport`
 
@@ -74,10 +74,10 @@ The extension provides AI agent commands accessible via the command palette:
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
+| Shortcut       | Action               |
+| -------------- | -------------------- |
 | `Ctrl+Shift+V` | Open Preview to Side |
-| `Ctrl+K V` | Open Preview |
+| `Ctrl+K V`     | Open Preview         |
 
 ## Installation
 
