@@ -20,7 +20,6 @@
     "clean": "pnpm -r exec rm -rf dist",
     "types:generate": "bash scripts/generate-types.sh",
     "types:generate:win": "powershell -File scripts/generate-types.ps1",
-    "prebuild": "pnpm types:generate || pnpm types:generate:win",
     "version:patch": "node scripts/sync-versions.js patch",
     "version:minor": "node scripts/sync-versions.js minor",
     "version:major": "node scripts/sync-versions.js major",
