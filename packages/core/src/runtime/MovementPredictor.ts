@@ -12,6 +12,12 @@ export interface IntentSignal {
   weight: number; // 0-1 (confidence in intent)
 }
 
+export interface PredictiveWindow {
+  center: [number, number, number];
+  radius: number;
+  likelihood: number;
+}
+
 export class MovementPredictor {
   private lastPosition: Vector3 = [0, 0, 0];
   private velocity: Vector3 = [0, 0, 0];
@@ -20,18 +26,24 @@ export class MovementPredictor {
   private intent: IntentSignal | null = null;
 
   /**
+   * Convert Vector3 to tuple for consistent handling
+   */
+  private toTuple(v: Vector3): [number, number, number] {
+    return Array.isArray(v) ? v : [v.x, v.y, v.z];
+  }
+
+  /**
    * Update internal state with current player transform
    */
   public update(position: Vector3, dt: number): void {
-    const currentPos: Vector3 = Array.isArray(position)
-      ? [...position]
-      : [position.x, position.y, position.z];
+    const currentPos = this.toTuple(position);
 
     if (dt > 0) {
+      const lastPos = this.toTuple(this.lastPosition);
       this.velocity = [
-        ((currentPos as any)[0] - (this.lastPosition as any)[0]) / dt,
-        ((currentPos as any)[1] - (this.lastPosition as any)[1]) / dt,
-        ((currentPos as any)[2] - (this.lastPosition as any)[2]) / dt,
+        (currentPos[0] - lastPos[0]) / dt,
+        (currentPos[1] - lastPos[1]) / dt,
+        (currentPos[2] - lastPos[2]) / dt,
       ];
     }
 
@@ -54,11 +66,13 @@ export class MovementPredictor {
   /**
    * Tier 1: Linear Extrapolation
    */
-  private predictLinear(lookahead: number): Vector3 {
+  private predictLinear(lookahead: number): [number, number, number] {
+    const lastPosTuple = this.toTuple(this.lastPosition);
+    const velTuple = this.toTuple(this.velocity);
     return [
-      (this.lastPosition as any)[0] + (this.velocity as any)[0] * lookahead,
-      (this.lastPosition as any)[1] + (this.velocity as any)[1] * lookahead,
-      (this.lastPosition as any)[2] + (this.velocity as any)[2] * lookahead,
+      lastPosTuple[0] + velTuple[0] * lookahead,
+      lastPosTuple[1] + velTuple[1] * lookahead,
+      lastPosTuple[2] + velTuple[2] * lookahead,
     ];
   }
 
@@ -67,24 +81,24 @@ export class MovementPredictor {
    * In a full implementation, this would use an LSTM/RNN.
    * Here we simulate it by analyzing the curvature of the history.
    */
-  private predictRecurrent(lookahead: number): Vector3 {
+  private predictRecurrent(lookahead: number): [number, number, number] {
     if (this.history.length < 10) return this.predictLinear(lookahead);
 
     // Calculate average acceleration (curvature)
     const midIdx = Math.floor(this.history.length / 2);
-    const startPos = this.history[0];
-    const midPos = this.history[midIdx];
-    const endPos = this.history[this.history.length - 1];
+    const startPosTuple = this.toTuple(this.history[0]);
+    const midPosTuple = this.toTuple(this.history[midIdx]);
+    const endPosTuple = this.toTuple(this.history[this.history.length - 1]);
 
     // Simple spline-like estimation
     const linearPred = this.predictLinear(lookahead);
 
     // If the path is curving, bias the prediction towards the curve
-    const chord1 = [midPos[0] - startPos[0], midPos[1] - startPos[1], midPos[2] - startPos[2]];
-    const chord2 = [endPos[0] - midPos[0], endPos[1] - midPos[1], endPos[2] - midPos[2]];
+    const chord1: [number, number, number] = [midPosTuple[0] - startPosTuple[0], midPosTuple[1] - startPosTuple[1], midPosTuple[2] - startPosTuple[2]];
+    const chord2: [number, number, number] = [endPosTuple[0] - midPosTuple[0], endPosTuple[1] - midPosTuple[1], endPosTuple[2] - midPosTuple[2]];
 
     const turnFactor = 0.5; // Simulated RNN weight
-    const curveOffset: Vector3 = [
+    const curveOffset: [number, number, number] = [
       (chord2[0] - chord1[0]) * lookahead * turnFactor,
       (chord2[1] - chord1[1]) * lookahead * turnFactor,
       (chord2[2] - chord1[2]) * lookahead * turnFactor,
@@ -100,7 +114,7 @@ export class MovementPredictor {
   /**
    * Tier 3: Intent-based biasing
    */
-  private predictIntent(lookahead: number): Vector3 {
+  private predictIntent(lookahead: number): [number, number, number] {
     const recurrent = this.predictRecurrent(lookahead);
     if (!this.intent) return recurrent;
 
@@ -108,10 +122,11 @@ export class MovementPredictor {
     const weight = this.intent.weight;
 
     // Interpolate between recurrent path and intent target
+    const targetPosTuple = this.toTuple(targetPos);
     return [
-      recurrent[0] * (1 - weight) + (targetPos as any)[0] * weight,
-      recurrent[1] * (1 - weight) + (targetPos as any)[1] * weight,
-      recurrent[2] * (1 - weight) + (targetPos as any)[2] * weight,
+      recurrent[0] * (1 - weight) + targetPosTuple[0] * weight,
+      recurrent[1] * (1 - weight) + targetPosTuple[1] * weight,
+      recurrent[2] * (1 - weight) + targetPosTuple[2] * weight,
     ];
   }
 
@@ -124,7 +139,7 @@ export class MovementPredictor {
 
     // 1. Ambient window (Tier 0: Immediate surroundings)
     windows.push({
-      center: [...this.lastPosition],
+      center: this.toTuple(this.lastPosition),
       radius: 10,
       likelihood: 1.0,
     });
@@ -138,7 +153,7 @@ export class MovementPredictor {
     if (speed > 0.5) {
       // 2. Linear prediction (High confidence, short term)
       windows.push({
-        center: this.predictLinear(lookaheadSeconds * 0.5),
+        center: this.predictLinear(lookaheadSeconds),
         radius: speed * lookaheadSeconds * 0.3 + 5,
         likelihood: 0.9,
       });
