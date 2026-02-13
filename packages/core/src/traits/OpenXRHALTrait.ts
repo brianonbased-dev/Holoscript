@@ -58,6 +58,88 @@ interface ControllerProfile {
   hasTrigger: boolean;
 }
 
+// Phase 2: Button types and gamepad state
+type ControllerButton =
+  | 'trigger'
+  | 'grip'
+  | 'thumbstick'
+  | 'a'
+  | 'b'
+  | 'x'
+  | 'y'
+  | 'menu'
+  | 'system'
+  | 'touchpad';
+
+interface ButtonState {
+  pressed: boolean;
+  touched: boolean;
+  value: number; // 0.0 to 1.0
+}
+
+interface GamepadState {
+  buttons: Map<ControllerButton, ButtonState>;
+  thumbstick: { x: number; y: number }; // -1.0 to 1.0
+  touchpad?: { x: number; y: number }; // -1.0 to 1.0
+  triggerValue: number; // 0.0 to 1.0
+  gripValue: number; // 0.0 to 1.0
+}
+
+interface ControllerProfileDatabase {
+  buttonMapping: (ControllerButton | null)[]; // Maps button index to semantic name
+  thumbstickXAxis: number; // Axes index for thumbstick X
+  thumbstickYAxis: number; // Axes index for thumbstick Y
+  touchpadXAxis?: number; // Axes index for touchpad X (if present)
+  touchpadYAxis?: number; // Axes index for touchpad Y (if present)
+  hapticActuators: number; // Number of haptic actuators
+}
+
+// Phase 3: Hand tracking types
+type HandJoint =
+  | 'wrist'
+  | 'thumb-metacarpal'
+  | 'thumb-phalanx-proximal'
+  | 'thumb-phalanx-distal'
+  | 'thumb-tip'
+  | 'index-finger-metacarpal'
+  | 'index-finger-phalanx-proximal'
+  | 'index-finger-phalanx-intermediate'
+  | 'index-finger-phalanx-distal'
+  | 'index-finger-tip'
+  | 'middle-finger-metacarpal'
+  | 'middle-finger-phalanx-proximal'
+  | 'middle-finger-phalanx-intermediate'
+  | 'middle-finger-phalanx-distal'
+  | 'middle-finger-tip'
+  | 'ring-finger-metacarpal'
+  | 'ring-finger-phalanx-proximal'
+  | 'ring-finger-phalanx-intermediate'
+  | 'ring-finger-phalanx-distal'
+  | 'ring-finger-tip'
+  | 'pinky-finger-metacarpal'
+  | 'pinky-finger-phalanx-proximal'
+  | 'pinky-finger-phalanx-intermediate'
+  | 'pinky-finger-phalanx-distal'
+  | 'pinky-finger-tip';
+
+interface JointPose {
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number; w: number }; // Quaternion
+  radius: number; // Joint radius in meters
+}
+
+interface HandTrackingState {
+  joints: Map<HandJoint, JointPose>;
+  pinchStrength: number; // 0.0 (open) to 1.0 (pinched)
+  gripStrength: number; // 0.0 (open) to 1.0 (gripped)
+}
+
+// Phase 3: Eye tracking types
+interface GazeRay {
+  origin: { x: number; y: number; z: number };
+  direction: { x: number; y: number; z: number };
+}
+
 interface OpenXRHALState {
   isInitialized: boolean;
   session: unknown | null;
@@ -68,6 +150,15 @@ interface OpenXRHALState {
   eyeTrackingActive: boolean;
   lastFrameTime: number;
   performanceLevel: 'low' | 'medium' | 'high' | 'max';
+  inputSourcesCache: unknown[]; // Cache of XRInputSource objects
+  referenceSpace: unknown | null; // XRReferenceSpace for pose calculations
+  // Phase 4: Session lifecycle tracking
+  sessionVisible: boolean; // Track visibility state
+  sessionInterrupted: boolean; // Track interruption state
+  reconnectAttempts: number; // Count reconnection attempts
+  featuresAvailable: Set<string>; // Track available WebXR features
+  lastError: string | null; // Last error message
+  errorCount: number; // Total error count this session
 }
 
 interface OpenXRHALConfig {
@@ -152,6 +243,87 @@ const deviceProfiles: Record<string, Partial<XRDeviceProfile>> = {
 };
 
 // =============================================================================
+// CONTROLLER PROFILE DATABASE (Phase 2)
+// =============================================================================
+
+/**
+ * Device-specific button mappings for gamepad state extraction
+ * Maps XRInputSource.profiles to button/axis indices
+ */
+const CONTROLLER_PROFILES: Record<string, ControllerProfileDatabase> = {
+  // Meta Quest 3 - Touch Plus controllers
+  'oculus-touch-v3': {
+    buttonMapping: [
+      'trigger', // 0
+      'grip', // 1
+      'thumbstick', // 2
+      'x', // 3 (left) / a (right)
+      'y', // 4 (left) / b (right)
+      'menu', // 5 (left only)
+    ],
+    thumbstickXAxis: 2,
+    thumbstickYAxis: 3,
+    hapticActuators: 1,
+  },
+
+  // Meta Quest Pro - TruTouch controllers (dual actuators)
+  'oculus-touch-v2': {
+    buttonMapping: [
+      'trigger', // 0
+      'grip', // 1
+      'thumbstick', // 2
+      'x', // 3 (left) / a (right)
+      'y', // 4 (left) / b (right)
+      'menu', // 5 (left only)
+    ],
+    thumbstickXAxis: 2,
+    thumbstickYAxis: 3,
+    hapticActuators: 2, // TruTouch dual actuators
+  },
+
+  // Valve Index - Knuckles controllers
+  'valve-index': {
+    buttonMapping: [
+      'trigger', // 0
+      'grip', // 1
+      'thumbstick', // 2
+      'a', // 3
+      'b', // 4
+      'system', // 5
+    ],
+    thumbstickXAxis: 2,
+    thumbstickYAxis: 3,
+    touchpadXAxis: 0,
+    touchpadYAxis: 1,
+    hapticActuators: 1,
+  },
+
+  // HTC Vive XR Elite
+  'htc-vive-focus': {
+    buttonMapping: [
+      'trigger', // 0
+      'grip', // 1
+      'touchpad', // 2
+      'menu', // 3
+      'system', // 4
+    ],
+    thumbstickXAxis: 2,
+    thumbstickYAxis: 3,
+    touchpadXAxis: 0,
+    touchpadYAxis: 1,
+    hapticActuators: 1,
+  },
+
+  // Generic fallback
+  'generic': {
+    buttonMapping: ['trigger', 'grip', 'thumbstick', 'a', 'b', 'menu'],
+    thumbstickXAxis: 2,
+    thumbstickYAxis: 3,
+    hapticActuators: 1,
+  },
+};
+
+// =============================================================================
 // HANDLER
 // =============================================================================
 
@@ -180,6 +352,15 @@ export const openXRHALHandler: TraitHandler<OpenXRHALConfig> = {
       eyeTrackingActive: false,
       lastFrameTime: 0,
       performanceLevel: 'medium',
+      inputSourcesCache: [],
+      referenceSpace: null,
+      // Phase 4: Session lifecycle initialization
+      sessionVisible: true,
+      sessionInterrupted: false,
+      reconnectAttempts: 0,
+      featuresAvailable: new Set<string>(),
+      lastError: null,
+      errorCount: 0,
     };
     (node as any).__openxrHALState = state;
 
@@ -198,6 +379,11 @@ export const openXRHALHandler: TraitHandler<OpenXRHALConfig> = {
     const state = (node as any).__openxrHALState as OpenXRHALState;
     if (!state || !state.isInitialized) return;
 
+    // Phase 4: Skip updates if session is interrupted
+    if (state.sessionInterrupted) {
+      return;
+    }
+
     state.lastFrameTime = delta;
 
     // Update performance level based on frame timing
@@ -211,12 +397,23 @@ export const openXRHALHandler: TraitHandler<OpenXRHALConfig> = {
       state.performanceLevel = 'max';
     }
 
+    // Phase 4: Poll input sources with error handling
+    if (state.session && !((state.session as any).simulated)) {
+      try {
+        pollInputSources(state, context, node);
+      } catch (error) {
+        handleFrameError(state, config, context, node, error);
+      }
+    }
+
     // Emit frame data for dependent traits
     context.emit?.('openxr_frame', {
       node,
       delta,
       deviceProfile: state.deviceProfile,
       performanceLevel: state.performanceLevel,
+      sessionVisible: state.sessionVisible,
+      errorCount: state.errorCount,
     });
   },
 
@@ -253,12 +450,14 @@ export const openXRHALHandler: TraitHandler<OpenXRHALConfig> = {
       const hand = (event.payload?.hand as 'left' | 'right') || 'right';
       const intensity = (event.payload?.intensity as number) ?? 1.0;
       const duration = (event.payload?.duration as number) ?? 100;
-      const success = triggerHaptic(state, hand, intensity, duration);
+      const actuatorIndex = (event.payload?.actuator_index as number) ?? 0; // Phase 2
+      const success = triggerHaptic(state, hand, intensity, duration, actuatorIndex);
       context.emit?.('haptic_triggered', {
         node,
         hand,
         intensity,
         duration,
+        actuatorIndex, // Phase 2
         success,
         simulated: (state.session as any)?.simulated === true,
       });
@@ -337,20 +536,20 @@ async function requestXRSession(
       }
     }
 
-    // Setup session event handlers
-    session.addEventListener('end', () => {
-      state.session = null;
-      state.isInitialized = false;
-      context.emit?.('openxr_session_end', { node });
-    });
+    // Phase 4: Setup comprehensive session event handlers
+    setupSessionEventHandlers(session, state, config, context, node);
 
     // Detect device from session
     detectDeviceFromSession(state, session, config);
+
+    // Phase 4: Detect available features
+    detectAvailableFeatures(session, state, config, context, node);
 
     context.emit?.('openxr_session_start', {
       node,
       mode,
       deviceProfile: state.deviceProfile,
+      featuresAvailable: Array.from(state.featuresAvailable),
     });
 
     return true;
@@ -363,6 +562,317 @@ async function requestXRSession(
       context.emit?.('openxr_error', { node, error: String(error) });
     }
     return false;
+  }
+}
+
+/**
+ * Phase 4: Setup comprehensive session event handlers
+ * Handles session lifecycle events, visibility changes, and input source changes
+ */
+function setupSessionEventHandlers(
+  session: any,
+  state: OpenXRHALState,
+  config: OpenXRHALConfig,
+  context: any,
+  node: any
+): void {
+  // Session end event
+  session.addEventListener('end', () => {
+    state.session = null;
+    state.isInitialized = false;
+    state.sessionVisible = false;
+    context.emit?.('openxr_session_end', {
+      node,
+      reason: 'ended',
+      errorCount: state.errorCount,
+    });
+  });
+
+  // Visibility change event (session hidden/visible)
+  session.addEventListener('visibilitychange', () => {
+    const wasVisible = state.sessionVisible;
+    state.sessionVisible = session.visibilityState === 'visible';
+
+    if (!wasVisible && state.sessionVisible) {
+      // Session became visible again
+      context.emit?.('openxr_session_resumed', { node });
+      state.sessionInterrupted = false;
+    } else if (wasVisible && !state.sessionVisible) {
+      // Session became hidden/interrupted
+      context.emit?.('openxr_session_interrupted', {
+        node,
+        visibilityState: session.visibilityState,
+      });
+      state.sessionInterrupted = true;
+    }
+  });
+
+  // Input sources change event (controllers connected/disconnected)
+  session.addEventListener('inputsourceschange', (event: any) => {
+    // Update input sources cache
+    state.inputSourcesCache = Array.from(session.inputSources || []);
+
+    const added = event.added || [];
+    const removed = event.removed || [];
+
+    context.emit?.('openxr_input_sources_changed', {
+      node,
+      added: added.length,
+      removed: removed.length,
+      totalSources: state.inputSourcesCache.length,
+      sources: state.inputSourcesCache.map((source: any) => ({
+        handedness: source.handedness,
+        targetRayMode: source.targetRayMode,
+        profiles: source.profiles,
+      })),
+    });
+
+    // Re-detect device profile if controllers changed
+    if (added.length > 0 || removed.length > 0) {
+      detectDeviceFromSession(state, session, config);
+    }
+  });
+
+  // Session focus blur event (if available)
+  if ('onfocusblur' in session || session.addEventListener) {
+    try {
+      session.addEventListener('blur', () => {
+        context.emit?.('openxr_session_blur', { node });
+      });
+      session.addEventListener('focus', () => {
+        context.emit?.('openxr_session_focus', { node });
+      });
+    } catch {
+      // Not all browsers support focus/blur events
+    }
+  }
+}
+
+/**
+ * Phase 4: Detect available WebXR features and capabilities
+ * Provides feature detection for graceful degradation
+ */
+function detectAvailableFeatures(
+  session: any,
+  state: OpenXRHALState,
+  config: OpenXRHALConfig,
+  context: any,
+  node: any
+): void {
+  const features = new Set<string>();
+
+  // Check for hand tracking support
+  if (session.enabledFeatures?.includes('hand-tracking')) {
+    features.add('hand-tracking');
+    state.handTrackingActive = true;
+  } else if (config.enable_hand_tracking) {
+    // Requested but not available
+    context.emit?.('openxr_feature_unavailable', {
+      node,
+      feature: 'hand-tracking',
+      fallback: config.fallback_mode,
+    });
+  }
+
+  // Check for eye tracking support (gaze input)
+  const hasGazeInput = session.inputSources?.some(
+    (source: any) => source.targetRayMode === 'gaze'
+  );
+  if (hasGazeInput || session.enabledFeatures?.includes('gaze')) {
+    features.add('eye-tracking');
+    state.eyeTrackingActive = true;
+  } else if (config.enable_eye_tracking) {
+    context.emit?.('openxr_feature_unavailable', {
+      node,
+      feature: 'eye-tracking',
+      fallback: 'controllers',
+    });
+  }
+
+  // Check for bounded reference space (room-scale)
+  try {
+    session.requestReferenceSpace('bounded-floor').then(
+      (refSpace: any) => {
+        features.add('bounded-floor');
+        if (!state.referenceSpace) {
+          state.referenceSpace = refSpace;
+        }
+      },
+      () => {
+        // Bounded floor not available, try local-floor
+        features.add('local-floor-fallback');
+      }
+    );
+  } catch {
+    // Reference space API not available
+  }
+
+  // Check for layers API (composition layers)
+  if (session.renderState?.layers !== undefined) {
+    features.add('layers');
+  }
+
+  // Check for depth sensing
+  if (session.depthUsage || session.enabledFeatures?.includes('depth-sensing')) {
+    features.add('depth-sensing');
+  }
+
+  // Check for hit testing (AR)
+  if (session.requestHitTestSource) {
+    features.add('hit-test');
+  }
+
+  // Check for anchors
+  if (session.requestAnimationFrame && session.environmentBlendMode) {
+    features.add('anchors');
+  }
+
+  // Check for DOM overlay (AR)
+  if (session.domOverlayState) {
+    features.add('dom-overlay');
+  }
+
+  // Check for passthrough (if AR session)
+  if (session.environmentBlendMode === 'alpha-blend' || session.environmentBlendMode === 'additive') {
+    features.add('passthrough');
+    state.isPassthroughActive = true;
+  }
+
+  // Check for plane detection
+  if (session.enabledFeatures?.includes('plane-detection')) {
+    features.add('plane-detection');
+  }
+
+  // Check for mesh detection
+  if (session.enabledFeatures?.includes('mesh-detection')) {
+    features.add('mesh-detection');
+  }
+
+  // Check for light estimation
+  if (session.requestLightProbe) {
+    features.add('light-estimation');
+  }
+
+  // Check for camera access
+  if (session.enabledFeatures?.includes('camera-access')) {
+    features.add('camera-access');
+  }
+
+  // Store detected features
+  state.featuresAvailable = features;
+
+  // Emit feature detection results
+  context.emit?.('openxr_features_detected', {
+    node,
+    features: Array.from(features),
+    handTracking: state.handTrackingActive,
+    eyeTracking: state.eyeTrackingActive,
+    passthrough: state.isPassthroughActive,
+  });
+}
+
+/**
+ * Phase 4: Handle frame loop errors with graceful recovery
+ */
+function handleFrameError(
+  state: OpenXRHALState,
+  config: OpenXRHALConfig,
+  context: any,
+  node: any,
+  error: unknown
+): void {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  state.lastError = errorMessage;
+  state.errorCount++;
+
+  // Emit error event
+  context.emit?.('openxr_frame_error', {
+    node,
+    error: errorMessage,
+    errorCount: state.errorCount,
+    recoveryAttempt: state.reconnectAttempts,
+  });
+
+  // Recovery strategy based on error count
+  if (state.errorCount < 3) {
+    // Minor error - log and continue
+    console.warn(`[OpenXRHAL] Frame error (${state.errorCount}/3):`, errorMessage);
+  } else if (state.errorCount < 10) {
+    // Moderate errors - attempt session recovery
+    attemptSessionRecovery(state, config, context, node);
+  } else {
+    // Too many errors - end session gracefully
+    context.emit?.('openxr_session_failed', {
+      node,
+      reason: 'too_many_errors',
+      errorCount: state.errorCount,
+      lastError: errorMessage,
+    });
+
+    // End the session
+    if (state.session && typeof (state.session as any).end === 'function') {
+      try {
+        (state.session as any).end();
+      } catch {
+        // Session already ended
+      }
+    }
+    state.session = null;
+    state.isInitialized = false;
+
+    // Attempt fallback if configured
+    if (config.fallback_mode === 'simulate') {
+      createSimulatedSession(state, config);
+      context.emit?.('openxr_fallback_activated', {
+        node,
+        reason: 'error_threshold_exceeded',
+      });
+    }
+  }
+}
+
+/**
+ * Phase 4: Attempt to recover from session errors
+ */
+function attemptSessionRecovery(
+  state: OpenXRHALState,
+  config: OpenXRHALConfig,
+  context: any,
+  node: any
+): void {
+  state.reconnectAttempts++;
+
+  // Reset error count to give recovery a chance
+  state.errorCount = 0;
+
+  context.emit?.('openxr_recovery_attempt', {
+    node,
+    attempt: state.reconnectAttempts,
+  });
+
+  // Clear reference space to force re-initialization
+  state.referenceSpace = null;
+
+  // Request a new reference space
+  if (state.session && typeof (state.session as any).requestReferenceSpace === 'function') {
+    const session = state.session as any;
+
+    session
+      .requestReferenceSpace('local-floor')
+      .then((refSpace: any) => {
+        state.referenceSpace = refSpace;
+        context.emit?.('openxr_recovery_success', {
+          node,
+          attempt: state.reconnectAttempts,
+        });
+      })
+      .catch((error: Error) => {
+        context.emit?.('openxr_recovery_failed', {
+          node,
+          attempt: state.reconnectAttempts,
+          error: error.message,
+        });
+      });
   }
 }
 
@@ -424,12 +934,14 @@ function detectDeviceFromSession(
 
 /**
  * Trigger haptic feedback on controller
+ * Phase 2: Added multi-actuator support (Quest Pro TruTouch)
  */
 function triggerHaptic(
   state: OpenXRHALState,
   hand: 'left' | 'right',
   intensity: number = 1.0,
-  durationMs: number = 100
+  durationMs: number = 100,
+  actuatorIndex: number = 0 // Phase 2: Support multiple actuators
 ): boolean {
   if (!state.session || !state.isInitialized) return false;
 
@@ -441,10 +953,14 @@ function triggerHaptic(
   for (const source of inputSources) {
     if (source.handedness === hand && source.gamepad?.hapticActuators) {
       const actuators = source.gamepad.hapticActuators;
+
+      // Phase 2: Validate actuator index
       if (actuators && actuators.length > 0) {
+        const targetIndex = Math.min(actuatorIndex, actuators.length - 1);
+
         // Use WebXR Gamepad Haptics API
         try {
-          actuators[0].pulse(intensity, durationMs);
+          actuators[targetIndex].pulse(intensity, durationMs);
           return true;
         } catch {
           return false;
@@ -454,6 +970,303 @@ function triggerHaptic(
   }
 
   return false;
+}
+
+/**
+ * Extract gamepad button and axis state (Phase 2)
+ */
+function pollGamepadState(
+  source: any, // XRInputSource
+  hand: 'left' | 'right' | 'none'
+): GamepadState | null {
+  if (!source.gamepad) return null;
+
+  // Determine controller profile from source.profiles
+  let profile: ControllerProfileDatabase = CONTROLLER_PROFILES['generic'];
+  if (source.profiles && source.profiles.length > 0) {
+    for (const profileId of source.profiles) {
+      if (CONTROLLER_PROFILES[profileId]) {
+        profile = CONTROLLER_PROFILES[profileId];
+        break;
+      }
+    }
+  }
+
+  // Extract button states
+  const buttons = new Map<ControllerButton, ButtonState>();
+  const gamepad = source.gamepad;
+
+  for (let i = 0; i < gamepad.buttons.length && i < profile.buttonMapping.length; i++) {
+    const button = gamepad.buttons[i];
+    const semanticName = profile.buttonMapping[i];
+
+    if (semanticName) {
+      buttons.set(semanticName, {
+        pressed: button.pressed || false,
+        touched: button.touched || false,
+        value: button.value || 0,
+      });
+    }
+  }
+
+  // Extract thumbstick axes
+  const thumbstick = {
+    x: gamepad.axes[profile.thumbstickXAxis] || 0,
+    y: gamepad.axes[profile.thumbstickYAxis] || 0,
+  };
+
+  // Extract touchpad axes (if present)
+  const touchpad =
+    profile.touchpadXAxis !== undefined && profile.touchpadYAxis !== undefined
+      ? {
+          x: gamepad.axes[profile.touchpadXAxis] || 0,
+          y: gamepad.axes[profile.touchpadYAxis] || 0,
+        }
+      : undefined;
+
+  // Extract trigger and grip values
+  const triggerValue = buttons.get('trigger')?.value || 0;
+  const gripValue = buttons.get('grip')?.value || 0;
+
+  return {
+    buttons,
+    thumbstick,
+    touchpad,
+    triggerValue,
+    gripValue,
+  };
+}
+
+/**
+ * Calculate pinch strength from hand joint positions (Phase 3)
+ * Returns 0.0 (open) to 1.0 (pinched)
+ */
+function calculatePinchStrength(joints: Map<HandJoint, JointPose>): number {
+  const thumbTip = joints.get('thumb-tip');
+  const indexTip = joints.get('index-finger-tip');
+
+  if (!thumbTip || !indexTip) return 0;
+
+  const dx = thumbTip.position.x - indexTip.position.x;
+  const dy = thumbTip.position.y - indexTip.position.y;
+  const dz = thumbTip.position.z - indexTip.position.z;
+  const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+  // Normalize: 0.05m = open (0.0), 0.01m = pinched (1.0)
+  const normalized = Math.max(0, Math.min(1, (0.05 - distance) / 0.04));
+  return normalized;
+}
+
+/**
+ * Calculate grip strength from hand joint curl (Phase 3)
+ * Returns 0.0 (open) to 1.0 (gripped)
+ */
+function calculateGripStrength(joints: Map<HandJoint, JointPose>): number {
+  // Average curl of all fingers except thumb
+  const fingerTips: HandJoint[] = [
+    'index-finger-tip',
+    'middle-finger-tip',
+    'ring-finger-tip',
+    'pinky-finger-tip',
+  ];
+
+  const wrist = joints.get('wrist');
+  if (!wrist) return 0;
+
+  let totalCurl = 0;
+  let validFingers = 0;
+
+  for (const tipJoint of fingerTips) {
+    const tip = joints.get(tipJoint);
+    if (!tip) continue;
+
+    // Distance from wrist to fingertip
+    const dx = tip.position.x - wrist.position.x;
+    const dy = tip.position.y - wrist.position.y;
+    const dz = tip.position.z - wrist.position.z;
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+    // Normalize: 0.15m = open (0.0), 0.08m = gripped (1.0)
+    const curl = Math.max(0, Math.min(1, (0.15 - distance) / 0.07));
+    totalCurl += curl;
+    validFingers++;
+  }
+
+  return validFingers > 0 ? totalCurl / validFingers : 0;
+}
+
+/**
+ * Poll hand tracking joints per frame (Phase 3)
+ * Requires XRHand API support (Quest Pro, Vision Pro)
+ */
+function pollHandTracking(source: any): HandTrackingState | null {
+  if (!source.hand) return null;
+
+  const joints = new Map<HandJoint, JointPose>();
+
+  // XRHand provides joint data as an iterable
+  for (const [jointName, xrJoint] of source.hand.entries()) {
+    // Note: In real implementation, we'd need XRFrame to get joint poses
+    // For now, store joint reference (Phase 4 will add XRFrame integration)
+    joints.set(jointName as HandJoint, {
+      position: { x: 0, y: 0, z: 0 }, // TODO: Get from XRFrame.getJointPose()
+      rotation: { x: 0, y: 0, z: 0, w: 1 },
+      radius: 0.01,
+    });
+  }
+
+  const pinchStrength = calculatePinchStrength(joints);
+  const gripStrength = calculateGripStrength(joints);
+
+  return {
+    joints,
+    pinchStrength,
+    gripStrength,
+  };
+}
+
+/**
+ * Calculate forward direction vector from quaternion (Phase 3)
+ */
+function calculateForwardVector(quaternion: {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}): { x: number; y: number; z: number } {
+  const { x, y, z, w } = quaternion;
+
+  // Forward is -Z axis rotated by quaternion
+  return {
+    x: 2 * (x * z + w * y),
+    y: 2 * (y * z - w * x),
+    z: 1 - 2 * (x * x + y * y),
+  };
+}
+
+/**
+ * Poll eye tracking gaze vector (Phase 3)
+ * Requires eye tracking permission (Vision Pro, Quest Pro)
+ */
+function pollEyeTracking(session: any, state: OpenXRHALState): GazeRay | null {
+  if (!session.inputSources) return null;
+
+  // Find gaze input source
+  const gazeSource = Array.from(session.inputSources).find(
+    (source: any) => source.targetRayMode === 'gaze'
+  );
+
+  if (!gazeSource) return null;
+
+  // Note: In real implementation, we'd need XRFrame to get gaze pose
+  // For now, return placeholder (Phase 4 will add XRFrame integration)
+  return {
+    origin: { x: 0, y: 1.6, z: 0 }, // Approximate eye height
+    direction: { x: 0, y: 0, z: -1 }, // Forward
+  };
+}
+
+/**
+ * Poll input sources per frame and emit updates
+ */
+function pollInputSources(
+  state: OpenXRHALState,
+  context: any,
+  node: any
+): void {
+  if (!state.session || (state.session as any).simulated) return;
+
+  const session = state.session as any;
+  const inputSources = session.inputSources;
+
+  if (!inputSources) return;
+
+  // Update cache
+  state.inputSourcesCache = Array.from(inputSources);
+
+  // Emit update for each input source
+  for (const source of inputSources) {
+    let pose = null;
+
+    // Get pose if we have a reference space
+    if (state.referenceSpace && source.gripSpace) {
+      try {
+        // Note: In a real XR frame callback, we'd have access to XRFrame
+        // For now, we emit source data without pose (Phase 2 will add full frame integration)
+        pose = null; // TODO: Get from XRFrame in Phase 2
+      } catch {
+        pose = null;
+      }
+    }
+
+    // Phase 2: Poll gamepad state for button/axis data
+    const gamepadState = pollGamepadState(source, source.handedness);
+
+    context.emit?.('xr_input_source_update', {
+      node,
+      source: {
+        handedness: source.handedness,
+        targetRayMode: source.targetRayMode,
+        profiles: source.profiles || [],
+        hasGamepad: !!source.gamepad,
+        hasHand: !!source.hand,
+      },
+      pose,
+      timestamp: Date.now(),
+    });
+
+    // Phase 2: Emit controller data if gamepad is present
+    if (gamepadState) {
+      // Convert Map to plain object for event emission
+      const buttonsObj: Record<string, ButtonState> = {};
+      gamepadState.buttons.forEach((state, button) => {
+        buttonsObj[button] = state;
+      });
+
+      context.emit?.('controller_data', {
+        node,
+        hand: source.handedness,
+        buttons: buttonsObj,
+        thumbstick: gamepadState.thumbstick,
+        touchpad: gamepadState.touchpad,
+        triggerValue: gamepadState.triggerValue,
+        gripValue: gamepadState.gripValue,
+        timestamp: Date.now(),
+      });
+    }
+
+    // Phase 3: Poll hand tracking if available
+    const handState = pollHandTracking(source);
+    if (handState) {
+      // Convert Map to plain object for event emission
+      const jointsObj: Record<string, JointPose> = {};
+      handState.joints.forEach((pose, joint) => {
+        jointsObj[joint] = pose;
+      });
+
+      context.emit?.('hand_data', {
+        node,
+        hand: source.handedness,
+        joints: jointsObj,
+        pinchStrength: handState.pinchStrength,
+        gripStrength: handState.gripStrength,
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  // Phase 3: Poll eye tracking (per-session, not per-source)
+  if (state.eyeTrackingActive) {
+    const gazeRay = pollEyeTracking(session, state);
+    if (gazeRay) {
+      context.emit?.('eye_gaze_update', {
+        node,
+        origin: gazeRay.origin,
+        direction: gazeRay.direction,
+        timestamp: Date.now(),
+      });
+    }
+  }
 }
 
 function initializeOpenXR(
