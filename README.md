@@ -4,11 +4,9 @@
 
 HoloScript is an AI-native, declarative language for spatial computing. It allows developers and AI agents to define interactive worlds, complex behaviors, and high-fidelity graphics that compile to 18+ platforms from a single source.
 
-<p align="center">
-  <a href="https://github.com/brianonbased-dev/HoloScript/releases/tag/v3.3.0"><img src="https://img.shields.io/badge/version-v3.3.0-green?style=for-the-badge" alt="v3.3.0"></a>
-  <a href="docs/getting-started/quickstart.md"><img src="https://img.shields.io/badge/Quickstart-5_min-blue?style=for-the-badge" alt="Quickstart"></a>
-  <a href="docs/TRAITS_REFERENCE.md"><img src="https://img.shields.io/badge/traits-1525+-orange?style=for-the-badge" alt="1525+ Traits"></a>
-</p>
+![version-badge](https://img.shields.io/badge/version-v3.3.0-green?style=for-the-badge)
+![Quickstart Badge](https://img.shields.io/badge/Quickstart-5_min-blue?style=for-the-badge)
+![Traits Badge](https://img.shields.io/badge/traits-1525+-orange?style=for-the-badge)
 
 ---
 
