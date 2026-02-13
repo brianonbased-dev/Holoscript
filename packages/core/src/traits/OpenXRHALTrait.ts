@@ -977,7 +977,7 @@ function triggerHaptic(
  */
 function pollGamepadState(
   source: any, // XRInputSource
-  hand: 'left' | 'right' | 'none'
+  _hand: 'left' | 'right' | 'none'
 ): GamepadState | null {
   if (!source.gamepad) return null;
 
@@ -1105,7 +1105,7 @@ function pollHandTracking(source: any): HandTrackingState | null {
   const joints = new Map<HandJoint, JointPose>();
 
   // XRHand provides joint data as an iterable
-  for (const [jointName, xrJoint] of source.hand.entries()) {
+  for (const [jointName, _xrJoint] of source.hand.entries()) {
     // Note: In real implementation, we'd need XRFrame to get joint poses
     // For now, store joint reference (Phase 4 will add XRFrame integration)
     joints.set(jointName as HandJoint, {
@@ -1128,7 +1128,7 @@ function pollHandTracking(source: any): HandTrackingState | null {
 /**
  * Calculate forward direction vector from quaternion (Phase 3)
  */
-function calculateForwardVector(quaternion: {
+function _calculateForwardVector(quaternion: {
   x: number;
   y: number;
   z: number;
@@ -1148,7 +1148,7 @@ function calculateForwardVector(quaternion: {
  * Poll eye tracking gaze vector (Phase 3)
  * Requires eye tracking permission (Vision Pro, Quest Pro)
  */
-function pollEyeTracking(session: any, state: OpenXRHALState): GazeRay | null {
+function pollEyeTracking(session: any, _state: OpenXRHALState): GazeRay | null {
   if (!session.inputSources) return null;
 
   // Find gaze input source

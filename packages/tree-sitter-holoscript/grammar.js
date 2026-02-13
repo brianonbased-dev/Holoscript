@@ -249,7 +249,7 @@ module.exports = grammar({
     action: ($) =>
       seq('action', field('name', $.identifier), '(', optional($.parameter_list), ')', $.block),
 
-    parameter_list: ($) => sepBy($.parameter, ','),
+    parameter_list: ($) => seq($.parameter, repeat(seq(',', $.parameter))),
 
     parameter: ($) => seq(field('name', $.identifier), optional(seq(':', field('type', $.type)))),
 
