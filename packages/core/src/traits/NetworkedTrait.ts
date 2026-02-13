@@ -22,6 +22,8 @@
  */
 
 import { SyncProtocol, type TransportType, type SyncState } from '../network/SyncProtocol';
+import { WebSocketTransport, type NetworkMessage } from '../network/WebSocketTransport';
+import { WebRTCTransport } from '../network/WebRTCTransport';
 import { logger } from '../logger';
 
 export type NetworkSyncMode = 'owner' | 'shared' | 'server';
@@ -229,6 +231,9 @@ export class NetworkedTrait {
   private peerId: string = '';
   private connected: boolean = false;
   private syncProtocol: SyncProtocol | null = null;
+  private wsTransport: WebSocketTransport | null = null;
+  private rtcTransport: WebRTCTransport | null = null;
+  private activeTransport: 'local' | 'websocket' | 'webrtc' = 'local';
   private entityId: string = '';
   private interpolationBuffer: InterpolationSample[] = [];
   private ownershipRequestResolve: ((approved: boolean) => void) | null = null;
@@ -267,7 +272,64 @@ export class NetworkedTrait {
   public async connect(transport: TransportType = 'local', serverUrl?: string): Promise<void> {
     const roomId = this.config.room || 'default-room';
 
-    this.syncProtocol = getOrCreateSyncProtocol(roomId, transport, serverUrl);
+    // Try WebSocket first if serverUrl is provided
+    if (serverUrl && transport === 'websocket') {
+      try {
+        this.wsTransport = new WebSocketTransport({
+          serverUrl,
+          roomId,
+          maxReconnectAttempts: 10,
+          initialBackoffMs: 1000,
+          maxBackoffMs: 30000,
+          heartbeatIntervalMs: 30000,
+        });
+
+        await this.wsTransport.connect();
+
+        this.wsTransport.onMessage('state-sync', (msg: NetworkMessage) => {
+          this.handleNetworkMessage(msg);
+        });
+
+        this.activeTransport = 'websocket';
+        this.connected = true;
+        this.peerId = this.entityId;
+        logger.info(`[NetworkedTrait] Connected via WebSocket to: ${serverUrl}`);
+        return;
+      } catch (error) {
+        logger.warn(`[NetworkedTrait] WebSocket connection failed, trying fallback: ${error}`);
+        // Fall through to fallback
+      }
+    }
+
+    // Try WebRTC fallback if enabled
+    if (serverUrl && transport === 'webrtc') {
+      try {
+        this.rtcTransport = new WebRTCTransport({
+          signalingServerUrl: serverUrl,
+          roomId,
+          iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }],
+        });
+
+        await this.rtcTransport.initialize();
+
+        this.rtcTransport.onMessage((msg: unknown) => {
+          const networkMsg = msg as NetworkMessage & { fromPeer?: string };
+          this.handleNetworkMessage(networkMsg);
+        });
+
+        this.activeTransport = 'webrtc';
+        this.connected = true;
+        this.peerId = this.entityId;
+        logger.info(`[NetworkedTrait] Connected via WebRTC to: ${serverUrl}`);
+        return;
+      } catch (error) {
+        logger.warn(`[NetworkedTrait] WebRTC connection failed, using local sync: ${error}`);
+        // Fall through to local
+      }
+    }
+
+    // Fallback to local SyncProtocol
+    this.syncProtocol = getOrCreateSyncProtocol(roomId, 'local', serverUrl);
 
     // Subscribe to state updates
     this.syncProtocol.on('state-updated', (event) => {
@@ -290,7 +352,6 @@ export class NetworkedTrait {
     this.syncProtocol.on('ownership-request', (event) => {
       const { entityId, requesterId } = event.data as { entityId: string; requesterId: string };
       if (entityId === this.entityId && this.isOwner) {
-        // If we are the owner, decide whether to transfer
         const approved = this.config.authority?.transferable ?? true;
         if (approved) {
           this.setOwner(false);
@@ -334,6 +395,7 @@ export class NetworkedTrait {
       await this.syncProtocol.connect();
     }
 
+    this.activeTransport = 'local';
     this.connected = true;
     this.clientId = this.syncProtocol.getClientId();
     this.peerId = this.entityId;
@@ -371,15 +433,63 @@ export class NetworkedTrait {
   }
 
   /**
+   * Handle incoming network message from WebSocket/WebRTC
+   */
+  private handleNetworkMessage(message: Record<string, unknown>): void {
+    const { type, entityId, data, timestamp } = message;
+
+    if (entityId !== this.entityId) {
+      return; // Message not for this entity
+    }
+
+    switch (type) {
+      case 'state-sync':
+        this.handleRemoteUpdate({
+          entityId: (entityId as string) || this.entityId,
+          version: 1,
+          timestamp: (timestamp as number) || Date.now(),
+          properties: (data as Record<string, unknown>) || {},
+        });
+        this.emit('stateReceived', {
+          type: 'stateReceived',
+          timestamp: Date.now(),
+        });
+        break;
+
+      case 'ownership-transfer':
+        const { newOwner } = data as { newOwner: string };
+        this.setOwner(newOwner === this.peerId, newOwner);
+        break;
+
+      default:
+        logger.debug(`[NetworkedTrait] Unknown message type: ${type}`);
+    }
+  }
+
+  /**
    * Sync state to network
    */
   public syncToNetwork(): void {
-    if (!this.syncProtocol || !this.connected || !this.isOwner) return;
+    if (!this.connected || !this.isOwner) return;
 
     if (this.shouldSync()) {
       const updates = this.flushUpdates();
       if (Object.keys(updates).length > 0) {
-        this.syncProtocol.syncState(this.entityId, updates);
+        const message: Omit<NetworkMessage, 'roomId' | 'id' | 'peerId' | 'timestamp'> = {
+          type: 'state-sync',
+          payload: {
+            entityId: this.entityId,
+            data: updates,
+          },
+        };
+
+        if (this.activeTransport === 'websocket' && this.wsTransport) {
+          this.wsTransport.sendMessage(message as NetworkMessage);
+        } else if (this.activeTransport === 'webrtc' && this.rtcTransport) {
+          this.rtcTransport.sendMessage(null, message as NetworkMessage);
+        } else if (this.syncProtocol) {
+          this.syncProtocol.syncState(this.entityId, updates);
+        }
       }
     }
   }
@@ -461,8 +571,19 @@ export class NetworkedTrait {
    * Disconnect from network
    */
   public disconnect(): void {
-    if (this.syncProtocol && this.connected) {
-      // We don't disconnect the shared pool, just mark ourselves disconnected
+    if (this.connected) {
+      if (this.wsTransport) {
+        this.wsTransport.disconnect();
+        this.wsTransport = null;
+      }
+      if (this.rtcTransport) {
+        this.rtcTransport.disconnect();
+        this.rtcTransport = null;
+      }
+      if (this.syncProtocol && this.activeTransport === 'local') {
+        // Don't disconnect shared pool, just mark ourselves disconnected
+      }
+
       this.connected = false;
       this.setConnected(false);
       logger.info(`[NetworkedTrait] Disconnected entity: ${this.entityId}`);
@@ -700,6 +821,27 @@ export class NetworkedTrait {
    */
   public isConnected(): boolean {
     return this.connected;
+  }
+
+  /**
+   * Get active transport type
+   */
+  public getActiveTransport(): 'local' | 'websocket' | 'webrtc' {
+    return this.activeTransport;
+  }
+
+  /**
+   * Connect via WebSocket with convenience method
+   */
+  public async connectWebSocket(serverUrl: string): Promise<void> {
+    await this.connect('websocket', serverUrl);
+  }
+
+  /**
+   * Connect via WebRTC with convenience method
+   */
+  public async connectWebRTC(signalingUrl: string): Promise<void> {
+    await this.connect('webrtc', signalingUrl);
   }
 
   /**

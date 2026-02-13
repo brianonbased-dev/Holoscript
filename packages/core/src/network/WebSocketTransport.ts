@@ -1,0 +1,238 @@
+/**
+ * WebSocket Transport for HoloScript Network Synchronization
+ *
+ * Provides reliable, bidirectional communication for networked traits.
+ * Handles reconnection, message queuing, and backpressure.
+ *
+ * @version 1.0.0
+ * Features:
+ * - Automatic reconnection with exponential backoff
+ * - Message queuing during disconnection
+ * - Heartbeat/keepalive mechanism
+ * - Room-based isolation
+ */
+
+export interface WebSocketTransportConfig {
+  /** Server URL (e.g., 'ws://localhost:8080') */
+  serverUrl: string;
+  
+  /** Room ID for message isolation */
+  roomId: string;
+  
+  /** Peer ID (auto-generated if not provided) */
+  peerId?: string;
+  
+  /** Max reconnection attempts */
+  maxReconnectAttempts: number;
+  
+  /** Initial backoff in ms */
+  initialBackoffMs: number;
+  
+  /** Max backoff in ms */
+  maxBackoffMs: number;
+  
+  /** Heartbeat interval in ms */
+  heartbeatIntervalMs: number;
+}
+
+export interface NetworkMessage {
+  id: string;
+  type: 'state-sync' | 'action' | 'heartbeat' | 'auth' | 'rpc';
+  peerId: string;
+  roomId: string;
+  payload: unknown;
+  timestamp: number;
+  targetPeerId?: string; // If set, message is unicast
+}
+
+export class WebSocketTransport {
+  private ws: WebSocket | null = null;
+  private config: WebSocketTransportConfig;
+  private messageQueue: NetworkMessage[] = [];
+  private reconnectAttempts = 0;
+  private messageHandlers = new Map<string, (msg: NetworkMessage) => void>();
+  private isConnected = false;
+  private peerId: string;
+  private heartbeatTimer: NodeJS.Timer | null = null;
+  private messageId = 0;
+
+  constructor(config: WebSocketTransportConfig) {
+    this.config = {
+      maxReconnectAttempts: 10,
+      initialBackoffMs: 1000,
+      maxBackoffMs: 30000,
+      heartbeatIntervalMs: 30000,
+      ...config,
+    };
+    this.peerId = config.peerId || this.generatePeerId();
+  }
+
+  /**
+   * Connect to WebSocket server
+   */
+  async connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        this.ws = new WebSocket(this.config.serverUrl);
+
+        this.ws.onopen = () => {
+          console.log(`✓ WebSocket connected to ${this.config.serverUrl}`);
+          this.isConnected = true;
+          this.reconnectAttempts = 0;
+          
+          // Send auth message
+          this.sendMessage({
+            type: 'auth',
+            payload: { peerId: this.peerId, roomId: this.config.roomId },
+          });
+
+          // Start heartbeat
+          this.startHeartbeat();
+
+          // Flush message queue
+          this.flushMessageQueue();
+
+          resolve();
+        };
+
+        this.ws.onmessage = (evt) => {
+          try {
+            const msg: NetworkMessage = JSON.parse(evt.data);
+            const handler = this.messageHandlers.get(msg.type);
+            if (handler) handler(msg);
+          } catch (err) {
+            console.error('Failed to parse WebSocket message:', err);
+          }
+        };
+
+        this.ws.onerror = (evt) => {
+          console.error('WebSocket error:', evt);
+          reject(new Error('WebSocket connection failed'));
+        };
+
+        this.ws.onclose = () => {
+          console.warn('WebSocket disconnected');
+          this.isConnected = false;
+          this.stopHeartbeat();
+          this.attemptReconnect();
+        };
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  /**
+   * Send a network message
+   */
+  sendMessage(
+    msg: Omit<NetworkMessage, 'id' | 'peerId' | 'roomId' | 'timestamp'>
+  ): void {
+    const fullMessage: NetworkMessage = {
+      ...msg,
+      id: `${this.peerId}-${this.messageId++}`,
+      peerId: this.peerId,
+      roomId: this.config.roomId,
+      timestamp: Date.now(),
+    };
+
+    if (this.isConnected && this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(fullMessage));
+    } else {
+      // Queue for later transmission
+      this.messageQueue.push(fullMessage);
+      if (this.messageQueue.length > 1000) {
+        this.messageQueue.shift(); // Drop oldest if queue too large
+      }
+    }
+  }
+
+  /**
+   * Register message handler
+   */
+  onMessage(
+    type: NetworkMessage['type'],
+    handler: (msg: NetworkMessage) => void
+  ): void {
+    this.messageHandlers.set(type, handler);
+  }
+
+  /**
+   * Disconnect from server
+   */
+  disconnect(): void {
+    this.stopHeartbeat();
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    this.isConnected = false;
+  }
+
+  /**
+   * Check if connected
+   */
+  getIsConnected(): boolean {
+    return this.isConnected;
+  }
+
+  // Private helpers
+
+  private attemptReconnect(): void {
+    if (this.reconnectAttempts >= this.config.maxReconnectAttempts) {
+      console.error('Max reconnection attempts exceeded');
+      return;
+    }
+
+    const backoff = Math.min(
+      this.config.initialBackoffMs * Math.pow(2, this.reconnectAttempts),
+      this.config.maxBackoffMs
+    );
+
+    this.reconnectAttempts++;
+    console.log(
+      `Reconnecting in ${backoff}ms (attempt ${this.reconnectAttempts}/${this.config.maxReconnectAttempts})`
+    );
+
+    setTimeout(() => {
+      this.connect().catch((err) => {
+        console.error('Reconnection failed:', err);
+        this.attemptReconnect();
+      });
+    }, backoff);
+  }
+
+  private flushMessageQueue(): void {
+    while (this.messageQueue.length > 0 && this.isConnected && this.ws?.readyState === WebSocket.OPEN) {
+      const msg = this.messageQueue.shift();
+      if (msg) this.ws.send(JSON.stringify(msg));
+    }
+  }
+
+  private startHeartbeat(): void {
+    this.heartbeatTimer = setInterval(
+      () => {
+        this.sendMessage({ type: 'heartbeat', payload: {} });
+      },
+      this.config.heartbeatIntervalMs
+    );
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
+  private generatePeerId(): string {
+    return `peer-${Math.random().toString(36).substr(2, 9)}`;
+  }
+}
+
+/**
+ * Create a WebSocket transport instance
+ */
+export function createWebSocketTransport(config: WebSocketTransportConfig): WebSocketTransport {
+  return new WebSocketTransport(config);
+}
