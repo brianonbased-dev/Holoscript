@@ -20,6 +20,10 @@
  */
 
 import type { TraitHandler } from './TraitTypes';
+import { WalletConnection } from './utils/WalletConnection';
+import { GasEstimator } from './utils/GasEstimator';
+import { parseEther, formatEther, type Address, type Hex } from 'viem';
+import { zoraCreator1155ImplABI } from '@zoralabs/protocol-deployments';
 
 // =============================================================================
 // TYPES
@@ -82,6 +86,7 @@ interface MintConfig {
 interface ZoraCoinsState {
   isConnected: boolean;
   walletAddress: string | null;
+  wallet?: WalletConnection;
   coins: ZoraCoin[];
   pendingMints: PendingMint[];
   totalRoyaltiesEarned: string;
@@ -96,8 +101,11 @@ interface PendingMint {
   status: MintStatus;
   txHash?: string;
   contractAddress?: string;
+  tokenId?: number;
+  blockNumber?: number;
   error?: string;
   createdAt: number;
+  timestamp: number;
 }
 
 interface Collection {
@@ -140,6 +148,14 @@ interface ZoraCoinsConfig {
   referral_percentage: number;
   /** Webhook for mint events */
   webhook_url: string;
+}
+
+/**
+ * Execution context for Zora operations
+ */
+interface ZoraExecutionContext {
+  wallet: WalletConnection;
+  emitEvent: (event: string, data: any) => void;
 }
 
 // =============================================================================
@@ -208,12 +224,18 @@ export const zoraCoinsHandler: TraitHandler<ZoraCoinsConfig> = {
 
   onUpdate(node, config, context, _delta) {
     const state = (node as any).__zoraCoinsState as ZoraCoinsState;
-    if (!state || !state.isConnected) return;
+    if (!state || !state.isConnected || !state.wallet) return;
+
+    // Create execution context for blockchain operations
+    const execContext: ZoraExecutionContext = {
+      wallet: state.wallet,
+      emitEvent: (event: string, data: any) => context.emit?.(event, { node, ...data })
+    };
 
     // Check pending mints for status updates
     state.pendingMints.forEach((mint) => {
       if (mint.status === 'minting') {
-        checkMintStatus(mint, state, context);
+        checkMintStatus(mint, state, execContext);
       }
     });
   },
@@ -346,6 +368,15 @@ async function connectToZora(
   context: any
 ): Promise<void> {
   try {
+    // Initialize wallet connection for blockchain interactions
+    const chainType = config.default_chain === 'base' ? 'base' : 'base-testnet';
+    state.wallet = new WalletConnection({ chain: chainType });
+
+    // If creator wallet is provided, connect it
+    if (config.creator_wallet) {
+      await state.wallet.connect(config.creator_wallet as Address);
+    }
+
     // Fetch existing coins for this creator
     const url = `${ZORA_API_BASE}/coins?creator=${config.creator_wallet}&chain=${config.default_chain}`;
     const response = await executeZoraApiCall<any>('GET', url);
@@ -403,12 +434,14 @@ async function mintCoin(
     license: params.license || config.default_license,
   };
 
+  const now = Date.now();
   const pendingMint: PendingMint = {
-    id: `mint_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `mint_${now}_${Math.random().toString(36).substr(2, 9)}`,
     config: mintConfig,
     holoFileHash: params.holoFileHash,
     status: 'pending',
-    createdAt: Date.now(),
+    createdAt: now,
+    timestamp: now,
   };
 
   state.pendingMints.push(pendingMint);
@@ -418,12 +451,22 @@ async function mintCoin(
     pendingMint,
   });
 
-  // Simulate minting process
+  // Execute real blockchain minting
   try {
+    if (!state.wallet) {
+      throw new Error('Wallet not initialized. Connect wallet first.');
+    }
+
     pendingMint.status = 'minting';
 
-    // Real Zora API call
-    const result = await executeMinting(pendingMint, config, params);
+    // Create execution context
+    const execContext: ZoraExecutionContext = {
+      wallet: state.wallet,
+      emitEvent: (event: string, data: any) => context.emit?.(event, { node, ...data })
+    };
+
+    // Real blockchain minting via Zora Protocol
+    const result = await executeMinting(pendingMint, config, execContext);
 
     pendingMint.status = 'complete';
     pendingMint.txHash = result.txHash;
@@ -590,8 +633,99 @@ function generateSymbol(name: string): string {
     .toUpperCase();
 }
 
-function checkMintStatus(_mint: PendingMint, _state: ZoraCoinsState, _context: any): void {
-  // In production, this would check the blockchain for tx confirmation
+/**
+ * Check the status of a pending mint transaction
+ *
+ * Polls the blockchain for transaction confirmation and updates mint status.
+ *
+ * @param mint - Pending mint to check
+ * @param _state - Current Zora coins state (unused)
+ * @param context - Execution context
+ */
+async function checkMintStatus(
+  mint: PendingMint,
+  _state: ZoraCoinsState,
+  context: ZoraExecutionContext
+): Promise<void> {
+
+  // Only check mints in 'minting' status
+  if (mint.status !== 'minting') {
+    return;
+  }
+
+  // Ensure we have a transaction hash
+  if (!mint.txHash) {
+    return;
+  }
+
+  const publicClient = context.wallet.getPublicClient();
+
+  try {
+    // Poll for transaction receipt
+    const receipt = await publicClient.getTransactionReceipt({
+      hash: mint.txHash as `0x${string}`
+    });
+
+    if (receipt.status === 'success') {
+      // Transaction confirmed successfully
+      mint.status = 'complete';
+      mint.blockNumber = Number(receipt.blockNumber);
+
+      // Extract minted token ID from logs
+      // Zora emits a 'Minted' event with token ID
+      const mintLog = receipt.logs.find(log => {
+        // Check for Zora Minted event signature
+        // Event signature: Minted(address indexed minter, uint256 indexed tokenId, uint256 quantity)
+        return log.topics[0] === '0x30385c845b448a36257a6a1716e6ad2e1bc2cbe333cde1e69fe849ad6511adfe';
+      });
+
+      if (mintLog && mintLog.topics[2]) {
+        // Token ID is in topics[2] for indexed parameters
+        mint.tokenId = Number(BigInt(mintLog.topics[2]));
+      }
+
+      // Emit completion event
+      context.emitEvent('zora_mint_complete', {
+        mintId: mint.id,
+        txHash: mint.txHash,
+        contractAddress: mint.contractAddress,
+        tokenId: mint.tokenId,
+        blockNumber: mint.blockNumber,
+        gasUsed: receipt.gasUsed.toString()
+      });
+
+    } else if (receipt.status === 'reverted') {
+      // Transaction failed
+      mint.status = 'failed';
+      mint.error = 'Transaction reverted on-chain';
+
+      context.emitEvent('zora_mint_failed', {
+        mintId: mint.id,
+        txHash: mint.txHash,
+        error: mint.error
+      });
+    }
+
+  } catch (error: any) {
+    // Transaction not yet confirmed or error fetching receipt
+
+    // Check for timeout (5 minutes max)
+    const elapsed = Date.now() - mint.timestamp;
+    const TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+    if (elapsed > TIMEOUT) {
+      mint.status = 'failed';
+      mint.error = `Transaction timeout after 5 minutes. Hash: ${mint.txHash}`;
+
+      context.emitEvent('zora_mint_failed', {
+        mintId: mint.id,
+        txHash: mint.txHash,
+        error: mint.error
+      });
+    }
+
+    // Otherwise, keep polling (transaction still pending)
+  }
 }
 
 // Production API helpers
@@ -619,37 +753,173 @@ async function executeZoraApiCall<T>(method: string, url: string, data?: any): P
 }
 
 /**
- * Real Zora Minting Logic
- * In a real environment, this might interact with a wallet or a backend relay.
- * Here we use the Zora API to initiate the minting process.
+ * Execute real Zora minting transaction on Base L2
+ *
+ * This function:
+ * 1. Validates wallet connection
+ * 2. Estimates gas costs
+ * 3. Checks wallet balance
+ * 4. Simulates transaction
+ * 5. Executes on-chain mint
+ * 6. Waits for confirmation
+ *
+ * @param mint - Pending mint configuration
+ * @param config - Zora coins configuration
+ * @param context - Execution context with wallet and event emitter
+ * @returns Transaction hash and contract address
+ * @throws Error if wallet not connected, insufficient balance, or transaction fails
  */
 async function executeMinting(
   mint: PendingMint,
   config: ZoraCoinsConfig,
-  _params: any
+  context: ZoraExecutionContext
 ): Promise<{ txHash: string; contractAddress: string }> {
-  // Call Zora API to prepare minting
-  const response = await executeZoraApiCall<{
-    success: boolean;
-    txHash: string;
-    contractAddress: string;
-  }>('POST', `${ZORA_API_BASE}/mint`, {
-    creator: config.creator_wallet,
-    name: mint.config.name,
-    symbol: mint.config.symbol,
-    description: mint.config.description,
-    royalty: mint.config.royaltyPercentage,
-    initialSupply: mint.config.initialSupply,
-    chain: config.default_chain,
-    metadata: {
-      holoFileHash: mint.holoFileHash,
-    },
+
+  // 1. Validate wallet connection
+  if (!context.wallet.isConnected()) {
+    throw new Error(
+      'Wallet not connected. Please connect wallet by emitting wallet_connected event first.'
+    );
+  }
+
+  const publicClient = context.wallet.getPublicClient();
+  const walletClient = context.wallet.getWalletClient();
+  const walletAddress = context.wallet.getAddress()!;
+
+  // 2. Determine contract address
+  let contractAddress: Address;
+
+  if (config.collection_id) {
+    // Use existing collection
+    contractAddress = config.collection_id as Address;
+  } else {
+    // For now, require collection_id
+    // TODO: Implement auto-deployment in future version
+    throw new Error(
+      'collection_id is required. Auto-deployment not yet implemented. ' +
+      'Create a Zora collection first at https://zora.co/create'
+    );
+  }
+
+  // 3. Calculate quantities and fees
+  const quantity = BigInt(mint.config.initialSupply || 1);
+
+  // 4. Estimate gas costs
+  context.emitEvent('zora_estimating_gas', {
+    mintId: mint.id,
+    quantity: Number(quantity)
   });
 
-  return {
-    txHash: response.txHash,
-    contractAddress: response.contractAddress,
-  };
+  const gasEstimate = await GasEstimator.estimateMintGas(
+    publicClient,
+    contractAddress,
+    quantity
+  );
+
+  const formattedEstimate = GasEstimator.formatEstimate(gasEstimate);
+
+  // 5. Check wallet balance
+  const balanceCheck = await GasEstimator.checkSufficientBalance(
+    publicClient,
+    walletAddress,
+    gasEstimate
+  );
+
+  if (!balanceCheck.sufficient) {
+    const shortfall = GasEstimator.formatCost(balanceCheck.shortfall!);
+    const required = GasEstimator.formatCost(balanceCheck.required);
+    const balance = GasEstimator.formatCost(balanceCheck.balance);
+
+    throw new Error(
+      `Insufficient balance for mint transaction.\n` +
+      `Required: ${required}\n` +
+      `Available: ${balance}\n` +
+      `Shortfall: ${shortfall}\n\n` +
+      `Gas estimate: ${formattedEstimate.totalGasCostETH}\n` +
+      `Mint fee (0.000777 ETH × ${quantity}): ${formattedEstimate.mintFeeETH}`
+    );
+  }
+
+  context.emitEvent('zora_gas_estimated', {
+    mintId: mint.id,
+    estimate: formattedEstimate
+  });
+
+  // 6. Prepare mint transaction
+  const tokenId = BigInt(0); // Token ID 0 for new token creation on Zora 1155
+  const mintReferral = (config.creator_wallet as Address) || walletAddress;
+
+  // 7. Simulate transaction to catch errors before sending
+  try {
+    const { request } = await publicClient.simulateContract({
+      address: contractAddress,
+      abi: zoraCreator1155ImplABI,
+      functionName: 'mintWithRewards',
+      args: [
+        walletAddress,     // minter (who receives the NFT)
+        tokenId,           // tokenId (0 for new)
+        quantity,          // quantity to mint
+        '0x' as Hex,       // minterArguments (empty)
+        mintReferral       // mintReferral (who gets referral reward)
+      ],
+      value: gasEstimate.mintFee,
+      account: walletClient.account,
+      gas: gasEstimate.gasLimit,
+      maxFeePerGas: gasEstimate.maxFeePerGas,
+      maxPriorityFeePerGas: gasEstimate.maxPriorityFeePerGas
+    });
+
+    context.emitEvent('zora_transaction_simulated', {
+      mintId: mint.id,
+      success: true
+    });
+
+    // 8. Execute transaction
+    context.emitEvent('zora_transaction_sending', {
+      mintId: mint.id
+    });
+
+    const txHash = await walletClient.writeContract(request);
+
+    context.emitEvent('zora_transaction_sent', {
+      mintId: mint.id,
+      txHash
+    });
+
+    // 9. Wait for transaction confirmation (1 block on Base ≈ 2 seconds)
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: txHash,
+      confirmations: 1
+    });
+
+    if (receipt.status === 'reverted') {
+      throw new Error(`Transaction reverted on-chain: ${txHash}`);
+    }
+
+    context.emitEvent('zora_transaction_confirmed', {
+      mintId: mint.id,
+      txHash,
+      blockNumber: Number(receipt.blockNumber),
+      gasUsed: receipt.gasUsed.toString()
+    });
+
+    // 10. Return success
+    return {
+      txHash,
+      contractAddress
+    };
+
+  } catch (error: any) {
+    // Handle simulation or execution errors
+    const errorMessage = error.message || 'Unknown error during mint transaction';
+
+    context.emitEvent('zora_transaction_failed', {
+      mintId: mint.id,
+      error: errorMessage
+    });
+
+    throw new Error(`Zora mint transaction failed: ${errorMessage}`);
+  }
 }
 
 // =============================================================================
