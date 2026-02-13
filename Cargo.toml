@@ -7,6 +7,9 @@ members = [
     # TODO: holoscript-component disabled until WIT bindings are properly configured
     # "packages/holoscript-component",
 ]
+exclude = [
+    "packages/holoscript-component",  # Excluded until WIT bindings are configured
+]
 resolver = "2"
 
 # Shared metadata across all workspace members
