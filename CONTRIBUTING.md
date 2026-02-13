@@ -82,6 +82,134 @@ Configuration files: `.eslintrc.json` (linting rules), `.prettierrc` (formatting
 
 For VR development patterns, see the [Best Practices Guide](./docs/guides/best-practices.md).
 
+## Testing Guidelines
+
+All code changes must include tests. Use these patterns established in Phase 4:
+
+### Test Organization
+
+```typescript
+describe('Module Name', () => {
+  describe('Feature Group', () => {
+    it('should test specific behavior', () => {
+      // Arrange: Set up test data
+      const input = createTestInput()
+      
+      // Act: Execute the function
+      const result = executeFunction(input)
+      
+      // Assert: Verify the result
+      expect(result).toEqual(expectedOutput)
+    })
+  })
+})
+```
+
+### Test File Naming
+
+- `{Module}.test.ts` - Unit tests for a module
+- `{Module}.comprehensive.test.ts` - Integration and advanced tests
+- `{Module}.performance.test.ts` - Performance benchmarks (rarely used)
+
+### Coverage Requirements by Test Type
+
+**1. Unit Tests** - For isolated function behavior
+```typescript
+describe('Parser', () => {
+  it('should parse valid composition', () => {
+    const code = 'composition "test" { }'
+    const result = parse(code)
+    expect(result.name).toBe('test')
+  })
+  
+  it('should throw on invalid syntax', () => {
+    const code = 'invalid syntax !@#'
+    expect(() => parse(code)).toThrow()
+  })
+})
+```
+
+**2. Integration Tests** - For pipeline validation (see `Integration.comprehensive.test.ts`)
+```typescript
+describe('Parser-to-Compiler Pipeline', () => {
+  it('should preserve data through compilation', () => {
+    const input = createComposition()
+    const parsed = parser.parse(input)
+    const compiled = compiler.compile(parsed)
+    
+    expect(compiled.metadata).toEqual(parsed.metadata)
+  })
+})
+```
+
+**3. Edge Case Tests** - For boundary conditions (see `ParserEdgeCases.test.ts`)
+```typescript
+describe('Parser Edge Cases', () => {
+  it('should handle maximum nesting level', () => {
+    const nested = generateNesting(15) // At architectural limit
+    const result = parse(nested)
+    expect(result).toBeDefined()
+  })
+  
+  it('should fail gracefully beyond limits', () => {
+    const nested = generateNesting(20) // Beyond limit
+    expect(() => parse(nested)).toThrow()
+  })
+})
+```
+
+**4. Platform-Specific Tests** - For target code generation (see `TargetSpecific.comprehensive.test.ts`)
+```typescript
+describe('Python Code Generation', () => {
+  it('should generate valid Python type hints', () => {
+    const python = compiler.generatePython(ast)
+    expect(python).toContain(':')  // Type annotation marker
+    expect(isPythonValid(python)).toBe(true)
+  })
+})
+```
+
+### Coverage Targets
+
+- **Minimum:** 80% for new code (lines, branches, functions)
+- **Target:** 90%+ for critical paths (parser, compiler, traits)
+- **Aspirational:** 100% for public APIs
+
+Run coverage analysis:
+```bash
+pnpm vitest run --coverage
+```
+
+### Test Execution
+
+```bash
+# Run all tests
+pnpm test
+
+# Run specific test file
+pnpm vitest run src/__tests__/MyTest.test.ts
+
+# Run with coverage
+pnpm vitest run --coverage
+
+# Run Phase 4 comprehensive tests only
+pnpm vitest run \
+  src/__tests__/ParserEdgeCases.test.ts \
+  src/__tests__/AdvancedFeatures.comprehensive.test.ts \
+  src/__tests__/CompilerArchitecture.test.ts \
+  src/__tests__/Integration.comprehensive.test.ts \
+  src/__tests__/TargetSpecific.comprehensive.test.ts
+```
+
+### Known Test Limitations
+
+Three edge cases in ParserEdgeCases.test.ts are expected to fail (non-blocking):
+1. Deep nesting (>15 levels) - Parser architectural constraint
+2. Negative number literals in certain contexts - Expected workaround: use unary operator
+3. Multiple event declarations on same object - Expected: use event bus pattern instead
+
+See `PHASE_4_COMPLETION_REPORT.md` for details.
+
 ## Commit Messages
 
 Use conventional commits:

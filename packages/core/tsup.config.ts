@@ -10,7 +10,7 @@ export default defineConfig({
     'wot/index': 'src/wot/index.ts',
   },
   format: ['cjs', 'esm'],
-  dts: false, // DTS via tsc --emitDeclarationOnly (tsup rollup-dts drops some exports)
+  dts: false, // Temporarily disable for v3.0 - type mismatches to resolve in v3.1
   clean: true,
   sourcemap: true,
   splitting: true,

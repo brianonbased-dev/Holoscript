@@ -8,7 +8,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "pnpm --filter core build && pnpm --filter !core build",
+    "build:parallel": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
@@ -27,6 +28,9 @@
     "publish": "pnpm -r publish --access public"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^9.5.1",
+    "@stryker-mutator/typescript-checker": "^9.5.1",
+    "@stryker-mutator/vitest-runner": "^9.5.1",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
