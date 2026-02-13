@@ -114,4 +114,58 @@ export type TraitEvent =
   | { type: 'rotate_update'; rotation: Vector3 }
   | { type: 'rotate_end'; finalRotation: Vector3 }
   | { type: 'neural_link_execute'; data?: { prompt?: string } }
-  | { type: 'neural_link_response'; data?: { text?: string; generationTime?: number } };
+  | { type: 'neural_link_response'; data?: { text?: string; generationTime?: number } }
+  | {
+      type: 'xr_input_source_update';
+      node: HSPlusNode;
+      source: {
+        handedness: 'left' | 'right' | 'none';
+        targetRayMode: 'gaze' | 'tracked-pointer' | 'screen';
+        profiles: string[];
+        hasGamepad: boolean;
+        hasHand: boolean;
+      };
+      pose: unknown | null;
+      timestamp: number;
+    }
+  | {
+      type: 'controller_data';
+      node: HSPlusNode;
+      hand: 'left' | 'right' | 'none';
+      buttons: Record<
+        string,
+        {
+          pressed: boolean;
+          touched: boolean;
+          value: number;
+        }
+      >;
+      thumbstick: { x: number; y: number };
+      touchpad?: { x: number; y: number };
+      triggerValue: number;
+      gripValue: number;
+      timestamp: number;
+    }
+  | {
+      type: 'hand_data';
+      node: HSPlusNode;
+      hand: 'left' | 'right' | 'none';
+      joints: Record<
+        string,
+        {
+          position: { x: number; y: number; z: number };
+          rotation: { x: number; y: number; z: number; w: number };
+          radius: number;
+        }
+      >;
+      pinchStrength: number;
+      gripStrength: number;
+      timestamp: number;
+    }
+  | {
+      type: 'eye_gaze_update';
+      node: HSPlusNode;
+      origin: { x: number; y: number; z: number };
+      direction: { x: number; y: number; z: number };
+      timestamp: number;
+    };

@@ -42,7 +42,6 @@ import { registerEmotionDetector } from './runtime/EmotionDetector';
 import { MockSpeechRecognizer } from './runtime/MockSpeechRecognizer';
 import { registerSpeechRecognizer } from './runtime/SpeechRecognizer';
 import { MethodMemoize, ObjectPool } from './runtime/RuntimeOptimization';
-import { HoloScriptAgentRuntime } from './HoloScriptAgentRuntime';
 import type {
   ASTNode,
   OrbNode,
@@ -1056,16 +1055,17 @@ export class HoloScriptRuntime {
     }
 
     // 3. TEMPLATE MERGING (Inherit properties from template)
-    if (node.template) {
-      const tpl = this.context.templates.get(node.template) as unknown as TemplateNode | undefined;
+    const orbNodeAny = node as any;
+    if (orbNodeAny.template) {
+      const tpl = this.context.templates.get(orbNodeAny.template) as unknown as TemplateNode | undefined;
       console.log(
-        `[RUNTIME_DEBUG] executeOrb: ${node.name} using template: ${node.template}. Found template: ${!!tpl}`
+        `[RUNTIME_DEBUG] executeOrb: ${orbNodeAny.name} using template: ${orbNodeAny.template}. Found template: ${!!tpl}`
       );
       if (tpl) {
         // Merge template properties if not overridden by orb
         if (tpl.properties) {
           console.log(
-            `[RUNTIME_DEBUG] Merging properties from template ${node.template} into ${node.name}`
+            `[RUNTIME_DEBUG] Merging properties from template ${orbNodeAny.template} into ${orbNodeAny.name}`
           );
           for (const [key, val] of Object.entries(tpl.properties)) {
             if (evaluatedProperties[key] === undefined) {

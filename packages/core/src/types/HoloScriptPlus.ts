@@ -84,6 +84,16 @@ export interface HSPlusNode extends ASTNode {
   version?: string | number;
   migrations?: any[];
   migrationBlocks?: Record<number, string>;
+  // Additional properties for runtime evaluation
+  value?: any;
+  target?: any;
+  arguments?: any[];
+  method?: string;
+  condition?: HSPlusNode;
+  consequent?: HSPlusNode;
+  alternate?: HSPlusNode;
+  event?: string;
+  data?: any;
   loc?: {
     start: { line: number; column: number };
     end: { line: number; column: number };
@@ -94,6 +104,8 @@ export interface HSPlusAST {
   type: 'Program';
   body: HSPlusNode[];
   root: HSPlusNode;
+  version?: string | number;
+  migrations?: any[];
   imports?: Array<{
     source: string;
     specifiers: string[];
@@ -101,6 +113,10 @@ export interface HSPlusAST {
     alias?: string;
   }>;
 }
+
+// Type aliases for statement and expression nodes
+export type HSPlusStatement = HSPlusNode;
+export type HSPlusExpression = HSPlusNode;
 
 export interface StateDeclaration {
   name: string;
