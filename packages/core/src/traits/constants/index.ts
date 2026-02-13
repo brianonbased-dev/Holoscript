@@ -75,9 +75,12 @@ import { FURNITURE_DECOR_TRAITS } from './furniture-decor';
 import { TIME_PERIOD_TRAITS } from './time-period';
 import { MATERIAL_PROPERTIES_TRAITS } from './material-properties';
 import { FABRICATION_DEVICES_TRAITS } from './fabrication-devices';
+import { ROBOTICS_INDUSTRIAL_TRAITS } from './robotics-industrial';
+import { SCIENTIFIC_COMPUTING_TRAITS } from './scientific-computing';
 
 /**
  * Combined VR_TRAITS array - the single source of truth for all valid VR trait names.
+ * Now includes 213 robotics & industrial traits (CYCLE B) + 22 scientific computing traits (Phase 1).
  */
 export const VR_TRAITS = [
   ...CORE_VR_INTERACTION_TRAITS,
@@ -148,6 +151,12 @@ export const VR_TRAITS = [
   ...TIME_PERIOD_TRAITS,
   ...MATERIAL_PROPERTIES_TRAITS,
   ...FABRICATION_DEVICES_TRAITS,
+
+  // Robotics & Industrial (213 traits - CYCLE B)
+  ...ROBOTICS_INDUSTRIAL_TRAITS,
+
+  // Scientific Computing & Molecular Dynamics (22 traits - Phase 1)
+  ...SCIENTIFIC_COMPUTING_TRAITS,
 ] as const;
 
 /**
@@ -224,3 +233,36 @@ export { FURNITURE_DECOR_TRAITS } from './furniture-decor';
 export { TIME_PERIOD_TRAITS } from './time-period';
 export { MATERIAL_PROPERTIES_TRAITS } from './material-properties';
 export { FABRICATION_DEVICES_TRAITS } from './fabrication-devices';
+export {
+  ROBOTICS_INDUSTRIAL_TRAITS,
+  JOINT_TYPE_TRAITS,
+  JOINT_PROPERTY_TRAITS,
+  JOINT_CONTROL_TRAITS,
+  TRANSMISSION_TRAITS,
+  MOTOR_TYPE_TRAITS,
+  MOTOR_FEEDBACK_TRAITS,
+  FORCE_TORQUE_TRAITS,
+  VISION_TRAITS,
+  RANGE_SENSING_TRAITS,
+  INERTIAL_POSITION_TRAITS,
+  ENVIRONMENTAL_SENSOR_TRAITS,
+  GRIPPER_TRAITS,
+  TOOL_INTERFACE_TRAITS,
+  TOOL_TRAITS,
+  MOBILE_BASE_TRAITS,
+  LEGGED_TRAITS,
+  AERIAL_AQUATIC_TRAITS,
+  CONTROLLER_TRAITS,
+  PLANNING_TRAITS,
+  SAFETY_TRAITS,
+  STANDARDS_TRAITS,
+  POWER_TRAITS,
+  PROTOCOL_TRAITS,
+  CONNECTIVITY_TRAITS,
+} from './robotics-industrial';
+
+// Scientific Computing & Molecular Dynamics (Phase 1)
+export {
+  SCIENTIFIC_COMPUTING_TRAITS,
+  type ScientificComputingTraitName,
+} from './scientific-computing';
