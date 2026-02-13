@@ -1,11 +1,11 @@
 [package]
 name = "holoscript-component"
-version.workspace = true
-authors.workspace = true
-edition.workspace = true
+version = "3.0.0"
+authors = ["HoloScript Team"]
+edition = "2021"
 description = "HoloScript WASM Component with WIT interfaces (WASI Preview 3)"
-license.workspace = true
-repository.workspace = true
+license = "MIT"
+repository = "https://github.com/brianonbased-dev/HoloScript"
 
 [lib]
 crate-type = ["cdylib"]
@@ -15,8 +15,8 @@ crate-type = ["cdylib"]
 wit-bindgen = "0.36"
 
 # Serialization
-serde.workspace = true
-serde_json.workspace = true
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 # Parser utilities
 logos = "0.14"
