@@ -1,0 +1,97 @@
+import { useEffect, useState, useRef } from 'react';
+import type { OrbData } from '../types';
+
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
+
+export interface TimeState {
+  julianDate: number;
+  date: string;
+  timeScale: number;
+  isPaused: boolean;
+}
+
+export function useHoloSocket(port: number = 8080) {
+  const [orbs, setOrbs] = useState<Map<string, OrbData>>(new Map());
+  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
+  const [timeState, setTimeState] = useState<TimeState | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    setStatus('connecting');
+    const ws = new WebSocket(`ws://localhost:${port}`);
+    socketRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('Connected to HoloScript Runtime');
+      setStatus('connected');
+    };
+
+    ws.onclose = () => {
+      console.log('Disconnected from HoloScript Runtime');
+      setStatus('disconnected');
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setStatus('error');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        const { type, payload, orbs: initialOrbs, time } = message;
+        console.log('[Frontend] Received WebSocket message:', type);
+
+        if (type === 'init') {
+          console.log('[Frontend] Initializing with', initialOrbs.length, 'orbs');
+          const newMap = new Map();
+          initialOrbs.forEach((orb: OrbData) => newMap.set(orb.id, orb));
+          setOrbs(newMap);
+
+          // Set initial time state
+          if (time) {
+            setTimeState(time);
+          }
+        } else if (type === 'orb_created' || type === 'orb_update') {
+          console.log('[Frontend] Orb update:', payload.orb?.name, 'pos=', payload.orb?.position);
+          setOrbs((prev) => {
+            const next = new Map(prev);
+            if (payload && payload.orb) {
+              const existing = next.get(payload.orb.id);
+              next.set(payload.orb.id, { ...existing, ...payload.orb });
+            }
+            return next;
+          });
+        } else if (type === 'time_update') {
+          // Update time state
+          setTimeState(payload);
+        }
+      } catch (e) {
+        console.error('Failed to parse message', e);
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [port]);
+
+  const sendTimeControl = (command: string, value?: any) => {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'time_control',
+          command,
+          value,
+        })
+      );
+    }
+  };
+
+  return {
+    orbs: Array.from(orbs.values()),
+    status,
+    timeState,
+    sendTimeControl,
+  };
+}
