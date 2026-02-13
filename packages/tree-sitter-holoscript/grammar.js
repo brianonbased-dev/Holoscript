@@ -37,7 +37,6 @@ module.exports = grammar({
   // Handle parsing conflicts
   conflicts: ($) => [
     [$.property_access, $.identifier],
-    [$.trait_inline, $.trait_block],
   ],
 
   // External scanner for handling string interpolation (future)
