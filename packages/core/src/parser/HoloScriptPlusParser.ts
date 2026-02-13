@@ -2934,7 +2934,7 @@ export class HoloScriptPlusParser {
   }
 
   /**
-   * Parse unary prefix expressions (currently only ... supported)
+   * Parse unary prefix expressions (spread, unary minus, unary plus)
    */
   private parseUnary(): unknown {
     if (this.check('SPREAD')) {
@@ -2942,6 +2942,21 @@ export class HoloScriptPlusParser {
       const arg = this.parseUnary();
       return { type: 'spread', argument: arg };
     }
+
+    // Handle unary minus and plus
+    if (this.check('MINUS') || this.check('PLUS')) {
+      const operator = this.current().type === 'MINUS' ? '-' : '+';
+      this.advance();
+      const arg = this.parseUnary();
+
+      // If argument is a number literal, fold the operation
+      if (typeof arg === 'number') {
+        return operator === '-' ? -arg : arg;
+      }
+
+      return { type: 'unary', operator, argument: arg };
+    }
+
     return this.parsePrimary();
   }
 
