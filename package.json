@@ -33,7 +33,7 @@
     "@stryker-mutator/vitest-runner": "^9.5.1",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
-    "@typescript-eslint/parser": "^8.54.0",
+    "@typescript-eslint/parser": "^8.55.0",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",
