@@ -503,8 +503,8 @@ export class HITLBackendService {
    * Submit an approval request
    */
   async submitApprovalRequest(request: ApprovalRequest): Promise<ApprovalResponse> {
-    // Try WebSocket first for real-time
-    if (this.ws?.readyState === WebSocket.OPEN) {
+    // Try WebSocket first for real-time (if available in environment)
+    if (typeof WebSocket !== 'undefined' && this.ws?.readyState === WebSocket.OPEN) {
       return this.submitViaWebSocket(request);
     }
 
