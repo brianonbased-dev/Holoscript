@@ -87,6 +87,7 @@ export const MATERIAL_PRESETS: Record<string, Record<string, any>> = {
     sheen: 1.0,
     sheenRoughness: 0.8,
     sheenColor: '#ffffff',
+    clearcoat: 0.3,
   },
   xray: { roughness: 0.0, metalness: 0.0, transparent: true, opacity: 0.3, emissiveIntensity: 0.5 },
   gradient: { roughness: 0.5, metalness: 0.0 },
