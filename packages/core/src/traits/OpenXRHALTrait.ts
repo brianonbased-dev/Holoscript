@@ -315,7 +315,7 @@ const CONTROLLER_PROFILES: Record<string, ControllerProfileDatabase> = {
   },
 
   // Generic fallback
-  'generic': {
+  generic: {
     buttonMapping: ['trigger', 'grip', 'thumbstick', 'a', 'b', 'menu'],
     thumbstickXAxis: 2,
     thumbstickYAxis: 3,
@@ -398,7 +398,7 @@ export const openXRHALHandler: TraitHandler<OpenXRHALConfig> = {
     }
 
     // Phase 4: Poll input sources with error handling
-    if (state.session && !((state.session as any).simulated)) {
+    if (state.session && !(state.session as any).simulated) {
       try {
         pollInputSources(state, context, node);
       } catch (error) {
@@ -675,9 +675,7 @@ function detectAvailableFeatures(
   }
 
   // Check for eye tracking support (gaze input)
-  const hasGazeInput = session.inputSources?.some(
-    (source: any) => source.targetRayMode === 'gaze'
-  );
+  const hasGazeInput = session.inputSources?.some((source: any) => source.targetRayMode === 'gaze');
   if (hasGazeInput || session.enabledFeatures?.includes('gaze')) {
     features.add('eye-tracking');
     state.eyeTrackingActive = true;
@@ -733,7 +731,10 @@ function detectAvailableFeatures(
   }
 
   // Check for passthrough (if AR session)
-  if (session.environmentBlendMode === 'alpha-blend' || session.environmentBlendMode === 'additive') {
+  if (
+    session.environmentBlendMode === 'alpha-blend' ||
+    session.environmentBlendMode === 'additive'
+  ) {
     features.add('passthrough');
     state.isPassthroughActive = true;
   }
@@ -1128,12 +1129,11 @@ function pollHandTracking(source: any): HandTrackingState | null {
 /**
  * Calculate forward direction vector from quaternion (Phase 3)
  */
-function _calculateForwardVector(quaternion: {
+function _calculateForwardVector(quaternion: { x: number; y: number; z: number; w: number }): {
   x: number;
   y: number;
   z: number;
-  w: number;
-}): { x: number; y: number; z: number } {
+} {
   const { x, y, z, w } = quaternion;
 
   // Forward is -Z axis rotated by quaternion
@@ -1169,11 +1169,7 @@ function pollEyeTracking(session: any, _state: OpenXRHALState): GazeRay | null {
 /**
  * Poll input sources per frame and emit updates
  */
-function pollInputSources(
-  state: OpenXRHALState,
-  context: any,
-  node: any
-): void {
+function pollInputSources(state: OpenXRHALState, context: any, node: any): void {
   if (!state.session || (state.session as any).simulated) return;
 
   const session = state.session as any;

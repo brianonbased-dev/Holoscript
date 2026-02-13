@@ -94,8 +94,16 @@ export class MovementPredictor {
     const linearPred = this.predictLinear(lookahead);
 
     // If the path is curving, bias the prediction towards the curve
-    const chord1: [number, number, number] = [midPosTuple[0] - startPosTuple[0], midPosTuple[1] - startPosTuple[1], midPosTuple[2] - startPosTuple[2]];
-    const chord2: [number, number, number] = [endPosTuple[0] - midPosTuple[0], endPosTuple[1] - midPosTuple[1], endPosTuple[2] - midPosTuple[2]];
+    const chord1: [number, number, number] = [
+      midPosTuple[0] - startPosTuple[0],
+      midPosTuple[1] - startPosTuple[1],
+      midPosTuple[2] - startPosTuple[2],
+    ];
+    const chord2: [number, number, number] = [
+      endPosTuple[0] - midPosTuple[0],
+      endPosTuple[1] - midPosTuple[1],
+      endPosTuple[2] - midPosTuple[2],
+    ];
 
     const turnFactor = 0.5; // Simulated RNN weight
     const curveOffset: [number, number, number] = [

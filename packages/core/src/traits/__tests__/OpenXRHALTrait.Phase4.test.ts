@@ -669,7 +669,17 @@ describe('openXRHALHandler - Phase 4: Session Lifecycle & Feature Detection', ()
 
       // Thresholds: >16.67='low', >11.11='medium', >8.33='high', <=8.33='max'
       const frameTimings = [6, 8, 10, 14, 20, 6, 8.5, 12, 17];
-      const expectedLevels = ['max', 'max', 'high', 'medium', 'low', 'max', 'high', 'medium', 'low'];
+      const expectedLevels = [
+        'max',
+        'max',
+        'high',
+        'medium',
+        'low',
+        'max',
+        'high',
+        'medium',
+        'low',
+      ];
 
       frameTimings.forEach((timing, index) => {
         openXRHALHandler.onUpdate(mockNode, mockConfig, mockContext, timing);

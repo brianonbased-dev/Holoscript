@@ -420,7 +420,10 @@ export class AgentMessaging extends EventEmitter {
       if (channel && channel.encryption !== 'none') {
         try {
           // For E2E encryption, derive shared key using sender's public key
-          const senderPublicKey = this.channelManager.getPublicKey(message.channelId, message.senderId);
+          const senderPublicKey = this.channelManager.getPublicKey(
+            message.channelId,
+            message.senderId
+          );
           const decryptionKey = senderPublicKey
             ? EncryptionService.deriveSharedKey(this.keyPair.privateKey, senderPublicKey)
             : this.keyPair.privateKey;

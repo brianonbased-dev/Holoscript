@@ -14,7 +14,14 @@ import type {
   GenerateOptions,
 } from './AIAdapter';
 
-export type { AIAdapter, GenerateResult, ExplainResult, OptimizeResult, FixResult, GenerateOptions };
+export type {
+  AIAdapter,
+  GenerateResult,
+  ExplainResult,
+  OptimizeResult,
+  FixResult,
+  GenerateOptions,
+};
 
 // ============================================================================
 // System Prompt for HoloScript Generation
