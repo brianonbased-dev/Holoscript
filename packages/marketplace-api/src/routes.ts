@@ -180,7 +180,7 @@ function requireAuth(marketplace: MarketplaceService) {
 /**
  * Validate request body with zod schema
  */
-function validate<T>(schema: z.ZodSchema<T>) {
+function validate<T = any>(schema: z.ZodType) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.body);
     if (!result.success) {
@@ -194,7 +194,7 @@ function validate<T>(schema: z.ZodSchema<T>) {
       });
       return;
     }
-    (req as any).validated = result.data;
+    (req as any).validated = result.data as T;
     next();
   };
 }
@@ -202,7 +202,7 @@ function validate<T>(schema: z.ZodSchema<T>) {
 /**
  * Validate query params with zod schema
  */
-function validateQuery<T>(schema: z.ZodSchema<T>) {
+function validateQuery<T = any>(schema: z.ZodType) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.query);
     if (!result.success) {
@@ -216,7 +216,7 @@ function validateQuery<T>(schema: z.ZodSchema<T>) {
       });
       return;
     }
-    (req as any).validated = result.data;
+    (req as any).validated = result.data as T;
     next();
   };
 }
